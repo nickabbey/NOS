@@ -80,6 +80,24 @@ function shellInit() {
     sc.function = shellPrompt;
     this.commandList[this.commandList.length] = sc;
 
+    // date
+    sc = new ShellCommand();
+    sc.command = "date";
+    sc.description = "- Prints the date/time.";
+    sc.function = function date() {
+        _StdIn.putText(new Date().toString());
+    };
+    this.commandList[this.commandList.length] = sc;
+
+    // whereami
+    sc = new ShellCommand();
+    sc.command = "whereami";
+    sc.description = "- Wherever you go, you are there.";
+    sc.function = function whereami() {
+        _StdIn.putText("There you are!");
+    };
+    this.commandList[this.commandList.length] = sc;
+
     // processes - list the running processes and their IDs
     // kill <id> - kills the specified process id.
 
