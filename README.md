@@ -1,5 +1,8 @@
-AlanBBOS2013
-============
+NOS - A supercharged Operating System
+=====================================
+My implementation of an operating system using Javascript and 6502A assembly
 
-This is my Fall 2013 Operating Systems class initial project.
-See http://www.labouseur.com/courses/os/ for details.
+Forked from:
+
+AlanBBOS2013
+https://github.com/labouseur/AlanBBOS2013
