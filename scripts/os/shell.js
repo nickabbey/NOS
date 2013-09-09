@@ -84,7 +84,7 @@ function shellInit() {
     sc = new ShellCommand();
     sc.command = "date";
     sc.description = "- Prints the date/time.";
-    sc.function = function date() {
+    sc.function = function shellDate() {
         _StdIn.putText(new Date().toString());
     };
     this.commandList[this.commandList.length] = sc;
@@ -93,8 +93,17 @@ function shellInit() {
     sc = new ShellCommand();
     sc.command = "whereami";
     sc.description = "- Wherever you go, you are there.";
-    sc.function = function whereami() {
+    sc.function = function shellWhereAmI() {
         _StdIn.putText("There you are!");
+    };
+    this.commandList[this.commandList.length] = sc;
+
+    // qotd
+    sc = new ShellCommand();
+    sc.command = "qotd";
+    sc.description = "- Quote of the day";
+    sc.function = function shellQotd() {
+        _StdIn.putText(qotd());
     };
     this.commandList[this.commandList.length] = sc;
 

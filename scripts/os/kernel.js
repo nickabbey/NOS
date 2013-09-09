@@ -53,6 +53,10 @@ function krnBootstrap()      // Page 8.
    if (_GLaDOS) {
       _GLaDOS.afterStartup();
    }
+
+    if (_GLaDNOS) {
+        _GLaDNOS.afterStartup();
+    }
 }
 
 function krnShutdown()

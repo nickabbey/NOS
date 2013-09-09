@@ -42,6 +42,14 @@ function hostInit()
       _GLaDOS.init();
    };
 
+    // Personal testing
+    if (typeof GladNos === "function") {
+        _GLaDNOS = new GladNos();
+        _GLaDNOS.init();
+    };
+
+
+
 }
 
 function hostLog(msg, source)
