@@ -51,6 +51,7 @@ var _StdOut = null;
 // UI
 var _Console = null;
 var _OsShell = null;
+var _Cursor = false;
 
 // At least this OS is not trying to kill you. (Yet.)
 var _SarcasticMode = false;

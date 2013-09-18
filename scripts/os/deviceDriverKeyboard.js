@@ -48,6 +48,7 @@ function krnKbdDispatchKeyPress(params)
         _KernelInputQueue.enqueue(chr);
     }
     else if ( ((keyCode >= 48) && (keyCode <= 57)) ||   // digits
+        (keyCode === 8)                     ||          // backspace
         (keyCode == 32)                     ||          // space
         (keyCode == 13)                     ||          // enter
         (keyCode >= 33 && keyCode <= 47)    ||

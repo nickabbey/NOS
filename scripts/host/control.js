@@ -66,7 +66,7 @@ function hostLog(msg, source)
     var now = new Date().getTime();
 
     // Build the log string.   
-    var str = "({ clock:" + clock + ", source:" + source + ", msg:" + msg + ", now:" + now  + " })"  + "\n";    
+    var str = "({ clock:" + clock + ", source:" + source + ", msg:" + msg + ", now:" + now  + " })"  + "\n";
 
     // Update the log console.
     var taLog = document.getElementById("taLog");
@@ -96,6 +96,7 @@ function hostBtnStartOS_click(btn)
 
     // ... then set the host clock pulse ...
     _hardwareClockID = setInterval(hostClockPulse, CPU_CLOCK_INTERVAL);
+
     // .. and call the OS Kernel Bootstrap routine.
     krnBootstrap();
 }
@@ -104,10 +105,14 @@ function hostBtnHaltOS_click(btn)
 {
     hostLog("emergency halt", "host");
     hostLog("Attempting Kernel shutdown.", "host");
+
+    //stop the cursor pulse
+    _Console.clearCursorBlinkInterval();
     // Call the OS shutdown routine.
     krnShutdown();
     // Stop the JavaScript interval that's simulating our clock pulse.
     clearInterval(_hardwareClockID);
+
     // TODO: Is there anything else we need to do here?
 }
 
@@ -119,3 +124,10 @@ function hostBtnReset_click(btn)
     // be reloaded from the server. If it is false or not specified, the browser may reload the 
     // page from its cache, which is not what we want.
 }
+
+function hostCursorTimer()
+{
+
+}
+
+
