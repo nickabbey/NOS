@@ -26,9 +26,9 @@ function hostInit()
 
 	// Get a global reference to the drawing context.
 	_DrawingContext = _Canvas.getContext('2d');
-
+    //***DEPECATED******  Use consoleIO.js
 	// Enable the added-in canvas text functions (see canvastext.js for provenance and details).
-	CanvasTextFunctions.enable(_DrawingContext);   // TODO: Text functionality is now built in to the HTML5 canvas. Consider using that instead.
+    //CanvasTextFunctions.enable(_DrawingContext);   // TODO: Text functionality is now built in to the HTML5 canvas. Consider using that instead.
 
 	// Clear the log text box.
 	document.getElementById("taLog").value="";

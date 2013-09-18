@@ -6,173 +6,200 @@
 
 // TODO: Write a base class / prototype for system services and let Shell inherit from it.
 
-function Shell() {
+//
+// Prototype definition for Shell "class"
+//
+function Shell()
+{
     // Properties
-    this.promptStr   = ">";
-    this.commandList = [];
-    this.curses      = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
-    this.apologies   = "[sorry]";
+    this.promptStr      = ">";
+    this.commandList    = [];
+    this.curses         = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
+    this.apologies      = "[sorry]";
+
     // Methods
-    this.init        = shellInit;
-    this.putPrompt   = shellPutPrompt;
-    this.handleInput = shellHandleInput;
-    this.execute     = shellExecute;
-}
-
-function shellInit() {
-    var sc = null;
-    //
-    // Load the command list.
-
-    // ver
-    sc = new ShellCommand();
-    sc.command = "ver";
-    sc.description = "- Displays the current version data.";
-    sc.function = shellVer;
-    this.commandList[this.commandList.length] = sc;
-    
-    // help
-    sc = new ShellCommand();
-    sc.command = "help";
-    sc.description = "- This is the help command. Seek help.";
-    sc.function = shellHelp;
-    this.commandList[this.commandList.length] = sc;
-    
-    // shutdown
-    sc = new ShellCommand();
-    sc.command = "shutdown";
-    sc.description = "- Shuts down the virtual OS but leaves the underlying hardware simulation running.";
-    sc.function = shellShutdown;
-    this.commandList[this.commandList.length] = sc;
-
-    // cls
-    sc = new ShellCommand();
-    sc.command = "cls";
-    sc.description = "- Clears the screen and resets the cursor position.";
-    sc.function = shellCls;
-    this.commandList[this.commandList.length] = sc;
-
-    // man <topic>
-    sc = new ShellCommand();
-    sc.command = "man";
-    sc.description = "<topic> - Displays the MANual page for <topic>.";
-    sc.function = shellMan;
-    this.commandList[this.commandList.length] = sc;
-    
-    // trace <on | off>
-    sc = new ShellCommand();
-    sc.command = "trace";
-    sc.description = "<on | off> - Turns the OS trace on or off.";
-    sc.function = shellTrace;
-    this.commandList[this.commandList.length] = sc;
-
-    // rot13 <string>
-    sc = new ShellCommand();
-    sc.command = "rot13";
-    sc.description = "<string> - Does rot13 obfuscation on <string>.";
-    sc.function = shellRot13;
-    this.commandList[this.commandList.length] = sc;
-
-    // prompt <string>
-    sc = new ShellCommand();
-    sc.command = "prompt";
-    sc.description = "<string> - Sets the prompt.";
-    sc.function = shellPrompt;
-    this.commandList[this.commandList.length] = sc;
-
-    // date
-    sc = new ShellCommand();
-    sc.command = "date";
-    sc.description = "- Prints the date/time.";
-    sc.function = function shellDate() {
-        _StdIn.putText(new Date().toString());
-    };
-    this.commandList[this.commandList.length] = sc;
-
-    // whereami
-    sc = new ShellCommand();
-    sc.command = "whereami";
-    sc.description = "- Wherever you go, you are there.";
-    sc.function = function shellWhereAmI() {
-        _StdIn.putText("There you are!");
-    };
-    this.commandList[this.commandList.length] = sc;
-
-    // qotd
-    sc = new ShellCommand();
-    sc.command = "qotd";
-    sc.description = "- Quote of the day";
-    sc.function = function shellQotd() {
-        _StdIn.putText(qotd());
-    };
-    this.commandList[this.commandList.length] = sc;
-
-    // processes - list the running processes and their IDs
-    // kill <id> - kills the specified process id.
-
-    //
-    // Display the initial prompt.
-    this.putPrompt();
-}
-
-function shellPutPrompt()
-{
-    _StdIn.putText(this.promptStr);
-}
-
-function shellHandleInput(buffer)
-{
-    krnTrace("Shell Command~" + buffer);
-    // 
-    // Parse the input...
-    //
-    var userCommand = new UserCommand();
-    userCommand = shellParseInput(buffer);
-    // ... and assign the command and args to local variables.
-    var cmd = userCommand.command;
-    var args = userCommand.args;
-    //
-    // Determine the command and execute it.
-    //
-    // JavaScript may not support associative arrays in all browsers so we have to
-    // iterate over the command list in attempt to find a match.  TODO: Is there a better way? Probably.
-    var index = 0;
-    var found = false;
-    while (!found && index < this.commandList.length)
+    this.putPrompt      = function()
     {
-        if (this.commandList[index].command === cmd)
+        _StdIn.putText(this.promptStr);
+    };
+
+    this.init           = function()
+    {
+        var sc = null;
+        // Load the command list.
+
+        // ver
+        sc = new ShellCommand();
+        sc.command = "ver";
+        sc.description = "- Displays the current version data.";
+        sc.function = shellVer;
+        this.commandList[this.commandList.length] = sc;
+
+        // help
+        sc = new ShellCommand();
+        sc.command = "help";
+        sc.description = "- This is the help command. Seek help.";
+        sc.function = shellHelp;
+        this.commandList[this.commandList.length] = sc;
+
+        // shutdown
+        sc = new ShellCommand();
+        sc.command = "shutdown";
+        sc.description = "- Shuts down the virtual OS but leaves the underlying hardware simulation running.";
+        sc.function = shellShutdown;
+        this.commandList[this.commandList.length] = sc;
+
+        // cls
+        sc = new ShellCommand();
+        sc.command = "cls";
+        sc.description = "- Clears the screen and resets the cursor position.";
+        sc.function = shellCls;
+        this.commandList[this.commandList.length] = sc;
+
+        // man <topic>
+        sc = new ShellCommand();
+        sc.command = "man";
+        sc.description = "<topic> - Displays the MANual page for <topic>.";
+        sc.function = shellMan;
+        this.commandList[this.commandList.length] = sc;
+
+        // trace <on | off>
+        sc = new ShellCommand();
+        sc.command = "trace";
+        sc.description = "<on | off> - Turns the OS trace on or off.";
+        sc.function = shellTrace;
+        this.commandList[this.commandList.length] = sc;
+
+        // rot13 <string>
+        sc = new ShellCommand();
+        sc.command = "rot13";
+        sc.description = "<string> - Does rot13 obfuscation on <string>.";
+        sc.function = shellRot13;
+        this.commandList[this.commandList.length] = sc;
+
+        // prompt <string>
+        sc = new ShellCommand();
+        sc.command = "prompt";
+        sc.description = "<string> - Sets the prompt.";
+        sc.function = shellPrompt;
+        this.commandList[this.commandList.length] = sc;
+
+        // date
+        sc = new ShellCommand();
+        sc.command = "date";
+        sc.description = "- Prints the date/time.";
+        sc.function = function shellDate() {
+            _StdIn.putText(new Date().toString());
+        };
+        this.commandList[this.commandList.length] = sc;
+
+        // whereami
+        sc = new ShellCommand();
+        sc.command = "whereami";
+        sc.description = "- Wherever you go, you are there.";
+        sc.function = function shellWhereAmI() {
+            _StdIn.putText("There you are!");
+        };
+        this.commandList[this.commandList.length] = sc;
+
+        // qotd
+        sc = new ShellCommand();
+        sc.command = "qotd";
+        sc.description = "- Quote of the day";
+        sc.function = function shellQotd() {
+            _StdIn.putText(qotd());
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // processes - list the running processes and their IDs
+        // kill <id> - kills the specified process id.
+
+        // Display the welcome message and initial prompt.
+        _StdIn.putText("Welcome to NOS - The turbocharged operating system!");
+        _StdIn.advanceLine();
+        this.putPrompt();
+    };
+
+    this.handleInput    =  function(buffer)
+    {
+        krnTrace("Shell Command~" + buffer);
+        //
+        // Parse the input...
+        //
+        var userCommand = new UserCommand();
+        userCommand = shellParseInput(buffer);
+        // ... and assign the command and args to local variables.
+        var cmd = userCommand.command;
+        var args = userCommand.args;
+        //
+        // Determine the command and execute it.
+        //
+        // JavaScript may not support associative arrays in all browsers so we have to
+        // iterate over the command list in attempt to find a match.  TODO: Is there a better way? Probably.
+        var index = 0;
+        var found = false;
+        while (!found && index < this.commandList.length)
         {
-            found = true;
-            var fn = this.commandList[index].function;
+            if (this.commandList[index].command === cmd)
+            {
+                found = true;
+                var fn = this.commandList[index].function;
+            }
+            else
+            {
+                ++index;
+            }
+        }
+        if (found)
+        {
+            this.execute(fn, args);
         }
         else
         {
-            ++index;
+            // It's not found, so check for curses and apologies before declaring the command invalid.
+            if (this.curses.indexOf("[" + rot13(cmd) + "]") >= 0)      // Check for curses.
+            {
+                this.execute(shellCurse);
+            }
+            else if (this.apologies.indexOf("[" + cmd + "]") >= 0)      // Check for apologies.
+            {
+                this.execute(shellApology);
+            }
+            else    // It's just a bad command.
+            {
+                this.execute(shellInvalidCommand);
+            }
         }
-    }
-    if (found)
+    };
+
+    this.execute        = function(fn, args)
     {
-        this.execute(fn, args);
-    }
-    else
-    {
-        // It's not found, so check for curses and apologies before declaring the command invalid.
-        if (this.curses.indexOf("[" + rot13(cmd) + "]") >= 0)      // Check for curses.
+        // We just got a command, so advance the line...
+        _StdIn.advanceLine();
+        // ... call the command function passing in the args...
+        fn(args);
+        // Check to see if we need to advance the line again
+        if (_StdIn.CurrentXPosition > 0)
         {
-            this.execute(shellCurse);
+            _StdIn.advanceLine();
         }
-        else if (this.apologies.indexOf("[" + cmd + "]") >= 0)      // Check for apologies.
-        {
-            this.execute(shellApology);
-        }
-        else    // It's just a bad command.
-        {
-            this.execute(shellInvalidCommand);
-        }
-    }
+        // ... and finally write the prompt again.
+        this.putPrompt();
+    };
 }
 
-function shellParseInput(buffer)
+//
+// The rest of these functions ARE NOT part of the Shell "class" (prototype, more accurately), 
+// as they are not denoted in the constructor.  The idea is that you cannot execute them from
+// elsewhere as shell.xxx .  In a better world, and a more perfect JavaScript, we'd be
+// able to make then private.  (Actually, we can. have a look at Crockford's stuff and Resig's JavaScript Ninja cook.)
+//
+
+//
+// An "interior" or "private" class (prototype) used only inside Shell() (we hope).
+//
+function shellParseInput(buffer)    //called by this.handleInput
 {
     var retVal = new UserCommand();
 
@@ -204,29 +231,6 @@ function shellParseInput(buffer)
     return retVal;
 }
 
-function shellExecute(fn, args)
-{
-    // We just got a command, so advance the line...
-    _StdIn.advanceLine();
-    // ... call the command function passing in the args...
-    fn(args);
-    // Check to see if we need to advance the line again
-    if (_StdIn.CurrentXPosition > 0)
-    {
-        _StdIn.advanceLine();
-    }
-    // ... and finally write the prompt again.
-    this.putPrompt();
-}
-
-
-//
-// The rest of these functions ARE NOT part of the Shell "class" (prototype, more accurately), 
-// as they are not denoted in the constructor.  The idea is that you cannot execute them from
-// elsewhere as shell.xxx .  In a better world, and a more perfect JavaScript, we'd be
-// able to make then private.  (Actually, we can. have a look at Crockford's stuff and Resig's JavaScript Ninja cook.)
-//
-
 //
 // An "interior" or "private" class (prototype) used only inside Shell() (we hope).
 //
@@ -247,7 +251,6 @@ function UserCommand()
     this.command = "";
     this.args = [];
 }
-
 
 //
 // Shell Command Functions.  Again, not part of Shell() class per se', just called from there.
