@@ -26,9 +26,9 @@ function hostInit()
 
 	// Get a global reference to the drawing context.
 	_DrawingContext = _Canvas.getContext('2d');
-    //***DEPECATED******  Use consoleIO.js
-	// Enable the added-in canvas text functions (see canvastext.js for provenance and details).
-    //CanvasTextFunctions.enable(_DrawingContext);   // TODO: Text functionality is now built in to the HTML5 canvas. Consider using that instead.
+
+    //***DEPECATED******  Console does all and more this now
+    //CanvasTextFunctions.enable(_DrawingContext);
 
 	// Clear the log text box.
 	document.getElementById("taLog").value="";
@@ -106,8 +106,8 @@ function hostBtnHaltOS_click(btn)
     hostLog("emergency halt", "host");
     hostLog("Attempting Kernel shutdown.", "host");
 
-    //stop the cursor pulse
-    _Console.clearCursorBlinkInterval();
+//    //stop the cursor pulse
+//    _Console.clearCursorBlinkInterval();
     // Call the OS shutdown routine.
     krnShutdown();
     // Stop the JavaScript interval that's simulating our clock pulse.
@@ -123,11 +123,6 @@ function hostBtnReset_click(btn)
     // That boolean parameter is the 'forceget' flag. When it is true it causes the page to always
     // be reloaded from the server. If it is false or not specified, the browser may reload the 
     // page from its cache, which is not what we want.
-}
-
-function hostCursorTimer()
-{
-
 }
 
 

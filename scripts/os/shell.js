@@ -13,7 +13,7 @@ function Shell()
 {
     // Properties
     this.promptStr      = ">";
-    this.commandList    = [];
+    this.commandList    = [];           //holds shell commands created in init
     this.curses         = "[fuvg],[cvff],[shpx],[phag],[pbpxfhpxre],[zbgureshpxre],[gvgf]";
     this.apologies      = "[sorry]";
 
@@ -179,11 +179,8 @@ function Shell()
         _StdIn.advanceLine();
         // ... call the command function passing in the args...
         fn(args);
-        // Check to see if we need to advance the line again
-        if (_StdIn.CurrentXPosition > 0)
-        {
-            _StdIn.advanceLine();
-        }
+        //Always advance the line, don't make the user programs or shell commands worry about it
+        _StdIn.advanceLine();
         // ... and finally write the prompt again.
         this.putPrompt();
     };
@@ -311,8 +308,10 @@ function shellShutdown(args)
 
 function shellCls(args)
 {
+    //TODO werid defect with prompt appearing twice when 'cls' entered at prompt
     _StdIn.clearScreen();
     _StdIn.resetXY();
+    _OsShell.putPrompt();
 }
 
 function shellMan(args)

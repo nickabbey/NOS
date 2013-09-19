@@ -11,17 +11,18 @@
 
 function CLIconsole() {
     // Properties
-    this.CurrentXPosition = 0;
-    this.CurrentYPosition = 0;
-    this.buffer = "";
-    this.fontWidth = null;                          //Determined by init
-    this.font = _FontPoint + "pt " + _FontName;     //Required by init to set up fontWidth property
-    this.fontHeight = _FontPoint;                   //Is this always true?  It's worked so far with monospace fonts
-    this.fontPadding = 4;                           //padding for newline
-    this.textColor = "rgb(25,255,0)";               //color od text displayed in console //TODO make this configurable
-    this.backgroundColor = "rgb(0,0,0)";            //color of console background //TODO make this configurable
-    this._cursorBlinkInterval = 0;
-
+    this.CurrentXPosition   = 0;
+    this.CurrentYPosition   = 0;
+    this.buffer             = "";
+    this.fontWidth          = null;                             //Determined by this.init()
+    this.font               = _FontPoint + "pt " + _FontName;   //Required by this.init() to set up fontWidth property
+    this.fontHeight         = _FontPoint;                       //Is this always true?  It's worked so far with monospace fonts
+    this.fontPadding        = 4;                                //padding for newline
+    this.textColor          = "rgb(25,255,0)";                  //color od text displayed in console //TODO make this configurable
+    this.backgroundColor    = "rgb(0,0,0)";                     //color of console background //TODO make this configurable
+    this.cursorBlinkInterval= 0;                                //cursor blink interval set in init //TODO make this actually work
+    this.history            = [];                               //Array of commands entered
+    this.historyIndex       = -1;                               //For moving through the history array
 
     // Methods
     this.init                       = function()
@@ -30,43 +31,40 @@ function CLIconsole() {
         _DrawingContext.font = this.font;  //TODO - is it worth it to wrap this in a check for null or some such?
         this.fontWidth = _DrawingContext.measureText("A").width;  //Simple test, all are the same for monospace
         this.clearScreen();
-//        this.putPrompt();
-//        this.startCursorBlinkInterval();
+        this.resetXY();
+//        this.startCursorBlinkInterval();  //TODO get cursor blink working
     };
 
     this.startCursorBlinkInterval   = function()
     {
-        this._cursorBlinkInterval = setInterval(this.cursorBlink, 1000);
+        this.cursorBlinkInterval = setInterval(this.cursorBlink, 1000);
     };
 
     this.clearCursorBlinkInterval   = function()
     {
-        clearInterval(this._cursorBlinkInterval);
+        clearInterval(this.cursorBlinkInterval);
     };
 
     this.clearScreen                = function()
     {
         _DrawingContext.fillStyle = this.backgroundColor;
         _DrawingContext.fillRect(0,0,_Canvas.width, _Canvas.height);
-        this.resetXY();
-//        this.putPrompt();
     };
 
     this.clearLine = function()
     {  //leaves the cursor in front of the prompt
         _DrawingContext.fillStyle = this.backgroundColor;
-        CurrentXPosition = 0;
-        CurrentYPosition = CurrentYPosition - (this.fontHeight + this.fontPadding);
-        _DrawingContext.fillRect(_CurrentX, _CurrentY, _Canvas.width, _Canvas.height);
-//        this.putPrompt();
-
+        this.CurrentXPosition = 0;
+//        this.CurrentYPosition = this.CurrentYPosition - (this.fontHeight + this.fontPadding);
+        _DrawingContext.fillRect(this.CurrentXPosition, (this.CurrentYPosition - this.fontHeight), _Canvas.width, _Canvas.height);
+        _OsShell.putPrompt();
     };
 
     this.resetXY = function()
     {
         this.CurrentXPosition = 0;
         this.CurrentYPosition = 0;
-        this.CurrentYPosition += this.fontHeight;
+        this.CurrentYPosition += this.fontHeight + this.fontPadding;
     };
 
     this.handleInput = function()
@@ -76,17 +74,61 @@ function CLIconsole() {
             // Get the next character from the kernel input queue.
             var chr = _KernelInputQueue.dequeue();
             // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
-            if (chr == String.fromCharCode(13))  //     Enter key
+            if (chr === 7)  //System bell
+            {
+                console.log(String.fromCharCode(chr));  //this would have been so much cooler if browsers actually played a sound here.
+            }
+            else if (chr === 13)  //     Enter key
             {
                 // The enter key marks the end of a console command, so ...
-                // ... tell the shell ...
-                _OsShell.handleInput(this.buffer);
-                // ... and reset our buffer.
-                this.buffer = "";
+
+                //... push the command to the history buffer,
+                this.history.push(this.buffer);
+                //... increment the history index (history traversal is from n...0)
+                this.historyIndex += 1;
+                //... handle the input
+                _OsShell.handleInput(this.history[this.historyIndex]);
+                //... reset the buffer
+                this.buffer = '';
+            }
+            else if (chr == 8 || chr == 127)   // backspace or delete
+            {
+                this.clearLine();
+                this.buffer = this.buffer.slice(0, this.buffer.length-1);
+                this.putText(this.buffer);
+            }
+            else if (chr === 38)   // up
+            {
+                if (this.historyIndex == 0)
+                {
+                    this.buffer = this.history[this.historyIndex];
+                }
+                else if (this.historyIndex > 0)
+                {
+                    this.buffer = this.history[this.historyIndex];
+                    this.historyIndex -= 1;
+                    _StdIn.clearLine();
+                    _StdIn.putText(this.buffer);
+                }
+            }
+            else if (chr === 40)  //down
+            {
+                if (this.historyIndex == this.history.length-1)
+                {
+                    this.buffer = this.history[this.historyIndex];
+                }
+                else if (this.historyIndex < this.history.length-1)
+                {
+                    this.buffer = this.history[this.historyIndex];
+                    this.historyIndex += 1;
+                    _StdIn.clearLine();
+                    _StdIn.putText(this.buffer);
+                }
             }
             // TODO: Write a case for Ctrl-C.
             else
             {
+                chr = String.fromCharCode(chr);
                 // This is a "normal" character, so ...
                 // ... draw it on the screen...
                 this.putText(chr);
@@ -118,7 +160,8 @@ function CLIconsole() {
             //put the copied data back at the top, leaving room for the next row
             _DrawingContext.putImageData(pixels, 0, 0);
             this.CurrentXPosition = 0;
-        }  //otherwise, just draw the new line
+//            this.CurrentYPosition = this.CurrentYPosition - (this.fontHeight + this.fontPadding);
+        }
         else
         {
             this.CurrentXPosition = 0;

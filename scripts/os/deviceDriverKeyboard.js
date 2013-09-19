@@ -2,6 +2,7 @@
    DeviceDriverKeyboard.js
    
    Requires deviceDriver.js
+   Requires keymap.js
    
    The Kernel Keyboard Device Driver.
    ---------------------------------- */
@@ -10,18 +11,20 @@ DeviceDriverKeyboard.prototype = new DeviceDriver;  // "Inherit" from prototype 
 
 function DeviceDriverKeyboard()                     // Add or override specific attributes and method pointers.
 {
+    // "Constructor" code.
     // "subclass"-specific attributes.
     // this.buffer = "";    // TODO: Do we need this?
     // Override the base method pointers.
     this.driverEntry = krnKbdDriverEntry;
     this.isr = krnKbdDispatchKeyPress;
-    // "Constructor" code.
+    this.keymap = new Keymap();  //allows for scancode magic
 }
 
 function krnKbdDriverEntry()
 {
     // Initialization routine for this, the kernel-mode Keyboard Device Driver.
     this.status = "loaded";
+    this.keymap.init(); //abracadabra
     // More?
 }
 
@@ -31,32 +34,18 @@ function krnKbdDispatchKeyPress(params)
     var keyCode = params[0];
     var isShifted = params[1];
     krnTrace("Key code:" + keyCode + " shifted:" + isShifted);
-    var chr = "";
-    // Check to see if we even want to deal with the key that was pressed.
-    if ( ((keyCode >= 65) && (keyCode <= 90)) ||   // A..Z
-        ((keyCode >= 97) && (keyCode <= 123)) )   // a..z
+    //this ensures that you're sending a valid ascii code to the kernel input queue every time
+    var asciiCode = this.keymap.fromScanCode(keyCode);
+    if(isShifted)  //if your shifted
     {
-        // Determine the character we want to display.
-        // Assume it's lowercase...
-        chr = String.fromCharCode(keyCode + 32);
-        // ... then check the shift key and re-adjust if necessary.
-        if (isShifted)
+        if(this.keymap.isShifty(keyCode))  //and your shifty
         {
-            chr = String.fromCharCode(keyCode);
+            asciiCode = this.keymap.fromShiftedScanCode(keyCode);   //then get shift faced
         }
-        // TODO: Check for caps-lock and handle as shifted if so.
-        _KernelInputQueue.enqueue(chr);
-    }
-    else if ( ((keyCode >= 48) && (keyCode <= 57)) ||   // digits
-        (keyCode === 8)                     ||          // backspace
-        (keyCode == 32)                     ||          // space
-        (keyCode == 13)                     ||          // enter
-        (keyCode >= 33 && keyCode <= 47)    ||
-        (keyCode >= 58 && keyCode <= 64)    ||
-        (keyCode >= 91 && keyCode <= 96)    ||
-        (keyCode >= 123 && keyCode <= 126)          )           // punctuation marks
+    } else if (this.keymap.isAlpha(keyCode))  // otherwise you're a lowercase, in which case you get an easy shift
     {
-        chr = String.fromCharCode(keyCode);
-        _KernelInputQueue.enqueue(chr);
+        asciiCode += 32;
     }
+    //and put an ascii code on the input queue
+    _KernelInputQueue.enqueue(asciiCode);
 }
