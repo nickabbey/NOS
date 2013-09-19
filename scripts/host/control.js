@@ -42,6 +42,7 @@ function hostInit()
    // Check for our testing and enrichment core.
    if (typeof Glados === "function") {
       _GLaDOS = new Glados();
+       alert("ALERT! - Changes to console IO don't play nice with GlaDOS.  The script executes, but this disables keyboard input!");
       _GLaDOS.init();
    };
 

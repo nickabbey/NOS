@@ -41,7 +41,20 @@ function Keymap() {
 
         // Add the rest by hand...  blech!
         // Duplicates here are bad.  Ask Egon, he'll explain it.
-        // The ones that are commented are codes that are generated using the shift key (unknown scancode)
+        this.scanCodes[39] = 222; // '
+        this.scanCodes[44] = 188; // ,
+        this.scanCodes[45] = 189; // -
+        this.scanCodes[46] = 190; // .
+        this.scanCodes[47] = 191; // /
+        this.scanCodes[59] = 186; // ;
+        this.scanCodes[61] = 187; // =
+        this.scanCodes[91] = 219; // [
+        this.scanCodes[92] = 220; // \
+        this.scanCodes[93] = 221; // ]
+        this.scanCodes[96] = 192; // `
+        this.scanCodes[127] = 46;  //delete
+
+        // These are the ones that generated using the shift key
         this.shiftedCodes.push(new KeyPair(49, 33));
         this.shiftedCodes.push(new KeyPair(39, 34));
         this.shiftedCodes.push(new KeyPair(51, 35));
@@ -51,40 +64,22 @@ function Keymap() {
         //Hopefully if you're looking this closely, you see that I figured out how to do this and it's working
         //(for the ones I did above anyway)
         //there was just too much other stuff to get right before slogging through this tedium so I moved on
-//        this.scanCodes[35] = "!"; // # 51
-//        this.scanCodes[36] = "!"; // $ 52
-//        this.scanCodes[37] = "!"; // % 53
-//        this.scanCodes[38] = "!"; // & 55
-        this.scanCodes[39] = 222; // '
 //        this.scanCodes[40] = "!"; // ( 57
 //        this.scanCodes[41] = "!"; // ) 48
 //        this.scanCodes[42] = "!"; // * 56
 //        this.scanCodes[43] = "!"; // + 61
-        this.scanCodes[44] = 188; // ,
-        this.scanCodes[45] = 189; // -
-        this.scanCodes[46] = 190; // .
-        this.scanCodes[47] = 191; // /
-
 //        this.scanCodes[58] = "!"; // : 59
-        this.scanCodes[59] = 186; // ;
 //        this.scanCodes[60] = "!"; // < 44
-        this.scanCodes[61] = 187; // =
 //        this.scanCodes[62] = "!"; // > 46
 //        this.scanCodes[63] = "!"; // ? 47
 //        this.scanCodes[64] = "!"; // @ 50
-
-        this.scanCodes[91] = 219; // [
-        this.scanCodes[92] = 220; // \
-        this.scanCodes[93] = 221; // ]
 //        this.scanCodes[94] = "!"; // ^  64
 //        this.scanCodes[95] = "!"; // _  45
-        this.scanCodes[96] = 192; // `
-
 //        this.scanCodes[123] = "!"; // {  91
 //        this.scanCodes[124] = "!"; // |  92
 //        this.scanCodes[125] = "!"; // }  93
 //        this.scanCodes[126] = "!"; // ~  96
-        this.scanCodes[127] = 46;  //delete
+
     };
 
     //returns the scancode of the given ascii value

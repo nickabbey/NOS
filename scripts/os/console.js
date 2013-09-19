@@ -25,7 +25,7 @@ function CLIconsole() {
     this.historyIndex       = -1;                               //For moving through the history array
 
     // Methods
-    this.init                       = function()
+    this.init = function()
     {
         //Kind of unsafe, but technically the Drawing context should never be null by the time console.init runs
         _DrawingContext.font = this.font;  //TODO - is it worth it to wrap this in a check for null or some such?
@@ -35,30 +35,31 @@ function CLIconsole() {
         this.startCursorBlinkInterval();  //TODO get cursor blink working
     };
 
-    this.startCursorBlinkInterval   = function()
+    this.startCursorBlinkInterval = function()
     {
         this.cursorBlinkInterval = setInterval(this.cursorBlink, 1000);
     };
 
-    this.clearCursorBlinkInterval   = function()
+    this.clearCursorBlinkInterval = function()
     {
         clearInterval(this.cursorBlinkInterval);
     };
 
-    this.clearScreen                = function()
+    this.clearScreen = function()
     {
         _DrawingContext.fillStyle = this.backgroundColor;
         _DrawingContext.fillRect(0,0,_Canvas.width, _Canvas.height);
     };
 
-    this.bsod                = function()
+    this.bsod = function()
     {
         _DrawingContext.fillStyle = "rgb(25,25,255)";
         _DrawingContext.fillRect(0,0,_Canvas.width, _Canvas.height);
 
+        //TODO Why doesn't this work?
         var imageObj = new Image();
         imageObj.onload = function() {
-            _DrawingContext.drawImage(imageObj, 0, 200);
+            _DrawingContext.drawImage(imageObj, 0, 0);
         };
         imageObj.src = '/images/glados_bsod.jpg';
     };
@@ -85,6 +86,15 @@ function CLIconsole() {
         {
             // Get the next character from the kernel input queue.
             var chr = _KernelInputQueue.dequeue();
+            //Wrapper for Alan's test script, since I changed the way the console interprets scancodes
+            //Unfortnately, you can't keep throwing input at it afterwards.
+            if(document.contains(document.getElementById("glaDOS")))
+            {
+                if(chr != 13)  // Alan sends an interrupt for the enter key, leave it if that's on the top of the queue
+                {
+                    chr = chr.charCodeAt(0);  //otherwise, convert to ASCII code, since that's what handleInput() uses
+                }
+            }
             // Check to see if it's "special" (enter or ctrl-c) or "normal" (anything else that the keyboard device driver gave us).
             if (chr === 7)  //System bell
             {
