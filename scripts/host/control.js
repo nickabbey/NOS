@@ -27,7 +27,7 @@ function hostInit()
 	// Get a global reference to the drawing context.
 	_DrawingContext = _Canvas.getContext('2d');
 
-    //***DEPECATED******  Console does all and more this now
+    //***DEPRECATED******  Console does all and more this now
     //CanvasTextFunctions.enable(_DrawingContext);
 
 	// Clear the log text box.
