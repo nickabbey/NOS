@@ -95,27 +95,3 @@ function isPunctuation(keyCode)     //ASCII code test for punctuations marks
                 (keyCode >= 91 && keyCode <= 96)    ||
                 (keyCode >= 123 && keyCode <= 126)  );
 }
-
-
-//test code for routines I've added
-
-//function testIsPunctuation()
-//{
-//    for ( var i = 0; i < 127; i++) {
-//        pMarks(String.fromCharCode(i));
-//    }
-//}
-
-//function testIsAplha()
-//{
-//    for ( var i = 0; i < 127; i++) {
-//        pMarks(String.fromCharCode(i));
-//    }
-//}
-
-//function testIsNumeric()
-//{
-//    for ( var i = 0; i < 127; i++) {
-//        pMarks(String.fromCharCode(i));
-//    }
-//}

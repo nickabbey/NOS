@@ -32,7 +32,7 @@ function CLIconsole() {
         this.fontWidth = _DrawingContext.measureText("A").width;  //Simple test, all are the same for monospace
         this.clearScreen();
         this.resetXY();
-//        this.startCursorBlinkInterval();  //TODO get cursor blink working
+        this.startCursorBlinkInterval();  //TODO get cursor blink working
     };
 
     this.startCursorBlinkInterval   = function()
@@ -49,6 +49,18 @@ function CLIconsole() {
     {
         _DrawingContext.fillStyle = this.backgroundColor;
         _DrawingContext.fillRect(0,0,_Canvas.width, _Canvas.height);
+    };
+
+    this.bsod                = function()
+    {
+        _DrawingContext.fillStyle = "rgb(25,25,255)";
+        _DrawingContext.fillRect(0,0,_Canvas.width, _Canvas.height);
+
+        var imageObj = new Image();
+        imageObj.onload = function() {
+            _DrawingContext.drawImage(imageObj, 0, 200);
+        };
+        imageObj.src = '/images/glados_bsod.jpg';
     };
 
     this.clearLine = function()
@@ -171,31 +183,16 @@ function CLIconsole() {
 
     this.cursorBlink = function()
     {
-        var msg = "CursorBlink()";
-        if (_DrawingContext === null)
+        if (_Cursor)
         {
-            msg += " FAILED";
+            _DrawingContext.fillStyle = this.textColor;
+            _DrawingContext.fillRect(this.CurrentXPosition, this.CurrentYPosition, this.fontWidth, 5);
         }
         else
         {
-            console.log(_Canvas.canvas.getCurrentPosition());
-//            console.log(_Canvas.CurrentYPosition);
-            if (_Cursor)
-            {
-                //TODO - Why can't I get the current position as I expect?
-//                _DrawingContext.clearRect(_DrawingContext.CurrentXPosition, _DrawingContext.CurrentXPosition, _DefaultFontSize, _DefaultFontSize);
-                _DrawingContext.clearRect(0,0,10,10);
-                _Cursor = !_Cursor;
-            }
-            else
-            {
-//                _DrawingContext.fillRect(_DrawingContext.CurrentXPosition, _DrawingContext.CurrentXPosition, _DefaultFontSize, _DefaultFontSize);
-                _DrawingContext.fillRect(0,0,10,10);
-
-                _Cursor = !_Cursor;
-            }
-            msg += " Executed";
+            _DrawingContext.fillStyle = this.backgroundColor;
+            _DrawingContext.fillRect(this.CurrentXPosition, this.CurrentYPosition, this.fontWidth, 5);
         }
-        krnTrace(msg);
+        _Cursor = !_Cursor;
     };
 }

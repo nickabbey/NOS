@@ -25,6 +25,7 @@ function Shell()
 
     this.init           = function()
     {
+
         var sc = null;
         // Load the command list.
 
@@ -108,6 +109,44 @@ function Shell()
         sc.description = "- Quote of the day";
         sc.function = function shellQotd() {
             _StdIn.putText(qotd());
+        };
+        this.commandList[this.commandList.length] = sc;
+
+        // status
+        sc = new ShellCommand();
+        sc.command = "status";
+        sc.description = "- Send a status to the host";
+        sc.function = function shellStatus(status) {
+            hostStat(status);
+        };
+        this.commandList[this.commandList.length] = sc;
+
+        // BSOD test
+        sc = new ShellCommand();
+        sc.command = "bsod";
+        sc.description = "- NO DISSASSEMBLE JOHNNY 5!!!";
+        sc.function = function shellBSOD() {
+            krnTrapError("BSOD TEST");
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // Load
+        sc = new ShellCommand();
+        sc.command = "load";
+        sc.description = "- Load a user program";
+        sc.function = function shellLoadProgram() {
+            var program = document.getElementById("taProgramInput").value;
+            _StdIn.putText(program.toUpperCase());
+            _StdIn.advanceLine();
+            if (shellProgramValidation(program))
+            {
+                _StdOut.putText("Program is valid");
+            }
+            else
+            {
+                _StdOut.putText("Program is invalid")
+            }
         };
 
         this.commandList[this.commandList.length] = sc;
@@ -389,4 +428,18 @@ function shellPrompt(args)
     {
         _StdIn.putText("Usage: prompt <string>  Please supply a string.");
     }
+}
+
+function shellProgramValidation(args)
+{
+    return /[ABCDEF][ABCDEF]|[ABCDEF]\d|\d\d/g.test(args.toUpperCase());
+//
+//    var retVal = true;
+//    var results = args.toUpperCase().match(/[ABCDEF][ABCDEF]|[ABCDEF]\d|\d\d/g);
+//    if(results === null)
+//    {
+//        retVal = false;
+//    }
+//
+//    return retVal;
 }

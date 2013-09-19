@@ -36,6 +36,9 @@ function hostInit()
 	// Set focus on the start button.
    document.getElementById("btnStartOS").focus();
 
+    //Give some status info
+    document.getElementById("taStatusBar").value = new Date().toString();
+
    // Check for our testing and enrichment core.
    if (typeof Glados === "function") {
       _GLaDOS = new Glados();
@@ -74,6 +77,17 @@ function hostLog(msg, source)
     // Optionally update a log database or some streaming service.
 }
 
+function hostStat(status)  //sends a message to the host status bar
+{
+    var taStatus = document.getElementById("taStatusBar");
+    var msg = "This is one UGLY error!";
+    //check the message
+    if(status) {
+        msg = status;
+        taStatus.value = msg;
+    }
+}
+
 
 //
 // Control Events
@@ -86,6 +100,8 @@ function hostBtnStartOS_click(btn)
     // .. enable the Halt and Reset buttons ...
     document.getElementById("btnHaltOS").disabled = false;
     document.getElementById("btnReset").disabled = false;
+    //Status update
+    document.getElementById("taStatusBar").value = "KERNEL SPAAAAAAAAACCEEE GHOOOOOSSSSSSTTT!!!!";
     
     // .. set focus on the OS console display ... 
     document.getElementById("display").focus();
@@ -112,6 +128,7 @@ function hostBtnHaltOS_click(btn)
     krnShutdown();
     // Stop the JavaScript interval that's simulating our clock pulse.
     clearInterval(_hardwareClockID);
+    _Console.clearCursorBlinkInterval();
 
     // TODO: Is there anything else we need to do here?
 }
