@@ -42,8 +42,12 @@ function hostInit()
    // Check for our testing and enrichment core.
    if (typeof Glados === "function") {
       _GLaDOS = new Glados();
-       alert("ALERT! - Changes to console IO don't play nice with GlaDOS.  The script executes, but this disables keyboard input!");
+       alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
+           "The script executes, but this disables keyboard input! " +
+            "Luckily, you can purge the Neurotoxins after the script has run. " +
+            "Just click the 'Purge' button when you want to regain control");
       _GLaDOS.init();
+      _Testing = true;
    };
 
     // Personal testing
@@ -101,6 +105,7 @@ function hostBtnStartOS_click(btn)
     // .. enable the Halt and Reset buttons ...
     document.getElementById("btnHaltOS").disabled = false;
     document.getElementById("btnReset").disabled = false;
+    document.getElementById("btnPurge").disabled = false;
     //Status update
     document.getElementById("taStatusBar").value = "KERNEL SPAAAAAAAAACCEEE GHOOOOOSSSSSSTTT!!!!";
     
@@ -141,6 +146,14 @@ function hostBtnReset_click(btn)
     // That boolean parameter is the 'forceget' flag. When it is true it causes the page to always
     // be reloaded from the server. If it is false or not specified, the browser may reload the 
     // page from its cache, which is not what we want.
+}
+
+function hostBtnPurge_click(btn)
+{    //Disable _Testing so that we can have an interactive session
+    _Testing = false;
+    //refocus on the console
+    hostStat("Cleared the air.")
+    document.getElementById("display").focus();
 }
 
 

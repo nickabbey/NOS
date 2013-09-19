@@ -88,7 +88,7 @@ function CLIconsole() {
             var chr = _KernelInputQueue.dequeue();
             //Wrapper for Alan's test script, since I changed the way the console interprets scancodes
             //Unfortnately, you can't keep throwing input at it afterwards.
-            if(document.contains(document.getElementById("glaDOS")))
+            if(_Testing)
             {
                 if(chr != 13)  // Alan sends an interrupt for the enter key, leave it if that's on the top of the queue
                 {

@@ -62,6 +62,7 @@ var krnKeyboardDriver = null;
 
 // For testing...
 var _GLaDOS = null;
+var _Testing = false;
 
 // For testing...
 var _GLaDNOS = null;
