@@ -118,6 +118,7 @@ function hostBtnStartOS_click(btn)
 
     // ... then set the host clock pulse ...
     _hardwareClockID = setInterval(hostClockPulse, CPU_CLOCK_INTERVAL);
+    _CursorBlinkInterval = setInterval(cursorBlink, 1000);
 
     // .. and call the OS Kernel Bootstrap routine.
     krnBootstrap();

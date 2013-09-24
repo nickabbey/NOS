@@ -20,7 +20,7 @@ function CLIconsole() {
     this.fontPadding        = 4;                                //padding for newline
     this.textColor          = "rgb(25,255,0)";                  //color od text displayed in console //TODO make this configurable
     this.backgroundColor    = "rgb(0,0,0)";                     //color of console background //TODO make this configurable
-    this.cursorBlinkInterval= 0;                                //cursor blink interval set in init //TODO make this actually work
+//    this.cursorBlinkInterval= 0;                                //cursor blink interval set in init //TODO make this actually work
     this.history            = [];                               //Array of commands entered
     this.historyIndex       = -1;                               //For moving through the history array
 
@@ -35,14 +35,30 @@ function CLIconsole() {
         this.startCursorBlinkInterval();  //TODO get cursor blink working
     };
 
-    this.startCursorBlinkInterval = function()
-    {
-        this.cursorBlinkInterval = setInterval(this.cursorBlink, 1000);
-    };
+//    this.startCursorBlinkInterval = function()
+//    {
+//        this.cursorBlinkInterval = setInterval(cursorBlink, 1000);
+//    };
+//
+//    this.clearCursorBlinkInterval = function()
+//    {
+//        clearInterval(this.cursorBlinkInterval);
+//    };
 
-    this.clearCursorBlinkInterval = function()
+    this.cursorBlink = function()
     {
-        clearInterval(this.cursorBlinkInterval);
+        krnTrace("cursor");
+        if (_Cursor)
+        {
+            _DrawingContext.fillStyle = this.textColor;
+            _DrawingContext.fillRect(this.CurrentXPosition, this.CurrentYPosition, this.fontWidth, 5);
+        }
+        else
+        {
+            _DrawingContext.fillStyle = this.backgroundColor;
+            _DrawingContext.fillRect(this.CurrentXPosition, this.CurrentYPosition, this.fontWidth, 5);
+        }
+        _Cursor = !_Cursor;
     };
 
     this.clearScreen = function()
@@ -191,18 +207,5 @@ function CLIconsole() {
         }
     };
 
-    this.cursorBlink = function()
-    {
-        if (_Cursor)
-        {
-            _DrawingContext.fillStyle = this.textColor;
-            _DrawingContext.fillRect(this.CurrentXPosition, this.CurrentYPosition, this.fontWidth, 5);
-        }
-        else
-        {
-            _DrawingContext.fillStyle = this.backgroundColor;
-            _DrawingContext.fillRect(this.CurrentXPosition, this.CurrentYPosition, this.fontWidth, 5);
-        }
-        _Cursor = !_Cursor;
-    };
+
 }

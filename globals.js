@@ -53,6 +53,7 @@ var _StdOut = null;
 var _Console = null;
 var _OsShell = null;
 var _Cursor = false;
+var _CursorBlinkInterval= 0;  //cursor blink interval set in init //TODO make this actually work
 
 // At least this OS is not trying to kill you. (Yet.)
 var _SarcasticMode = false;
