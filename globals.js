@@ -76,6 +76,10 @@ var _MemorySegmentSize = 256;
 //The actual main memory of our host
 var _MainMemory = null;
 
+//the memory manager
+var _MMU = null;
+
 //The memory display in index.html
 var _MemoryTable = null;
+
 

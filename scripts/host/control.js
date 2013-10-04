@@ -36,7 +36,11 @@ function hostInit()
     //initialize the host memory
     _MainMemory = new Memory();
 
-    //Get a reference to the memory table
+    //create an mmu
+    _MMU = new Mmu();
+
+
+    //Get a reference to the memory table for output
     _MemoryTable = document.getElementById("taMemory");
 
     _MemoryTable.appendChild(memoryToTable(_MainMemory));

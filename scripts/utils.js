@@ -75,7 +75,6 @@ function memoryToTable(memoryArray)
     var tblBody = document.createElement("tbody");
     var row = document.createElement("tr");
     var cell = document.createElement("td");
-//    var cellText = document.createTextNode(this.bank[i][j].toString());
     var cellText = null;
     var addressBlock = -1; //divisor for figuring out row headings
 
@@ -83,7 +82,7 @@ function memoryToTable(memoryArray)
     {
         if (i % _MemorySegmentSize === 0)
         {
-            addressBlock++;  //divisor for figuring out row headings
+            addressBlock ++;  //For creating row headings
         }
         //add rows with headers to the table every 8 addresses
         if((i)%8 === 0)
@@ -93,12 +92,11 @@ function memoryToTable(memoryArray)
             cell = document.createElement("td");
 
             //build the row label
-            var strAddress = i.toString(16);
-            if (strAddress.length == 1)
+            var strAddress = (i%_MemorySegmentSize).toString(16);
+            if (strAddress.length === 1)
             {   //pad label as needed
                 strAddress = "0" + strAddress;
             }
-                //"$" + addressBlock;
             cellText = document.createTextNode("$" + addressBlock + strAddress);
             cell.appendChild(cellText);
             row.appendChild(cell);

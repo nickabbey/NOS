@@ -141,7 +141,8 @@ function Shell()
             _StdIn.advanceLine();
             if (shellProgramValidation(program))
             {
-                _StdOut.putText("Program is valid");
+                _StdOut.putText("Program is valid, loading...");
+
             }
             else
             {
@@ -430,16 +431,48 @@ function shellPrompt(args)
     }
 }
 
+//verify that a program contains valid characters contained in an opcode
 function shellProgramValidation(args)
 {
     return /[ABCDEF][ABCDEF]|[ABCDEF]\d|\d\d/g.test(args.toUpperCase());
-//
-//    var retVal = true;
-//    var results = args.toUpperCase().match(/[ABCDEF][ABCDEF]|[ABCDEF]\d|\d\d/g);
-//    if(results === null)
-//    {
-//        retVal = false;
-//    }
-//
-//    return retVal;
+
+}
+
+//do the actual work to move the user program in to memory
+function shellProgramLoader(args)
+{
+    // See if user has paired the process with a priority
+    var priority = -1;
+
+    if( args[0] )
+        priority = parseInt( args[0] );
+
+    var resultArray = loadProgram(priority); // from programLoader.js
+
+    var pid = resultArray[0];
+    var location = resultArray[1];
+
+    // If load is unsuccessful, no PID is returned
+    if( typeof pid == "undefined" || isNaN(pid)) // Overkill?
+    {
+        _StdIn.putText("There was an error, please consult the log --->");
+    }
+    else
+    {
+        // Display PID and location
+        if( priority === -1 ) // No priority supplied
+        {
+            if( location === "memory" )
+                _StdIn.putText("Process with PID " + pid + " added to memory");
+            else if( location === "disk" )
+                _StdIn.putText("Process with PID " + pid + " added to disk");
+        }
+        else
+        {
+            if( location === "memory" )
+                _StdIn.putText("Process with PID " + pid + " added to memory with priority " + priority);
+            else if( location === "disk" )
+                _StdIn.putText("Process with PID " + pid + " added to disk with priority " + priority);
+        }
+    }
 }
