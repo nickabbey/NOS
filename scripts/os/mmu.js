@@ -13,13 +13,24 @@ function Mmu()
         limit : _InstalledMemory -1
     };
 
-    this.write(hexVal, address)
+    this.load = function(args)
     {
-        _MainMemory[address] = hexval;
-    }
+        if (args == null)
+        {
+            _StdOut.putText("MMU load operation failed");
+            return;
+        }
+        else
+        {
+            var program = args[0];
 
-    this.read(address)
-    {
-        return _MainMemory[address];
-    }
+            for(i == 0; i < program.size -1; i++)
+            {
+                _MainMemory[base + i] = program[i];
+            }
+            memoryToTable();
+            _StdOut.putText("MMU load operation complete");
+        }
+
+    };
 }

@@ -142,7 +142,9 @@ function Shell()
             if (shellProgramValidation(program))
             {
                 _StdOut.putText("Program is valid, loading...");
-
+                var opCodes = program.split(" ");
+                _MMU.load(opCodes);
+                _StdOut.putText("Program loaded to main memory");
             }
             else
             {
@@ -441,38 +443,9 @@ function shellProgramValidation(args)
 //do the actual work to move the user program in to memory
 function shellProgramLoader(args)
 {
-    // See if user has paired the process with a priority
-    var priority = -1;
-
-    if( args[0] )
-        priority = parseInt( args[0] );
-
-    var resultArray = loadProgram(priority); // from programLoader.js
-
-    var pid = resultArray[0];
-    var location = resultArray[1];
-
-    // If load is unsuccessful, no PID is returned
-    if( typeof pid == "undefined" || isNaN(pid)) // Overkill?
+    var opCodes = args.split(" ");
+    for (i = 0; i < opCodes.size - 1; i++)
     {
-        _StdIn.putText("There was an error, please consult the log --->");
-    }
-    else
-    {
-        // Display PID and location
-        if( priority === -1 ) // No priority supplied
-        {
-            if( location === "memory" )
-                _StdIn.putText("Process with PID " + pid + " added to memory");
-            else if( location === "disk" )
-                _StdIn.putText("Process with PID " + pid + " added to disk");
-        }
-        else
-        {
-            if( location === "memory" )
-                _StdIn.putText("Process with PID " + pid + " added to memory with priority " + priority);
-            else if( location === "disk" )
-                _StdIn.putText("Process with PID " + pid + " added to disk with priority " + priority);
-        }
+        _MMU.load()
     }
 }

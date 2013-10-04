@@ -25,8 +25,11 @@
    <script type="text/javascript" src="scripts/os/deviceDriverKeyboard.js"></script>
    <script type="text/javascript" src="scripts/os/queue.js"></script>
    <script type="text/javascript" src="scripts/os/shell.js"></script>
-   <script type="text/javascript" src="scripts/os/kernel.js"></script>
    <script type="text/javascript" src="scripts/os/keymap.js"></script>
+   <script type="text/javascript" src="scripts/os/mmu.js"></script>
+   <script type="text/javascript" src="scripts/os/pcb.js"></script>
+   <script type="text/javascript" src="scripts/os/kernel.js"></script>
+
 
    <!-- Other Routines -->
    <script type="text/javascript" src="scripts/utils.js"></script>
@@ -87,67 +90,61 @@
             <div id="divConsole">
                 <canvas id="display"
                         width="500px"
-                        height="500px"
+                        height="480px"
                         tabindex="3">
                 </canvas>
             </div>
+            <div id="divStatusBar">
+                        <textarea name="taStatusBar"
+                                  id="taStatusBar"
+                                  rows="4"
+                                  cols="70"
+                                ></textarea>
+                        </label>
+            </div>
+
         </td>
         <td>
-            <table>
-                <tr>
-                    <td>
-                        <div id="divLog">
-                            <label>
-                                Log
-                                <br>
-                                <textarea name="taLog"
-                                          id  ="taLog"
-                                          rows="23"
-                                          cols="48"
-                                        ></textarea>
-                            </label>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div id="divUserProgramInput">
-                            <label>
-                                User Program Input
-                                <br>
-                                <textarea name="taProgramInput"
-                                          id  ="taProgramInput"
-                                          rows="8"
-                                          cols="48"
-                                        ></textarea>
-                            </label>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div id="divStatusBar">
-                            <label>
-                                Status Bar
-                                <br>
-                            </label>
-                            <textarea name="taStatusBar"
-                                      id="taStatusBar"
-                                      rows="1"
-                                      cols="48"
-                                    ></textarea>
-                            </label>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-
+            <div id="divLog">
+                <label>
+                    Log
+                    <br>
+                    <textarea name="taLog"
+                              id  ="taLog"
+                              rows="30"
+                              cols="48"
+                            ></textarea>
+                </label>
+            </div>
+            <div id="divUserProgramInput">
+                <label>
+                    User Program Input
+                    <br>
+                    <textarea name="taProgramInput"
+                              id  ="taProgramInput"
+                              rows="8"
+                              cols="48"
+                            ></textarea>
+                </label>
+            </div>
         </td>
         <td>
             <div id="divMemory">
                Memory <br>
                 <div id="divMemoryTable">
                     <table id="taMemory"></table>
+                </div>
+            </div>
+            <div id="divCPU">
+                CPU <br>
+                <div id="divCPUTable">
+                    <table id="taCPU"></table>
+                </div>
+            </div>
+            <div id="divPCB">
+                PCB <br>
+                <div id="divPCBTable">
+                    <table id="taPCB"></table>
                 </div>
             </div>
         </td>

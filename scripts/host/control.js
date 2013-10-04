@@ -43,8 +43,17 @@ function hostInit()
     //Get a reference to the memory table for output
     _MemoryTable = document.getElementById("taMemory");
 
-    _MemoryTable.appendChild(memoryToTable(_MainMemory));
+    _MemoryTable.appendChild(memoryToTable());
 
+    //Get a reference to the CPU table for output
+    _CpuTable = document.getElementById("taCPU");
+
+    _CpuTable.appendChild(cpuToTable());
+
+    //Get a reference to the PCB table for output
+    _PcbTable = document.getElementById("taPCB");
+
+    _PcbTable.appendChild(pcbToTable());
 
 
 	// Set focus on the start button.

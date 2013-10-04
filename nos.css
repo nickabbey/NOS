@@ -38,14 +38,20 @@ h3 {
 
 #divMemoryTable {
     border: 2px groove black;
-    height: 500px;
+    height: 280px;
     width: 355px;
     overflow: auto;
 }
 
-#taMemory
-{
-    height: 500px;
+#divCPUTable {
+    border: 2px groove black;
+    height: 100px;
+    width: 355px;
+}
+
+#divPCBTable {
+    border: 2px groove black;
+    height: 100px;
     width: 355px;
 }
 
@@ -53,8 +59,18 @@ h3 {
 {
     margin:4px;
     width:500px;
-    height:500px;
+    height:480px;
     float:left;
+}
+
+#divLog
+{
+    text-align: left;
+}
+
+#divUserProgramInput
+{
+    text-align: left;
 }
 
 .normal_button {

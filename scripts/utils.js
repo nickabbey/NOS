@@ -70,7 +70,7 @@ function qotd() //gets a quote of the day from the internet
 }
 
 //returns a table 768 rows by 8 colums
-function memoryToTable(memoryArray)
+function memoryToTable()
 {
     var tblBody = document.createElement("tbody");
     var row = document.createElement("tr");
@@ -103,7 +103,7 @@ function memoryToTable(memoryArray)
 
             //and add the contents of the first cell
             cell = document.createElement("td");
-            cellText = document.createTextNode(memoryArray[i].toString(16));
+            cellText = document.createTextNode(_MainMemory[i].toString(16));
             cell.appendChild(cellText);
             row.appendChild(cell);
 
@@ -113,11 +113,61 @@ function memoryToTable(memoryArray)
         {
             //add cells to a row
             cell = document.createElement("td");
-            cellText = document.createTextNode(memoryArray[i].toString(16));
+            cellText = document.createTextNode(_MainMemory[i].toString(16));
             cell.appendChild(cellText);
             row.appendChild(cell);
         }
     }
     tblBody.appendChild(row);
+    return tblBody;
+}
+
+function cpuToTable()
+{
+    var tblBody = document.createElement("tbody");
+    var row = document.createElement("tr");
+    var cell = document.createElement("td");
+    var cellText = null;
+
+    for (var register in _CPU)
+    {
+        console.log(register.toString());
+    }
+
+    //reset the row and cell
+    row =  document.createElement("tr");
+    cell = document.createElement("td");
+
+    cellText = document.createTextNode("_");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    tblBody.appendChild(row);
+
+    return tblBody;
+}
+
+function pcbToTable()
+{
+    var tblBody = document.createElement("tbody");
+    var row = document.createElement("tr");
+    var cell = document.createElement("td");
+    var cellText = null;
+
+//    for (var register in _PCB)
+//    {
+//        console.log(register.toString());
+//    }
+
+    //reset the row and cell
+    row =  document.createElement("tr");
+    cell = document.createElement("td");
+
+    cellText = document.createTextNode("_");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    tblBody.appendChild(row);
+
     return tblBody;
 }

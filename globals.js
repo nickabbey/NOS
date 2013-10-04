@@ -82,4 +82,20 @@ var _MMU = null;
 //The memory display in index.html
 var _MemoryTable = null;
 
+//The CPU table display in index.html
+var _CpuTable = null;
+
+//A program control block
+var _PCB = null;
+
+//The PCB display in index.html
+var _PcbTable = null
+
+
+//A referenc
+
+//The first program, for easy population of user program box and testing of program loading
+var _ProgramOne = "A9 03 8D 41 00 A9 01 8D 40 00 AC 40 00 A2 01 FF EE 40 00 AE 40 00 EC 41 00 D0 " +
+    "EF A9 44 8D 42 00 A9 4F 8D 43 00 A9 4E 8D 44 00 A9 45 8D 45 00 A9 00 8D 46 00 " +
+    "A2 02 A0 42 FF 00";
 
