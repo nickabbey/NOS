@@ -36,6 +36,27 @@ h3 {
 	cursor: default;
 }
 
+#divMemoryTable {
+    border: 2px groove black;
+    height: 500px;
+    width: 355px;
+    overflow: auto;
+}
+
+#taMemory
+{
+    height: 500px;
+    width: 355px;
+}
+
+#divConsole
+{
+    margin:4px;
+    width:500px;
+    height:500px;
+    float:left;
+}
+
 .normal_button {
 	width: 100px;
 }

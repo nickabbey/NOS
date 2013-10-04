@@ -69,29 +69,57 @@ function qotd() //gets a quote of the day from the internet
     return(output);
 }
 
-function isUpper(keyCode)           //ASCII code test for A..Z
+//returns a table 768 rows by 8 colums
+function memoryToTable(memoryArray)
 {
-    return (keyCode >= 65 && keyCode <= 90);
-}
+    var tblBody = document.createElement("tbody");
+    var row = document.createElement("tr");
+    var cell = document.createElement("td");
+//    var cellText = document.createTextNode(this.bank[i][j].toString());
+    var cellText = null;
+    var addressBlock = -1; //divisor for figuring out row headings
 
-function isLower(keyCode)           //ASCII code test for  || a..z
-{
-    return (keyCode >= 97 && keyCode <= 123);
-}
+    for (var i = 0; i < _InstalledMemory ; i++)
+    {
+        if (i % _MemorySegmentSize === 0)
+        {
+            addressBlock++;  //divisor for figuring out row headings
+        }
+        //add rows with headers to the table every 8 addresses
+        if((i)%8 === 0)
+        {  //0,256,512, 768
+            //reset the row and cell
+            row =  document.createElement("tr");
+            cell = document.createElement("td");
 
-function isAlpha(keyCode)           //ASCII code test for isUpper || isLower
-{
-    return isUpper(keyCode) && (isLower(keyCode));
-}
-function isNumeric(keyCode)         //ASCII code test for 0-9
-{
-    return (keyCode >= 48) && (keyCode <= 57);
-}
+            //build the row label
+            var strAddress = i.toString(16);
+            if (strAddress.length == 1)
+            {   //pad label as needed
+                strAddress = "0" + strAddress;
+            }
+                //"$" + addressBlock;
+            cellText = document.createTextNode("$" + addressBlock + strAddress);
+            cell.appendChild(cellText);
+            row.appendChild(cell);
 
-function isPunctuation(keyCode)     //ASCII code test for punctuations marks
-{                                   // pretty much all ascii codes > 32 && != (a-z || A-Z)
-    return  (   (keyCode >= 33 && keyCode <= 47)    ||
-                (keyCode >= 58 && keyCode <= 64)    ||
-                (keyCode >= 91 && keyCode <= 96)    ||
-                (keyCode >= 123 && keyCode <= 126)  );
+            //and add the contents of the first cell
+            cell = document.createElement("td");
+            cellText = document.createTextNode(memoryArray[i].toString(16));
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+
+            tblBody.appendChild(row);
+        }
+        else //otherwise, add the value of the memory at address i to the row
+        {
+            //add cells to a row
+            cell = document.createElement("td");
+            cellText = document.createTextNode(memoryArray[i].toString(16));
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+        }
+    }
+    tblBody.appendChild(row);
+    return tblBody;
 }

@@ -15,6 +15,7 @@
    <script type="text/javascript" src="scripts/host/control.js"></script>
    <script type="text/javascript" src="scripts/host/devices.js"></script>
    <script type="text/javascript" src="scripts/host/cpu.js"></script>
+    <script type="text/javascript" src="scripts/host/memory.js"></script>
 
    <!-- Virtual OS Routines: Make sure Kernel code is last, since it needs those above it. -->
    <script type="text/javascript" src="scripts/os/interrupt.js"></script>
@@ -30,7 +31,7 @@
    <!-- Other Routines -->
    <script type="text/javascript" src="scripts/utils.js"></script>
     <!--- Alan's testing  !-->
-    <script type="text/javascript" src="http://www.labouseur.com/courses/os/projects/glados.js" id="glaDOS"></script>
+    <!--<script type="text/javascript" src="http://www.labouseur.com/courses/os/projects/glados.js" id="glaDOS"></script>-->
     <!--- My testing testing  !--->
     <!--- <script type="text/javascript" src="scripts/gladnos.js"></script> !--->
 
@@ -40,96 +41,118 @@
 <!--- to autostart !--->
 <!--- <body onload="hostInit(); hostBtnStartOS_click(this);">  !---->
 
+<table>
+    <tr>
+        <td>
+            <div id="divButtonBar">
+                <input type="button"
+                     id = "btnStartOS"
+                     name="brnStartOS"
+                     class="normal_button"
+                     value="Start"
+                     tabindex="0"
+                     onclick="hostBtnStartOS_click(this);">
 
-<div id="divMain" style="width:100%;">
+                <input type="button"
+                     id = "btnHaltOS"
+                     name="brnHaltOS"
+                     class="normal_button"
+                     disabled="disabled"
+                     value="Halt"
+                     tabindex="1"
+                     onclick="hostBtnHaltOS_click(this);">
 
-   <div id="divButtonBar" style="margin:4px;">
-      <input type="button"
-             id = "btnStartOS"
-             name="brnStartOS"
-             class="normal_button"
-             value="Start"
-             tabindex="0"
-             onclick="hostBtnStartOS_click(this);">
+                <input type="button"
+                     id = "btnReset"
+                     name="brnReset"
+                     class="normal_button"
+                     disabled="disabled"
+                     value="Reset"
+                     tabindex="2"
+                     onclick="hostBtnReset_click(this);">
 
-      <input type="button"
-             id = "btnHaltOS"
-             name="brnHaltOS"
-             class="normal_button"
-             disabled="disabled"
-             value="Halt"
-             tabindex="1"
-             onclick="hostBtnHaltOS_click(this);">
+                <input type="button"
+                      id = "btnPurge"
+                      name="btnPurge"
+                      class="normal_button"
+                      disabled="disabled"
+                      value="Purge"
+                      tabindex="2"
+                      onclick="hostBtnPurge_click(this);">
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="divConsole">
+                <canvas id="display"
+                        width="500px"
+                        height="500px"
+                        tabindex="3">
+                </canvas>
+            </div>
+        </td>
+        <td>
+            <table>
+                <tr>
+                    <td>
+                        <div id="divLog">
+                            <label>
+                                Log
+                                <br>
+                                <textarea name="taLog"
+                                          id  ="taLog"
+                                          rows="23"
+                                          cols="48"
+                                        ></textarea>
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="divUserProgramInput">
+                            <label>
+                                User Program Input
+                                <br>
+                                <textarea name="taProgramInput"
+                                          id  ="taProgramInput"
+                                          rows="8"
+                                          cols="48"
+                                        ></textarea>
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="divStatusBar">
+                            <label>
+                                Status Bar
+                                <br>
+                            </label>
+                            <textarea name="taStatusBar"
+                                      id="taStatusBar"
+                                      rows="1"
+                                      cols="48"
+                                    ></textarea>
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+            </table>
 
-      <input type="button"
-             id = "btnReset"
-             name="brnReset"
-             class="normal_button"
-             disabled="disabled"
-             value="Reset"
-             tabindex="2"
-             onclick="hostBtnReset_click(this);">
-
-       <input type="button"
-              id = "btnPurge"
-              name="btnPurge"
-              class="normal_button"
-              disabled="disabled"
-              value="Purge"
-              tabindex="2"
-              onclick="hostBtnPurge_click(this);">
-   </div>
-
-   <div id="divConsole" style="margin:4px; width:500px; height:500px; float:left;">
-      <canvas id="display"
-              width="500px"
-              height="500px"
-              tabindex="3">
-      </canvas>
-   </div>
-
-   <div id="divLog" style="margin-left:520px;">
-      <label>
-         Log
-         <br>
-         <textarea name="taLog"
-                   id  ="taLog"
-                   rows="23"
-                   cols="48"
-         ></textarea>
-      </label>
-   </div>
-
-   <div id="divUserProgramInput" style="margin-left:520px;">
-      <label>
-         User Program Input
-         <br>
-         <textarea name="taProgramInput"
-                   id  ="taProgramInput"
-                   rows="8"
-                   cols="48"
-         ></textarea>
-      </label>
-   </div>
-
-    <div id="divStatusBar" style="margin-left:520px;">
-        <label>
-            Status Bar
-            <br>
-        </label>
-        <textarea name="taStatusBar"
-                  id="taStatusBar"
-                  rows="1"
-                  cols="48"
-                ></textarea>
-        </label>
-    </div>
-
-   <div id="divQuote" class="hidden">
-       <script type="text/javascript" src="http://www.brainyquote.com/link/quotebr.js"></script> //quote of the day
-   </div>
-
-</div>
+        </td>
+        <td>
+            <div id="divMemory">
+               Memory <br>
+                <div id="divMemoryTable">
+                    <table id="taMemory"></table>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
 
 <p class="footerText" style="clear:both;">
    <br>
@@ -138,6 +161,9 @@
    Reproduction is prohibited without the express written consent of
    Ted Codd, Stevie Ray Vaughan, and Ian Fleming.
 </p>
+<div id="divQuote" class="hidden">
+    <script type="text/javascript" src="http://www.brainyquote.com/link/quotebr.js"></script> //quote of the day
+</div>
 
 </body>
 </html>

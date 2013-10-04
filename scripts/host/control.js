@@ -33,6 +33,16 @@ function hostInit()
 	// Clear the log text box.
 	document.getElementById("taLog").value="";
 
+    //initialize the host memory
+    _MainMemory = new Memory();
+
+    //Get a reference to the memory table
+    _MemoryTable = document.getElementById("taMemory");
+
+    _MemoryTable.appendChild(memoryToTable(_MainMemory));
+
+
+
 	// Set focus on the start button.
    document.getElementById("btnStartOS").focus();
 

@@ -66,3 +66,16 @@ var _Testing = false;
 
 // For testing...
 var _GLaDNOS = null;
+
+//The total "memory" "installed" in this system
+var _InstalledMemory = 768;
+
+// how big each segment will be
+var _MemorySegmentSize = 256;
+
+//The actual main memory of our host
+var _MainMemory = null;
+
+//The memory display in index.html
+var _MemoryTable = null;
+
