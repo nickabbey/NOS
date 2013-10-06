@@ -43,14 +43,34 @@ h3 {
     overflow: auto;
 }
 
+#taMemory
+{
+    height: 280px;
+    width: 355px;
+}
+
 #divCPUTable {
     border: 2px groove black;
+    height: 100px;
+    width: 355px;
+    text-align: center;
+}
+
+#taCPU
+{
     height: 100px;
     width: 355px;
 }
 
 #divPCBTable {
     border: 2px groove black;
+    height: 100px;
+    width: 355px;
+    overflow: auto;
+}
+
+#taPCB
+{
     height: 100px;
     width: 355px;
 }

@@ -141,14 +141,14 @@ function Shell()
             _StdIn.advanceLine();
             if (shellProgramValidation(program))
             {
-                _StdOut.putText("Program is valid, loading...");
+                _StdOut.putLine("Program is valid, loading...");
                 var opCodes = program.split(" ");
                 _MMU.load(opCodes);
-                _StdOut.putText("Program loaded to main memory");
+                _StdOut.putLine("Program loaded to main memory");
             }
             else
             {
-                _StdOut.putText("Program is invalid")
+                _StdOut.putLine("Program is invalid")
             }
         };
 

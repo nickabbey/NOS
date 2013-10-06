@@ -129,19 +129,97 @@ function cpuToTable()
     var cell = document.createElement("td");
     var cellText = null;
 
-    for (var register in _CPU)
-    {
-        console.log(register.toString());
-    }
-
     //reset the row and cell
     row =  document.createElement("tr");
     cell = document.createElement("td");
 
-    cellText = document.createTextNode("_");
+    cellText = document.createTextNode("PC");
     cell.appendChild(cellText);
     row.appendChild(cell);
 
+    cell = document.createElement("td");
+    cellText = document.createTextNode("ACC");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("X");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("Y");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("Z");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    //append the header row
+    tblBody.appendChild(row);
+
+    //reset the table elements
+    row = document.createElement("tr");
+    cell = document.createElement("td");
+    cellText = null;
+
+    //build the next row
+    if (_CPU === null)
+    {
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+    }
+    else
+    {
+        cellText = document.createTextNode(_CPU.pc.toString());
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(_CPU.acc.toString());
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(_CPU.x.toString());
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(_CPU.y.toString());
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(_CPU.z.toString());
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+    }
+
+    //append the row containing the actual cpu data
     tblBody.appendChild(row);
 
     return tblBody;
@@ -153,11 +231,6 @@ function pcbToTable()
     var row = document.createElement("tr");
     var cell = document.createElement("td");
     var cellText = null;
-
-//    for (var register in _PCB)
-//    {
-//        console.log(register.toString());
-//    }
 
     //reset the row and cell
     row =  document.createElement("tr");

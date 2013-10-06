@@ -172,6 +172,12 @@ function CLIconsole() {
         }
     };
 
+    this.putLine = function(text)
+    {
+        this.putText(text);
+        this.advanceLine();
+    };
+
     this.advanceLine = function() {
         //if you're about to run off the page...
         if (this.CurrentYPosition + this.fontHeight + this.fontPadding > _Canvas.height)

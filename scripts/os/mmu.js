@@ -1,35 +1,39 @@
 /* ------------
  mmu.js
 
+ requires globals.js
+
  The memory management unit, allows access to main memory.  Provides logical address space
 
  ------------ */
 
 function Mmu()
 {
+    //Methods
     this.logicalMemorySpace =
     {
         base  : 0,
         limit : _InstalledMemory -1
     };
 
+    //load a program from the user program input seciton in to memory
     this.load = function(args)
     {
-        if (args == null)
+        if (args === null || args.size === 0)
         {
-            _StdOut.putText("MMU load operation failed");
+            _StdOut.putLine("MMU load operation failed");
             return;
         }
         else
         {
-            var program = args[0];
-
-            for(i == 0; i < program.size -1; i++)
+            for(var i = 0; i < (args.length); i++)
             {
-                _MainMemory[base + i] = program[i];
+                _MainMemory[i] = args[i];
             }
-            memoryToTable();
-            _StdOut.putText("MMU load operation complete");
+
+            _MemoryTable.innerHTML = "";
+            _MemoryTable.appendChild(memoryToTable());
+            _StdOut.putLine("MMU load operation complete");
         }
 
     };
