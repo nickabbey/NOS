@@ -69,34 +69,34 @@ function qotd() //gets a quote of the day from the internet
     return(output);
 }
 
-//returns a table 768 rows by 8 colums
+//returns a table 768 rows by 8 columns
 function memoryToTable()
 {
     var tblBody = document.createElement("tbody");
     var row = document.createElement("tr");
     var cell = document.createElement("td");
     var cellText = null;
-    var addressBlock = -1; //divisor for figuring out row headings
+    var addressBlock = -1; //keep track of which memory block you're in for figuring out row headings
 
+    //iterate over all installed memory
     for (var i = 0; i < _InstalledMemory ; i++)
     {
+        //true for 256/512/768, these rows need to stand out
         if (i % _MemorySegmentSize === 0)
         {
             addressBlock ++;  //For creating row headings
+            //TODO - change the background color or something here
         }
-        //add rows with headers to the table every 8 addresses
+        //true for multiples of 8, this is how we know were starting a new row
         if((i)%8 === 0)
-        {  //0,256,512, 768
+        {
             //reset the row and cell
             row =  document.createElement("tr");
             cell = document.createElement("td");
 
             //build the row label
             var strAddress = (i%_MemorySegmentSize).toString(16);
-            if (strAddress.length === 1)
-            {   //pad label as needed
-                strAddress = "0" + strAddress;
-            }
+            strAddress = formatMemoryAddress(strAddress);
             cellText = document.createTextNode("$" + addressBlock + strAddress);
             cell.appendChild(cellText);
             row.appendChild(cell);
@@ -109,7 +109,7 @@ function memoryToTable()
 
             tblBody.appendChild(row);
         }
-        else //otherwise, add the value of the memory at address i to the row
+        else //append the value of the memory at address i to the current row
         {
             //add cells to a row
             cell = document.createElement("td");
@@ -118,18 +118,22 @@ function memoryToTable()
             row.appendChild(cell);
         }
     }
+    //append the row to the table
     tblBody.appendChild(row);
     return tblBody;
 }
 
+//returns a table representing the contents of memory at the time it is called
+//TODO - does this need to be on clock tick, or is it ok in the mmu?
 function cpuToTable()
 {
+    //set up the initial table
     var tblBody = document.createElement("tbody");
     var row = document.createElement("tr");
     var cell = document.createElement("td");
     var cellText = null;
 
-    //reset the row and cell
+    //first row is headings
     row =  document.createElement("tr");
     cell = document.createElement("td");
 
@@ -165,9 +169,9 @@ function cpuToTable()
     cell = document.createElement("td");
     cellText = null;
 
-    //build the next row
+    //build the next
     if (_CPU === null)
-    {
+    {   //if theres no cpu (should only occur on startup, when initializing tables to blank values)
         cellText = document.createTextNode("00");
         cell.appendChild(cellText);
         row.appendChild(cell);
@@ -193,28 +197,28 @@ function cpuToTable()
         row.appendChild(cell);
     }
     else
-    {
-        cellText = document.createTextNode(_CPU.pc.toString());
+    {  //output the contents of the CPU to the second row
+        cellText = document.createTextNode(_CPU.PC);
         cell.appendChild(cellText);
         row.appendChild(cell);
 
         cell = document.createElement("td");
-        cellText = document.createTextNode(_CPU.acc.toString());
+        cellText = document.createTextNode(_CPU.Acc);
         cell.appendChild(cellText);
         row.appendChild(cell);
 
         cell = document.createElement("td");
-        cellText = document.createTextNode(_CPU.x.toString());
+        cellText = document.createTextNode(_CPU.Xreg);
         cell.appendChild(cellText);
         row.appendChild(cell);
 
         cell = document.createElement("td");
-        cellText = document.createTextNode(_CPU.y.toString());
+        cellText = document.createTextNode(_CPU.Yreg);
         cell.appendChild(cellText);
         row.appendChild(cell);
 
         cell = document.createElement("td");
-        cellText = document.createTextNode(_CPU.z.toString());
+        cellText = document.createTextNode(_CPU.Zflag);
         cell.appendChild(cellText);
         row.appendChild(cell);
     }
@@ -243,4 +247,32 @@ function pcbToTable()
     tblBody.appendChild(row);
 
     return tblBody;
+}
+
+//for use with the <integer>.toString(16) method, to ensure that memory addresses are always a pair, even "00"
+function formatMemoryAddress(str)
+{
+    var retVal = str;
+    if (retVal.length === 1)
+    {   //pad label as needed
+        retVal = "0" + str;
+    }
+
+    return retVal;
+}
+
+//Translate a hex memory address to an integer value
+//Parameter is a memory address in hexadecimal
+function translateAddress(args)
+{
+    var retVal = null;
+    if (args != null)
+    {
+        retVal = parseInt(args, 16);
+    }
+    else
+    {
+        _StatusBar.value = "Address translation failed for " + formatMemoryAddress(args.toString(16));
+    }
+    return retVal;
 }

@@ -124,7 +124,7 @@ function Shell()
         // BSOD test
         sc = new ShellCommand();
         sc.command = "bsod";
-        sc.description = "- NO DISSASSEMBLE JOHNNY 5!!!";
+        sc.description = "- NO DISASSEMBLE JOHNNY 5!!!";
         sc.function = function shellBSOD() {
             krnTrapError("BSOD TEST");
         };
@@ -137,19 +137,38 @@ function Shell()
         sc.description = "- Load a user program";
         sc.function = function shellLoadProgram() {
             var program = document.getElementById("taProgramInput").value;
-            _StdIn.putText(program.toUpperCase());
-            _StdIn.advanceLine();
+            program = program.toUpperCase();
+            _StdIn.putLine(program);
             if (shellProgramValidation(program))
             {
                 _StdOut.putLine("Program is valid, loading...");
                 var opCodes = program.split(" ");
                 _MMU.load(opCodes);
-                _StdOut.putLine("Program loaded to main memory");
+                _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, _MMU.getNextEntryPoint());
+                _StdOut.putLine("Program loaded with PID: " + _NextPID);
+                //update PID and the last memory address
+                _NextPID++;
+                //TODO - This will be done differently in later assignments
+                _CurrentThread = _ThreadList[_ThreadList.length-1];
             }
             else
             {
-                _StdOut.putLine("Program is invalid")
+                _StdOut.putLine("Program is invalid");
             }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // Run
+        //TODO - later revisions of run will require a PID parameter
+        sc = new ShellCommand();
+        sc.command = "run";
+        sc.description = "- Run a user program";
+        sc.function = function shellRunProgram() {
+            _StdIn.putLine("Executing user PID " + _CurrentThread.pid);
+            //reset CPU PC
+            _CPU.PC = 0;
+            _CPU.isExecuting = true;
         };
 
         this.commandList[this.commandList.length] = sc;
@@ -440,12 +459,12 @@ function shellProgramValidation(args)
 
 }
 
-//do the actual work to move the user program in to memory
-function shellProgramLoader(args)
-{
-    var opCodes = args.split(" ");
-    for (i = 0; i < opCodes.size - 1; i++)
-    {
-        _MMU.load()
-    }
-}
+////do the actual work to move the user program in to memory
+//function shellProgramLoader(args)
+//{
+//    var opCodes = args.split(" ");
+//    for (i = 0; i < opCodes.size - 1; i++)
+//    {
+//        _MMU.load()
+//    }
+//}

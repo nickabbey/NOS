@@ -85,14 +85,27 @@ var _MemoryTable = null;
 //The CPU table display in index.html
 var _CpuTable = null;
 
-//A program control block
-var _PCB = null;
-
 //The PCB display in index.html
 var _PcbTable = null
 
+//List of processes as an array
+var _NextPID = 0;
 
-//A referenc
+//A reference to whichever thread is currently being executed by the CPU
+var _CurrentThread = null;
+
+//array of PCB's
+var _ThreadList = [];
+
+// a reference to easily access the status bar
+var _StatusBar = null;
+
+//CPU stepping on/off toggle
+var _SteppingEnabled = false;
+
+//Set to true when the step button clicked, set back to false after a step operation completes
+var _Step = false;
+
 
 //The first program, for easy population of user program box and testing of program loading
 var _ProgramOne = "A9 03 8D 41 00 A9 01 8D 40 00 AC 40 00 A2 01 FF EE 40 00 AE 40 00 EC 41 00 D0 " +

@@ -1,10 +1,11 @@
 
 
-function Pcb (state, pid, pc, base, limit, slot, priority)
+function Pcb (state, pid, pc)
 {
     // Member variables
     this.pid		= pid;  	// Process id
-    this.state      = state;    //Process state
+    this.state      = state;    // Process state
+    this.pc         = pc;       // Program counter - entry point for the program in memory
 
     // Registers
     this.acc = 0;

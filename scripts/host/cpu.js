@@ -37,23 +37,44 @@ function Cpu()
         krnTrace("CPU cycle");
         // TODO: Accumulate CPU usage and profiling statistics here.
         // Do the real work here. Be sure to set this.isExecuting appropriately.
+
+        //process status update
+        this.execute(this.fetch());
+        //refresh the memory display
+        _MemoryTable.innerHTML = "";
+        _MemoryTable.appendChild(memoryToTable());
+
+        //refresh CPU display
+        _CpuTable.innerHTML = "";
+        _CpuTable.appendChild(cpuToTable());
+
+        if (_SteppingEnabled)
+        {
+            krnTrace("Stepping enabled, click 'Step' to resume execution");
+            this.isExecuting = false;
+        }
     };
 
     this.execute = function(opCode)
     {
+        _CurrentThread.state = "RUNNING";
+        ++this.PC;
         switch(opCode)
         {
+            //load accumulator with a constant
             case "A9":
                 accLoadConst = function()
                 {
-                    //TODO - Implement opcode A9
+                    this.Acc = _MainMemory[this.fetch()];
                 };
                 break;
 
             case "AD":
                 accLoadMem = function()
                 {
-                    //TODO - Implement opcode AD
+                    //advance PC so that next fetch gives address of memory to be loaded in to the Acc
+                    ++this.PC;
+                    this.Acc = _MainMemory[translateAddress(this.fetch())];
                 };
                 break;
 
@@ -109,7 +130,8 @@ function Cpu()
             case "00":
                 sysBreak = function()
                 {
-                    //TODO - Implement opcode 00
+                    this.isExecuting = false;
+                    _CurrentThread.state = "TERMINATED";
                 };
                 break;
 
@@ -145,5 +167,12 @@ function Cpu()
                 sysBreak();
                 break;
         }
+    };
+
+    this.fetch = function()
+    {
+        //next op is located at the program's starting address + CPU's PC
+        var entryPoint = _CurrentThread.pc + this.PC;
+        return formatMemoryAddress(_MainMemory[entryPoint].toString(16));
     };
 }

@@ -60,7 +60,8 @@ function hostInit()
    document.getElementById("btnStartOS").focus();
 
     //Give some status info
-    document.getElementById("taStatusBar").value = new Date().toString();
+    _StatusBar = document.getElementById("taStatusBar");
+    _StatusBar.value = new Date().toString();
 
    // Check for our testing and enrichment core.
    if (typeof Glados === "function") {
@@ -128,7 +129,9 @@ function hostBtnStartOS_click(btn)
     // .. enable the Halt and Reset buttons ...
     document.getElementById("btnHaltOS").disabled = false;
     document.getElementById("btnReset").disabled = false;
-    document.getElementById("btnPurge").disabled = false;
+    document.getElementById("btnPurge").disabled = true;
+    document.getElementById("btnStep").disabled = true;
+    document.getElementById("chkStep").disabled = false;
     //Status update
     document.getElementById("taStatusBar").value = "KERNEL SPAAAAAAAAACCEEE GHOOOOOSSSSSSTTT!!!!";
     
@@ -177,6 +180,32 @@ function hostBtnPurge_click(btn)
     //refocus on the console
     hostStat("Cleared the air.")
     document.getElementById("display").focus();
+}
+
+//turn CPU stepping on and off
+function hostChkStep()
+{
+    //when the checkmark is clicked, set _SteppingEnabled to value of checkbox and enable step button
+    if (document.getElementById("chkStep").checked == true)
+    {
+        _SteppingEnabled = true;
+        _Step = false;
+        document.getElementById("btnStep").disabled = false;
+        document.getElementById("btnStep").addEventListener("onclick", hostBtnStep_click());
+    }
+    //otherwise, set it false and disable the button
+    else
+    {
+        _SteppingEnabled = false;
+        _Step = false;
+        document.getElementById("btnStep").disabled = true;
+        document.getElementById("btnStep").removeEventListener("onclick");
+    }
+}
+
+function hostBtnStep_click()
+{
+    _CPU.isExecuting = true;
 }
 
 
