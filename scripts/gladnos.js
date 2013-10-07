@@ -15,17 +15,28 @@ function GladNos() {
         //var msg = "Hello [subject name here]. It's time for testing.\n";
         //msg += "Before we start, however, keep in mind that although fun and learning are our primary goals, serious injuries may occur.";
         // alert(msg);
+
+        _UserProgramText.value = _TestProg;
     };
 
     this.afterStartup = function() {
-        /*
-         // Execute the 'qotd' command.
-         _KernelInputQueue.enqueue('q');
+
+
+
+         // Execute the 'load' and 'run' commands.
+         _KernelInputQueue.enqueue('l');
          _KernelInputQueue.enqueue('o');
-         _KernelInputQueue.enqueue('t');
+         _KernelInputQueue.enqueue('a');
          _KernelInputQueue.enqueue('d');
          krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
+        // Execute the 'load' and 'run' commands.
+        _KernelInputQueue.enqueue('r');
+        _KernelInputQueue.enqueue('u');
+        _KernelInputQueue.enqueue('n');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
+        /*
          // Execute the 'ver' command.
          _KernelInputQueue.enqueue('q');
          _KernelInputQueue.enqueue('o');

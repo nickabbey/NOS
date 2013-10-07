@@ -144,12 +144,13 @@ function Shell()
                 _StdOut.putLine("Program is valid, loading...");
                 var opCodes = program.split(" ");
                 _MMU.load(opCodes);
-                _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, _MMU.getNextEntryPoint());
+                //TODO - This needs to change for project 3
+                _ThreadList[0] = new Pcb("LOADED", _NextPID, _MMU.getNextBlock());
                 _StdOut.putLine("Program loaded with PID: " + _NextPID);
                 //update PID and the last memory address
                 _NextPID++;
-                //TODO - This will be done differently in later assignments
-                _CurrentThread = _ThreadList[_ThreadList.length-1];
+                //TODO - This needs to change for project 3
+                _CurrentThread = _ThreadList[0];
             }
             else
             {
@@ -166,9 +167,13 @@ function Shell()
         sc.description = "- Run a user program";
         sc.function = function shellRunProgram() {
             _StdIn.putLine("Executing user PID " + _CurrentThread.pid);
-            //reset CPU PC
+
+            //set up the cpu to execute the program
             _CPU.PC = 0;
             _CPU.isExecuting = true;
+
+            //tell the program its running
+            _CurrentThread.state = "RUNNING";
         };
 
         this.commandList[this.commandList.length] = sc;
@@ -177,8 +182,7 @@ function Shell()
         // kill <id> - kills the specified process id.
 
         // Display the welcome message and initial prompt.
-        _StdIn.putText("Welcome to NOS - The turbocharged operating system!");
-        _StdIn.advanceLine();
+        _StdIn.putLine("Welcome to NOS - The turbocharged operating system!");
         this.putPrompt();
     };
 

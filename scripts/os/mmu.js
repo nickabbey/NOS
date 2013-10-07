@@ -70,8 +70,8 @@ function Mmu()
         return retVal;
     };
 
-    //For now, this is "00" but later this will need to be smarter
-    this.getNextEntryPoint = function()
+    //TODO - For now, mmu.getNextBlock() returns "00" but project 3 will need to be smarter
+    this.getNextBlock = function()
     {
         return 0;
     };

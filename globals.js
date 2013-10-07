@@ -101,14 +101,18 @@ var _ThreadList = [];
 var _StatusBar = null;
 
 //CPU stepping on/off toggle
-var _SteppingEnabled = false;
+var _StepStatus = false;
 
-//Set to true when the step button clicked, set back to false after a step operation completes
-var _Step = false;
+//for accessing the text input box
+var _UserProgramText = "";
+
+
 
 
 //The first program, for easy population of user program box and testing of program loading
 var _ProgramOne = "A9 03 8D 41 00 A9 01 8D 40 00 AC 40 00 A2 01 FF EE 40 00 AE 40 00 EC 41 00 D0 " +
     "EF A9 44 8D 42 00 A9 4F 8D 43 00 A9 4E 8D 44 00 A9 45 8D 45 00 A9 00 8D 46 00 " +
     "A2 02 A0 42 FF 00";
+
+var _TestProg = "A9 FF";
 

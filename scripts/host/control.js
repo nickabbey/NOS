@@ -55,6 +55,8 @@ function hostInit()
 
     _PcbTable.appendChild(pcbToTable());
 
+    _UserProgramText = document.getElementById("taProgramInput");
+
 
 	// Set focus on the start button.
    document.getElementById("btnStartOS").focus();
@@ -78,6 +80,7 @@ function hostInit()
     if (typeof GladNos === "function") {
         _GLaDNOS = new GladNos();
         _GLaDNOS.init();
+        _Testing = true;
     };
 
 
@@ -129,7 +132,14 @@ function hostBtnStartOS_click(btn)
     // .. enable the Halt and Reset buttons ...
     document.getElementById("btnHaltOS").disabled = false;
     document.getElementById("btnReset").disabled = false;
-    document.getElementById("btnPurge").disabled = true;
+    if(_Testing)
+    {
+        document.getElementById("btnPurge").disabled = false;
+    }
+    else
+    {
+        document.getElementById("btnPurge").disabled = true;
+    }
     document.getElementById("btnStep").disabled = true;
     document.getElementById("chkStep").disabled = false;
     //Status update
@@ -185,19 +195,17 @@ function hostBtnPurge_click(btn)
 //turn CPU stepping on and off
 function hostChkStep()
 {
-    //when the checkmark is clicked, set _SteppingEnabled to value of checkbox and enable step button
+    //when the checkmark is clicked, set _StepStatus to value of checkbox and enable step button
     if (document.getElementById("chkStep").checked == true)
     {
-        _SteppingEnabled = true;
-        _Step = false;
+        _StepStatus = true;
         document.getElementById("btnStep").disabled = false;
         document.getElementById("btnStep").addEventListener("onclick", hostBtnStep_click());
     }
     //otherwise, set it false and disable the button
     else
     {
-        _SteppingEnabled = false;
-        _Step = false;
+        _StepStatus = false;
         document.getElementById("btnStep").disabled = true;
         document.getElementById("btnStep").removeEventListener("onclick");
     }
@@ -205,6 +213,8 @@ function hostChkStep()
 
 function hostBtnStep_click()
 {
+    //When _StepStatus is true, _CPU.isExecuting is set false at the end of every cycle
+    //Clicking here will
     _CPU.isExecuting = true;
 }
 

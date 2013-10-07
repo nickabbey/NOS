@@ -81,6 +81,10 @@ function krnOnCPUClockPulse()
        This, on the other hand, is the clock pulse from the hardware (or host) that tells the kernel 
        that it has to look for interrupts and process them if it finds any.                           */
 
+    //refresh the memory display
+    _MemoryTable.innerHTML = "";
+    _MemoryTable.appendChild(memoryToTable());
+
     // Check for an interrupt, are any. Page 560
     if (_KernelInterruptQueue.getSize() > 0)    
     {
@@ -89,7 +93,8 @@ function krnOnCPUClockPulse()
         var interrupt = _KernelInterruptQueue.dequeue();
         krnInterruptHandler(interrupt.irq, interrupt.params);
     }
-    else if (_CPU.isExecuting) // If there are no interrupts then run one CPU cycle if there is anything being processed.
+    // There are no interrupts and stepping is disabled, so run a cycle
+    else if (_CPU.isExecuting && !_StepStatus)
     {
         _CPU.cycle();
     }    
