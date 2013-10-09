@@ -145,11 +145,11 @@ function Shell()
                 var opCodes = program.split(" ");
                 _MMU.load(opCodes);
                 //TODO - This needs to change for project 3
-                _ThreadList[0] = new Pcb("LOADED", _NextPID, _MMU.getNextBlock());
+                _ThreadList[0] = new Pcb("LOADED", _NextPID, _MMU.getNextPcbAddress());
                 _StdOut.putLine("Program loaded with PID: " + _NextPID);
                 //update PID and the last memory address
                 _NextPID++;
-                //TODO - This needs to change for project 3
+                //TODO - This needs to change for later projects
                 _CurrentThread = _ThreadList[0];
             }
             else
@@ -166,14 +166,27 @@ function Shell()
         sc.command = "run";
         sc.description = "- Run a user program";
         sc.function = function shellRunProgram() {
-            _StdIn.putLine("Executing user PID " + _CurrentThread.pid);
+            //action and output based on successfully loaded thread
+            if(_CurrentThread)
+            {
+                _StdIn.putLine("Executing user PID " + _CurrentThread.pid);
+                //reset CPU PC
+                _CPU.PC = 0;
 
-            //set up the cpu to execute the program
-            _CPU.PC = 0;
-            _CPU.isExecuting = true;
+                //set CPU execution based on whether or not stepping is enabled
+                (_StepStatus) ? _CPU.isExecuting = false : _CPU.isExecuting = true;
 
-            //tell the program its running
-            _CurrentThread.state = "RUNNING";
+                //set the thread state based on _CPU execution status
+                (_CPU.isExecuting) ? _CurrentThread.state = "RUNNING" : _CurrentThread.state = "SUSPENDED";
+            }
+            else
+            {
+                _StdIn.putLine("Unable to Run, nothing loaded");
+                krnTrace("Shell excuted bad run (no process loaded)");
+            }
+
+            //update the pcb display to reflect initial state
+            updateDisplayTables();
         };
 
         this.commandList[this.commandList.length] = sc;

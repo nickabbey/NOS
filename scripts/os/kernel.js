@@ -81,27 +81,42 @@ function krnOnCPUClockPulse()
        This, on the other hand, is the clock pulse from the hardware (or host) that tells the kernel 
        that it has to look for interrupts and process them if it finds any.                           */
 
-    //refresh the memory display
-    _MemoryTable.innerHTML = "";
-    _MemoryTable.appendChild(memoryToTable());
+    //Check if we're idle first
+    if (_KernelInterruptQueue.getSize() === 0 && (!_CurrentThread || _CurrentThread.state === "TERMINATED" || _CurrentThread.state ==="SUSPENDED"))
+    {
+        krnTrace("Idle");
+    }
+    //Otherwise, triage the work to be done on this pulse
+    else
+    {
 
-    // Check for an interrupt, are any. Page 560
-    if (_KernelInterruptQueue.getSize() > 0)    
+    }
+
+    // First, check for an interrupt, are any. Page 560
+    if (_KernelInterruptQueue.getSize() > 0)
     {
         // Process the first interrupt on the interrupt queue.
         // TODO: Implement a priority queue based on the IRQ number/id to enforce interrupt priority.
         var interrupt = _KernelInterruptQueue.dequeue();
         krnInterruptHandler(interrupt.irq, interrupt.params);
     }
-    // There are no interrupts and stepping is disabled, so run a cycle
-    else if (_CPU.isExecuting && !_StepStatus)
+    // Next, check for an active thread that needs cpu time
+    //TODO this will have to change when preemptive threading or cpu scheduling are added
+    else if (_CurrentThread)
     {
         _CPU.cycle();
-    }    
-    else                       // If there are no interrupts and there is nothing being executed then just be idle.
-    {
-       krnTrace("Idle");
+        //there might not always be a current thread after a cycle, but if so it needs to be updated
+       if(_CurrentThread)
+       {
+           _CurrentThread.update();
+       }
     }
+
+    //This is done in lots of places where it may be desirable to see an immediate update to host status
+    //Doing it here may be slightly redundant, but ensures that the displays are always accurate after a pulse
+    updateDisplayTables();
+
+
 }
 
 

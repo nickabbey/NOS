@@ -106,6 +106,9 @@ var _StepStatus = false;
 //for accessing the text input box
 var _UserProgramText = "";
 
+//the end state of the last completed thread
+var _LastPCB = null;
+
 
 
 
@@ -114,5 +117,5 @@ var _ProgramOne = "A9 03 8D 41 00 A9 01 8D 40 00 AC 40 00 A2 01 FF EE 40 00 AE 4
     "EF A9 44 8D 42 00 A9 4F 8D 43 00 A9 4E 8D 44 00 A9 45 8D 45 00 A9 00 8D 46 00 " +
     "A2 02 A0 42 FF 00";
 
-var _TestProg = "A9 FF";
+var _TestProg = "A9 FF 8D 30 00 A9 EE 8D 38 00 AD 30 00";
 

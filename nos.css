@@ -66,7 +66,7 @@ h3 {
     border: 2px groove black;
     height: 100px;
     width: 355px;
-    overflow: auto;
+    text-align: center;
 }
 
 #taPCB

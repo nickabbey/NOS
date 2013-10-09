@@ -57,6 +57,9 @@ function hostInit()
 
     _UserProgramText = document.getElementById("taProgramInput");
 
+    //For testing
+    _UserProgramText.value = _TestProg;
+
 
 	// Set focus on the start button.
    document.getElementById("btnStartOS").focus();
@@ -66,7 +69,8 @@ function hostInit()
     _StatusBar.value = new Date().toString();
 
    // Check for our testing and enrichment core.
-   if (typeof Glados === "function") {
+   if (typeof Glados === "function")
+   {
       _GLaDOS = new Glados();
        alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
            "The script executes, but this disables keyboard input! " +
@@ -74,17 +78,19 @@ function hostInit()
             "Just click the 'Purge' button when you want to regain control");
       _GLaDOS.init();
       _Testing = true;
-   };
+   }
 
     // Personal testing
-    if (typeof GladNos === "function") {
+    if (typeof GladNos === "function")
+    {
         _GLaDNOS = new GladNos();
         _GLaDNOS.init();
         _Testing = true;
-    };
+    }
 
-
-
+    //stepping options should not be selectable until start is clicked
+    document.getElementById("chkStep").disabled = true;
+    document.getElementById("btnStep").disabled = true;
 }
 
 function hostLog(msg, source)
@@ -132,6 +138,11 @@ function hostBtnStartOS_click(btn)
     // .. enable the Halt and Reset buttons ...
     document.getElementById("btnHaltOS").disabled = false;
     document.getElementById("btnReset").disabled = false;
+
+    //set initial stepping checkbox and button state
+    document.getElementById("chkStep").disabled = false;
+    document.getElementById("btnStep").disabled = true;
+
     if(_Testing)
     {
         document.getElementById("btnPurge").disabled = false;
@@ -140,8 +151,6 @@ function hostBtnStartOS_click(btn)
     {
         document.getElementById("btnPurge").disabled = true;
     }
-    document.getElementById("btnStep").disabled = true;
-    document.getElementById("chkStep").disabled = false;
     //Status update
     document.getElementById("taStatusBar").value = "KERNEL SPAAAAAAAAACCEEE GHOOOOOSSSSSSTTT!!!!";
     
@@ -200,7 +209,7 @@ function hostChkStep()
     {
         _StepStatus = true;
         document.getElementById("btnStep").disabled = false;
-        document.getElementById("btnStep").addEventListener("onclick", hostBtnStep_click());
+        document.getElementById("btnStep").addEventListener("onclick", hostBtnStepClick());
     }
     //otherwise, set it false and disable the button
     else
@@ -211,11 +220,26 @@ function hostChkStep()
     }
 }
 
-function hostBtnStep_click()
+//Takes appropriate action when a click is registered on the Step button
+//SHOULD only be possible to click when chkStep is checked
+function hostBtnStepClick()
 {
-    //When _StepStatus is true, _CPU.isExecuting is set false at the end of every cycle
-    //Clicking here will
-    _CPU.isExecuting = true;
+    //The cpu is initialized and there is a current thread
+    if(_CPU && _CurrentThread)
+    {
+        //set process and cpu state
+        _CurrentThread.state = "RUNNING";
+        _CPU.isExecuting = true;
+        krnTrace("Single step request processed");
+    }
+    //The cpu is initialized but there is no current thread
+    else if (_CPU && !_CurrentThread)
+    {
+        _CPU.isExecuting = false;
+        krnTrace("Single step request ignored (no current thread)");
+    }
+
+    updateDisplayTables();
 }
 
 

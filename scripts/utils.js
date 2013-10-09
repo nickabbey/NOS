@@ -69,7 +69,7 @@ function qotd() //gets a quote of the day from the internet
     return(output);
 }
 
-//returns a table 768 rows by 8 columns
+//returns a fully populated and formatted table the entire contents of the system's main memory
 function memoryToTable()
 {
     var tblBody = document.createElement("tbody");
@@ -123,8 +123,7 @@ function memoryToTable()
     return tblBody;
 }
 
-//returns a table representing the contents of memory at the time it is called
-//TODO - does this need to be on clock tick, or is it ok in the mmu?
+//returns a fully populated and formatted table containing current CPU values ("00" for uninitialized CPU)
 function cpuToTable()
 {
     //set up the initial table
@@ -158,6 +157,11 @@ function cpuToTable()
 
     cell = document.createElement("td");
     cellText = document.createTextNode("Z");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("Executing");
     cell.appendChild(cellText);
     row.appendChild(cell);
 
@@ -195,30 +199,40 @@ function cpuToTable()
         cellText = document.createTextNode("00");
         cell.appendChild(cellText);
         row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("N/A");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
     }
     else
     {  //output the contents of the CPU to the second row
-        cellText = document.createTextNode(_CPU.PC);
+        cellText = document.createTextNode(formatMemoryAddress(_CPU.PC));
         cell.appendChild(cellText);
         row.appendChild(cell);
 
         cell = document.createElement("td");
-        cellText = document.createTextNode(_CPU.Acc);
+        cellText = document.createTextNode(formatMemoryAddress(_CPU.Acc));
         cell.appendChild(cellText);
         row.appendChild(cell);
 
         cell = document.createElement("td");
-        cellText = document.createTextNode(_CPU.Xreg);
+        cellText = document.createTextNode(formatMemoryAddress(_CPU.Xreg));
         cell.appendChild(cellText);
         row.appendChild(cell);
 
         cell = document.createElement("td");
-        cellText = document.createTextNode(_CPU.Yreg);
+        cellText = document.createTextNode(formatMemoryAddress(_CPU.Yreg));
         cell.appendChild(cellText);
         row.appendChild(cell);
 
         cell = document.createElement("td");
-        cellText = document.createTextNode(_CPU.Zflag);
+        cellText = document.createTextNode(formatMemoryAddress(_CPU.Zflag));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode((_CPU.isExecuting).toString().toUpperCase());
         cell.appendChild(cellText);
         row.appendChild(cell);
     }
@@ -229,27 +243,163 @@ function cpuToTable()
     return tblBody;
 }
 
+//returns a fully populated and formatted table containing either the current or last completed PCB
 function pcbToTable()
 {
+
+    //set up the initial table
     var tblBody = document.createElement("tbody");
     var row = document.createElement("tr");
     var cell = document.createElement("td");
     var cellText = null;
 
-    //reset the row and cell
+    //first row is headings
     row =  document.createElement("tr");
     cell = document.createElement("td");
 
-    cellText = document.createTextNode("_");
+    cellText = document.createTextNode("PID");
     cell.appendChild(cellText);
     row.appendChild(cell);
 
+    cell = document.createElement("td");
+    cellText = document.createTextNode("ACC");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("X");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("Y");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("Z");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("State");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    //append the header row
+    tblBody.appendChild(row);
+
+    //reset the table elements
+    row = document.createElement("tr");
+    cell = document.createElement("td");
+    cellText = null;
+
+    //build the next row
+
+    //best case is that there is an active thread to populate the pcb table
+    if (_CurrentThread)
+    {  //output the contents of the CPU to the second row
+        cellText = document.createTextNode(formatMemoryAddress(_CurrentThread.pid));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_CurrentThread.acc));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_CurrentThread.x));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_CurrentThread.y));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_CurrentThread.z));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_CurrentThread.state));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+    }
+    //but if there's no active thread, they may be a thread that ran to execution, display that
+    else if (_LastPCB)
+    {  //output the contents of the CPU to the second row
+        cellText = document.createTextNode(formatMemoryAddress(_LastPCB.pid));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_LastPCB.acc));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_LastPCB.x));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_LastPCB.y));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_LastPCB.z));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode(formatMemoryAddress(_LastPCB.state));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+    }
+    //otherwise, there is nothing to display (IE: first run before a  thread is active or complete)
+    else
+    {
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("00");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        cell = document.createElement("td");
+        cellText = document.createTextNode("N/A");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+    }
+
+    //append the row containing the actual cpu data
     tblBody.appendChild(row);
 
     return tblBody;
 }
 
-//for use with the <integer>.toString(16) method, to ensure that memory addresses are always a pair, even "00"
+//for use with the <integer>.toString(16) method, to ensure that memory address strings are always size 2 , even "00"
 function formatMemoryAddress(str)
 {
     var retVal = str;
@@ -261,18 +411,18 @@ function formatMemoryAddress(str)
     return retVal;
 }
 
-//Translate a hex memory address to an integer value
-//Parameter is a memory address in hexadecimal
-function translateAddress(args)
+//Pretty self explanatory, updates all the tables on the host display
+function updateDisplayTables()
 {
-    var retVal = null;
-    if (args != null)
-    {
-        retVal = parseInt(args, 16);
-    }
-    else
-    {
-        _StatusBar.value = "Address translation failed for " + formatMemoryAddress(args.toString(16));
-    }
-    return retVal;
+    //refresh the memory display
+    _MemoryTable.innerHTML = "";
+    _MemoryTable.appendChild(memoryToTable());
+
+    //refresh CPU display
+    _CpuTable.innerHTML = "";
+    _CpuTable.appendChild(cpuToTable());
+
+    //refresh pcbTable
+    _PcbTable.innerHTML = "";
+    _PcbTable.appendChild(pcbToTable());
 }

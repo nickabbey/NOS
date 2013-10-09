@@ -21,14 +21,19 @@ function GladNos() {
 
     this.afterStartup = function() {
 
-
-
          // Execute the 'load' and 'run' commands.
          _KernelInputQueue.enqueue('l');
          _KernelInputQueue.enqueue('o');
          _KernelInputQueue.enqueue('a');
          _KernelInputQueue.enqueue('d');
          krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
+        //turn on single step and update the display appropriately
+        document.getElementById('chkStep').disabled = false;
+        document.getElementById('btnStep').disabled = false;
+        document.getElementById('chkStep').checked = true;
+        //enable single step operation before sending commands
+        hostChkStep();
 
         // Execute the 'load' and 'run' commands.
         _KernelInputQueue.enqueue('r');
