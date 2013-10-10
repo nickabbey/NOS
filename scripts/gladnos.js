@@ -15,17 +15,35 @@ function GladNos() {
         //var msg = "Hello [subject name here]. It's time for testing.\n";
         //msg += "Before we start, however, keep in mind that although fun and learning are our primary goals, serious injuries may occur.";
         // alert(msg);
+
     };
 
     this.afterStartup = function() {
-        /*
-         // Execute the 'qotd' command.
-         _KernelInputQueue.enqueue('q');
+
+        _UserProgramText.value = _ProgramOne;
+//        _UserProgramText.value = _TestingProg;
+
+         // Execute the 'load' and 'run' commands.
+         _KernelInputQueue.enqueue('l');
          _KernelInputQueue.enqueue('o');
-         _KernelInputQueue.enqueue('t');
+         _KernelInputQueue.enqueue('a');
          _KernelInputQueue.enqueue('d');
          krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
+//        //turn on single step and update the display appropriately
+//        document.getElementById('chkStep').disabled = false;
+//        document.getElementById('btnStep').disabled = false;
+//        document.getElementById('chkStep').checked = true;
+//        //enable single step operation before sending commands
+//        hostChkStep();
+
+        // Execute the 'load' and 'run' commands.
+        _KernelInputQueue.enqueue('r');
+        _KernelInputQueue.enqueue('u');
+        _KernelInputQueue.enqueue('n');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
+        /*
          // Execute the 'ver' command.
          _KernelInputQueue.enqueue('q');
          _KernelInputQueue.enqueue('o');

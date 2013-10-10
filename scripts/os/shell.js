@@ -124,7 +124,7 @@ function Shell()
         // BSOD test
         sc = new ShellCommand();
         sc.command = "bsod";
-        sc.description = "- NO DISSASSEMBLE JOHNNY 5!!!";
+        sc.description = "- NO DISASSEMBLE JOHNNY 5!!!";
         sc.function = function shellBSOD() {
             krnTrapError("BSOD TEST");
         };
@@ -136,27 +136,85 @@ function Shell()
         sc.command = "load";
         sc.description = "- Load a user program";
         sc.function = function shellLoadProgram() {
+            //get the user code
             var program = document.getElementById("taProgramInput").value;
-            _StdIn.putText(program.toUpperCase());
-            _StdIn.advanceLine();
+            //format it
+            program = trim(program.toUpperCase());
+            _StdIn.putLine(program);
             if (shellProgramValidation(program))
             {
-                _StdOut.putText("Program is valid");
+                _StdOut.putLine("Program is valid, loading...");
+                //tokenize
+                var opCodes = program.split(" ");
+                _MMU.load(opCodes);
+                //TODO - This needs to change for project 3
+                _ThreadList[0] = new Pcb("LOADED", _NextPID, _MMU.getNextPcbAddress());
+                _StdOut.putLine("Program loaded with PID: " + _NextPID);
+                //update PID and the last memory address
+                _NextPID++;
+                //TODO - This needs to change for later projects
+                _CurrentThread = _ThreadList[0];
             }
             else
             {
-                _StdOut.putText("Program is invalid")
+                _StdOut.putLine("Program is invalid");
             }
         };
 
         this.commandList[this.commandList.length] = sc;
 
+        // Run
+        //TODO - later revisions of run will require a PID parameter
+        sc = new ShellCommand();
+        sc.command = "run";
+        sc.description = "- Run a user program";
+        sc.function = function shellRunProgram() {
+            //action and output based on successfully loaded thread
+            if(_CurrentThread)
+            {
+                _StdIn.putText("Executing user PID " + _CurrentThread.pid);
+                _StdIn.advanceLine();
+                //reset CPU PC
+                _CPU.PC = 0;
+
+                //set CPU execution based on whether or not stepping is enabled
+                (_StepStatus) ? _CPU.isExecuting = false : _CPU.isExecuting = true;
+
+                //set the thread state based on _CPU execution status
+                (_CPU.isExecuting) ? _CurrentThread.state = "RUNNING" : _CurrentThread.state = "SUSPENDED";
+            }
+            else
+            {
+                _StdIn.putLine("Unable to Run, nothing loaded");
+                krnTrace(this + " executed bad run (no process loaded)");
+            }
+            //update the pcb display to reflect initial state
+            updateDisplayTables();
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // Step
+        //TODO - later revisions of run will require a PID parameter
+        sc = new ShellCommand();
+        sc.command = "step";
+        sc.description = "- enable single step operation for a process";
+        sc.function = function shellStep() {
+            //simulate the action of checking/unchecking the single step box
+            document.getElementById('chkStep').checked = !(document.getElementById('chkStep').checked);
+            //call the host routine that does the actual work
+            hostChkStep();
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+
+
         // processes - list the running processes and their IDs
         // kill <id> - kills the specified process id.
 
         // Display the welcome message and initial prompt.
-        _StdIn.putText("Welcome to NOS - The turbocharged operating system!");
-        _StdIn.advanceLine();
+        _StdIn.putLine("Welcome to NOS - The turbocharged operating system!");
         this.putPrompt();
     };
 
@@ -221,7 +279,7 @@ function Shell()
         //Always advance the line, don't make the user programs or shell commands worry about it
         _StdIn.advanceLine();
         // ... and finally write the prompt again.
-        this.putPrompt();
+            this.putPrompt()
     };
 }
 
@@ -430,16 +488,19 @@ function shellPrompt(args)
     }
 }
 
+//verify that a program contains valid characters contained in an opcode
 function shellProgramValidation(args)
 {
     return /[ABCDEF][ABCDEF]|[ABCDEF]\d|\d\d/g.test(args.toUpperCase());
-//
-//    var retVal = true;
-//    var results = args.toUpperCase().match(/[ABCDEF][ABCDEF]|[ABCDEF]\d|\d\d/g);
-//    if(results === null)
-//    {
-//        retVal = false;
-//    }
-//
-//    return retVal;
+
 }
+
+////do the actual work to move the user program in to memory
+//function shellProgramLoader(args)
+//{
+//    var opCodes = args.split(" ");
+//    for (i = 0; i < opCodes.size - 1; i++)
+//    {
+//        _MMU.load()
+//    }
+//}

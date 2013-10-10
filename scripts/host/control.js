@@ -33,14 +33,44 @@ function hostInit()
 	// Clear the log text box.
 	document.getElementById("taLog").value="";
 
+    //initialize the host memory
+    _MainMemory = new Memory();
+
+    //create an mmu
+    _MMU = new Mmu();
+
+
+    //Get a reference to the memory table for output
+    _MemoryTable = document.getElementById("taMemory");
+
+    _MemoryTable.appendChild(memoryToTable());
+
+    //Get a reference to the CPU table for output
+    _CpuTable = document.getElementById("taCPU");
+
+    _CpuTable.appendChild(cpuToTable());
+
+    //Get a reference to the PCB table for output
+    _PcbTable = document.getElementById("taPCB");
+
+    _PcbTable.appendChild(pcbToTable());
+
+    _UserProgramText = document.getElementById("taProgramInput");
+
+    //For testing programs
+    _UserProgramText.value = _ProgramOne;
+
+
 	// Set focus on the start button.
    document.getElementById("btnStartOS").focus();
 
     //Give some status info
-    document.getElementById("taStatusBar").value = new Date().toString();
+    _StatusBar = document.getElementById("taStatusBar");
+    _StatusBar.value = new Date().toString();
 
    // Check for our testing and enrichment core.
-   if (typeof Glados === "function") {
+   if (typeof Glados === "function")
+   {
       _GLaDOS = new Glados();
        alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
            "The script executes, but this disables keyboard input! " +
@@ -48,16 +78,19 @@ function hostInit()
             "Just click the 'Purge' button when you want to regain control");
       _GLaDOS.init();
       _Testing = true;
-   };
+   }
 
     // Personal testing
-    if (typeof GladNos === "function") {
+    if (typeof GladNos === "function")
+    {
         _GLaDNOS = new GladNos();
         _GLaDNOS.init();
-    };
+        _Testing = true;
+    }
 
-
-
+    //stepping options should not be selectable until start is clicked
+    document.getElementById("chkStep").disabled = true;
+    document.getElementById("btnStep").disabled = true;
 }
 
 function hostLog(msg, source)
@@ -105,7 +138,19 @@ function hostBtnStartOS_click(btn)
     // .. enable the Halt and Reset buttons ...
     document.getElementById("btnHaltOS").disabled = false;
     document.getElementById("btnReset").disabled = false;
-    document.getElementById("btnPurge").disabled = false;
+
+    //set initial stepping checkbox and button state
+    document.getElementById("chkStep").disabled = false;
+    document.getElementById("btnStep").disabled = true;
+
+    if(_Testing)
+    {
+        document.getElementById("btnPurge").disabled = false;
+    }
+    else
+    {
+        document.getElementById("btnPurge").disabled = true;
+    }
     //Status update
     document.getElementById("taStatusBar").value = "KERNEL SPAAAAAAAAACCEEE GHOOOOOSSSSSSTTT!!!!";
     
@@ -155,6 +200,47 @@ function hostBtnPurge_click(btn)
     //refocus on the console
     hostStat("Cleared the air.")
     document.getElementById("display").focus();
+}
+
+//turn CPU stepping on and off
+function hostChkStep()
+{
+    //when the checkmark is clicked, set _StepStatus to value of checkbox and enable step button
+    if (document.getElementById("chkStep").checked == true)
+    {
+        _StepStatus = true;
+        document.getElementById("btnStep").disabled = false;
+        document.getElementById("btnStep").addEventListener("onclick", hostBtnStepClick());
+    }
+    //otherwise, set it false and disable the button
+    else
+    {
+        _StepStatus = false;
+        document.getElementById("btnStep").disabled = true;
+        document.getElementById("btnStep").removeEventListener("onclick");
+    }
+}
+
+//Takes appropriate action when a click is registered on the Step button
+//SHOULD only be possible to click when chkStep is checked
+function hostBtnStepClick()
+{
+    //The cpu is initialized and there is a current thread
+    if(_CPU && _CurrentThread)
+    {
+        //set process and cpu state
+        _CurrentThread.state = "RUNNING";
+        _CPU.isExecuting = true;
+        krnTrace("Single step request processed");
+    }
+    //The cpu is initialized but there is no current thread
+    else if (_CPU && !_CurrentThread)
+    {
+        _CPU.isExecuting = false;
+        krnTrace("Single step request ignored (no current thread)");
+    }
+
+    updateDisplayTables();
 }
 
 

@@ -36,6 +36,63 @@ h3 {
 	cursor: default;
 }
 
+#divMemoryTable {
+    border: 2px groove black;
+    height: 280px;
+    width: 355px;
+    overflow: auto;
+}
+
+#taMemory
+{
+    height: 280px;
+    width: 355px;
+}
+
+#divCPUTable {
+    border: 2px groove black;
+    height: 100px;
+    width: 355px;
+    text-align: center;
+}
+
+#taCPU
+{
+    height: 100px;
+    width: 355px;
+}
+
+#divPCBTable {
+    border: 2px groove black;
+    height: 100px;
+    width: 355px;
+    text-align: center;
+}
+
+#taPCB
+{
+    height: 100px;
+    width: 355px;
+}
+
+#divConsole
+{
+    margin:4px;
+    width:500px;
+    height:480px;
+    float:left;
+}
+
+#divLog
+{
+    text-align: left;
+}
+
+#divUserProgramInput
+{
+    text-align: left;
+}
+
 .normal_button {
 	width: 100px;
 }
