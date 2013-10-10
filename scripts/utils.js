@@ -6,7 +6,7 @@
 
 function trim(str) {     // Use a regular expression to remove leading and trailing spaces.
 	return str.replace(/^\s+ | \s+$/g, "");
-	/* 
+	/*
 	Huh?  Take a breath.  Here we go:
 	- The "|" separates this into two expressions, as in A or B.
 	- "^\s+" matches a sequence of one or more whitespace characters at the beginning of a string.
@@ -14,7 +14,7 @@ function trim(str) {     // Use a regular expression to remove leading and trail
     - "g" makes is global, so we get all the whitespace.
     - "" is nothing, which is what we replace the whitespace with.
 	*/
-	
+
 }
 
 function rot13(str) {   // An easy-to understand implementation of the famous and common Rot13 obfuscator.

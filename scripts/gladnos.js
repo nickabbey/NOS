@@ -16,10 +16,12 @@ function GladNos() {
         //msg += "Before we start, however, keep in mind that although fun and learning are our primary goals, serious injuries may occur.";
         // alert(msg);
 
-        _UserProgramText.value = _TestProg;
     };
 
     this.afterStartup = function() {
+
+        _UserProgramText.value = _ProgramOne;
+//        _UserProgramText.value = _TestingProg;
 
          // Execute the 'load' and 'run' commands.
          _KernelInputQueue.enqueue('l');
@@ -28,12 +30,12 @@ function GladNos() {
          _KernelInputQueue.enqueue('d');
          krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
-        //turn on single step and update the display appropriately
-        document.getElementById('chkStep').disabled = false;
-        document.getElementById('btnStep').disabled = false;
-        document.getElementById('chkStep').checked = true;
-        //enable single step operation before sending commands
-        hostChkStep();
+//        //turn on single step and update the display appropriately
+//        document.getElementById('chkStep').disabled = false;
+//        document.getElementById('btnStep').disabled = false;
+//        document.getElementById('chkStep').checked = true;
+//        //enable single step operation before sending commands
+//        hostChkStep();
 
         // Execute the 'load' and 'run' commands.
         _KernelInputQueue.enqueue('r');

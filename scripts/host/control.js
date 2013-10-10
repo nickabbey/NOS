@@ -57,8 +57,8 @@ function hostInit()
 
     _UserProgramText = document.getElementById("taProgramInput");
 
-    //For testing
-    _UserProgramText.value = _TestProg;
+    //For testing programs
+    _UserProgramText.value = _ProgramOne;
 
 
 	// Set focus on the start button.

@@ -136,12 +136,15 @@ function Shell()
         sc.command = "load";
         sc.description = "- Load a user program";
         sc.function = function shellLoadProgram() {
+            //get the user code
             var program = document.getElementById("taProgramInput").value;
-            program = program.toUpperCase();
+            //format it
+            program = trim(program.toUpperCase());
             _StdIn.putLine(program);
             if (shellProgramValidation(program))
             {
                 _StdOut.putLine("Program is valid, loading...");
+                //tokenize
                 var opCodes = program.split(" ");
                 _MMU.load(opCodes);
                 //TODO - This needs to change for project 3
@@ -169,7 +172,8 @@ function Shell()
             //action and output based on successfully loaded thread
             if(_CurrentThread)
             {
-                _StdIn.putLine("Executing user PID " + _CurrentThread.pid);
+                _StdIn.putText("Executing user PID " + _CurrentThread.pid);
+                _StdIn.advanceLine();
                 //reset CPU PC
                 _CPU.PC = 0;
 
@@ -182,14 +186,29 @@ function Shell()
             else
             {
                 _StdIn.putLine("Unable to Run, nothing loaded");
-                krnTrace("Shell excuted bad run (no process loaded)");
+                krnTrace(this + " executed bad run (no process loaded)");
             }
-
             //update the pcb display to reflect initial state
             updateDisplayTables();
         };
 
         this.commandList[this.commandList.length] = sc;
+
+        // Step
+        //TODO - later revisions of run will require a PID parameter
+        sc = new ShellCommand();
+        sc.command = "step";
+        sc.description = "- enable single step operation for a process";
+        sc.function = function shellStep() {
+            //simulate the action of checking/unchecking the single step box
+            document.getElementById('chkStep').checked = !(document.getElementById('chkStep').checked);
+            //call the host routine that does the actual work
+            hostChkStep();
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+
 
         // processes - list the running processes and their IDs
         // kill <id> - kills the specified process id.
@@ -260,7 +279,7 @@ function Shell()
         //Always advance the line, don't make the user programs or shell commands worry about it
         _StdIn.advanceLine();
         // ... and finally write the prompt again.
-        this.putPrompt();
+            this.putPrompt()
     };
 }
 

@@ -72,75 +72,186 @@ function Cpu()
     {
         //reused by any opcodes that need access to _MainMemory, to be set by translateAddress()
         var addy = null;
-        //TODO - some kind of error checking on addy, something like an if(addy)? this.fetch(): krnTrapError("Error");
-        //or something more graceful than a krnTrapError, which will result in a bsod - maybe treat it like a sysbreak
 
-        switch(opCode.toUpperCase()) // should already be uppercase, but just to be safe
-        {
-            //load accumulator with a constant
-            case "A9":
-                this.Acc = this.fetch();  //advances the PC by 1
-                break;
+        //TODO - some kind of error checking on addy within the opcode cases.
+        //something like an if(addy)? this.fetch(): krnTrapError("Error");
+        //or something more graceful than a krnTrapError, which will result in a bsod - maybe treat it like a sysbreak?
 
-            //load accumulator with a value from memory
-            case "AD":
-                addy = translateAddress();  //advances the PC by 2
-                this.Acc = _MainMemory[addy];
-                break;
+        //Make sure we have a good opcode, otherwise let the user know
+        if(!opCode)
+        {   //TODO - recover from this more gracefully
+            krnTrace(this + "Something went wrong while the CPU was executing an opCode!");
+        }
+        //Otherwise, it's a gravy train with biscuit wheels, baby!
+        else
+        { //process the opcode
+            switch(opCode.toUpperCase()) // should already be uppercase, but just to be safe
+            {
+                //load accumulator with a constant
+                case "A9":
+                    this.Acc = this.fetch();  //advances the PC by 1
+                    break;
 
-            //store the accumulator in memory
-            case "8D":
-                addy = translateAddress();  //advances the PC by 2
-                _MainMemory[addy] = this.Acc;
-                break;
+                //load accumulator with a value from memory
+                case "AD":
+                    addy = translateAddress();  //advances the PC by 2
+                    this.Acc = _MainMemory[addy];
+                    break;
 
-            case "6D":
-                    //TODO - Implement opcode 6D
-                break;
+                //store the accumulator in memory
+                case "8D":
+                    addy = translateAddress();  //advances the PC by 2
+                    _MainMemory[addy] = this.Acc;
+                    break;
 
-            case "A2":
-                    //TODO - Implement opcode A2
-                break;
+                //Add with carry (store result of acc + value at memory address in acc)
+                case "6D":
+                    addy = translateAddress();
+                    //          (acc hex to int         + hex at memory address to int) as hex
+                    this.Acc = (parseInt(this.Acc, 16) + parseInt(_MainMemory[addy], 16)).toString(16);
+                    break;
 
-            case "AE":
-                    //TODO - Implement opcode AE
-                break;
+                //load x register with constant
+                case "A2":
+                    this.Xreg = this.fetch();  //advances the PC by 1
+                    break;
 
-            case "A0":
-                    //TODO - Implement opcode A0
-                break;
+                //load x register from memory
+                case "AE":
+                    addy = translateAddress();  //advances the PC by 2
+                    this.Xreg = _MainMemory[addy];
+                    break;
 
-            case "AC":
-                    //TODO - Implement opcode AC
-                break;
+                //load y register with constant
+                case "A0":
+                    this.Yreg = this.fetch();  //advances the PC by 1
+                    break;
 
-            case "EA":
-                    //TODO - Implement opcode EA
+                //load y register from memory
+                case "AC":
+                    addy = translateAddress();  //advances the PC by 2
+                    this.Yreg = _MainMemory[addy];
+                    break;
 
-            // A "sysBreak" or "NoOp" when interpreted as an opcode, which it SHOULD be when executing a Cpu.fetch()
-            case "00":
-                this.sysBreak();
-                break;
+                case "EA":
+                    //no actual operation, advance the PC to move past this operation
+                    ++this.PC;
 
-            case "EC":
-                    //TODO - Implement opcode EC
-                break;
+                // Break
+                case "00":
+                    this.sysBreak();
+                    break;
 
-            case "D0":
-                    //TODO - Implement opcode D0
-                break;
+                //compare x (zflag true if value at memory address = value in x reg, false otherwise)
+                case "EC":
+                    addy = translateAddress();  // advances the pc by 2
+                    // if integer value of memory at addy === integer value of the x register, z = 1.  Else, z = 0
+                    //why doesn't this work? syntax?
+                    //this.Zflag = (parseInt(_MainMemory[addy], 16) === parseInt(this.Xreg)) ? 1 : 0;
+                    if(parseInt(_MainMemory[addy], 16) === parseInt(this.Xreg))
+                    {
+                        this.Zflag = 1;
+                    }
+                    else
+                    {
+                        this.Zflag = 0;
+                    }
+                    break;
 
-            case "EE":
-                    //TODO - Implement opcode EE
-                break;
+                //branch ahead (if z flag = 0, increment PC by byte value specified in next slot
+                case "D0":
+                    //the z flag check
+                    if( this.Zflag === 0 )
+                    {   // you need to branch, so figure out how far to increment pc
+                        var branchIncrement = parseInt(this.fetch(), 16);
 
-            case "FF":
-                    //TODO - Implement opcode FF
-                break;
+                        //make sure you haven't been asked to branch past the end of memory
+                        if( this.PC + branchIncrement > _InstalledMemory - 1)
+                        //You did exceed max memory address, inform the user and wrap around
+                        {
+                            krnTrace("CPU Branch error (destination address out of bounds)");
+                            //alert("You've branched beyond the end of memory.  I've wrapped the PC, but this could be bad.  'Try to imagine all life as you know it stopping instantaneously and every molecule in your body exploding at the speed of light.', bad.");
+                            this.PC =  (this.PC + branchIncrement) % _InstalledMemory;
+                            //TODO - should this do something more reliable?  halt the operation, reset the displays and inform the user, perhaps?
+                        }
+                        //your branch value is acceptable, so just branch as requested
+                        else
+                        {
+                            this.PC += branchIncrement;
+                        }
+                    }
+                    //the z flag check failed, so there's no branch
+                    else
+                    {
+                        //and all we need to do is throw away the op and increment the PC by 1 to move past it
+                        this.fetch();
+                    }
+                    break;
 
-            default:
-                this.sysBreak();
-                break;
+                //increment value at a memory address by 1 (wrap ff to 00)
+                case "EE":
+                    addy = translateAddress();
+                    //TODO - is wrapping form 255 to 00 on an increment really the best idea?
+                    //why didn't it like this syntax?
+//                    _MainMemory[addy] = (_MainMemory[addy] === "FF")?
+//                        _MainMemory[addy] = "00" :
+//                        _MainMemory[addy] = formatMemoryAddress(((parseInt(_MainMemory[addy], 16)) + 1).toString(16)) ;
+                    if(_MainMemory[addy] === "FF")
+                    {
+                        _MainMemory[addy] = "00";
+                    }
+                    else
+                    //convert hex val at _MainMemory[addy] to int.  Add 1 to it and convert back to hex
+                    {
+                        var base = parseInt(_MainMemory[addy], 16);
+                        _MainMemory[addy] = formatMemoryAddress((base + 1).toString(16));
+                    }
+                    break;
+
+                //system call - print contents of y register, format based on x register (x=1 print integer, x=2 print string terminated by "00")
+                case "FF":
+                    // check the easy case first, where we are printing an integer value:
+                    if( parseInt(this.Xreg, 16) === 1)
+                    {
+                        //parse the y register as a hex number, print its decimal value
+                        _StdIn.putText(parseInt(this.Yreg, 16).toString(10));
+                    }
+                    //	check the harder case second, where we must construct and display a "00" terminated character string
+                    else if( parseInt(this.Xreg) === 2)
+                    {
+                        //store the current PC
+                        var returnAddy = this.PC;
+
+                        //set the PC to the start address given by the Y register, so we can fetch the string
+                        this.PC = translateAddress(this.Yreg);
+
+                        // for loop control
+                        var nextCode = this.fetch();
+                        //initialize nextChar as blank string
+                        var nextChar = "";
+                        //initialize output as empty string
+                        var output = nextChar;
+                        //loop until an "00" is fetched
+                        while(nextCode != "00")
+                        {
+                            //will append all but the "00" character to the string, while advancing the PC appropriately
+                            nextChar = String.fromCharCode(parseInt(nextCode, 16));
+                            output += nextChar;
+                            nextCode = this.fetch();
+                        }
+
+                        _StdIn.putText(output);
+
+                        //return PC to position of memory call (don't need to increment PC, next cycle fetch does it)
+                        this.PC = returnAddy;
+
+                    }
+                    break;
+
+                default:
+                    this.sysBreak();
+                    break;
+            }
         }
     };
 
@@ -174,6 +285,11 @@ function Cpu()
         // kernel only executes a cycle when there is a thread, setting it null is analogous to having an empty ready queue
         _CurrentThread = null;
 
+        //reset the status bar, if needed
+        _StatusBar.value = "Nothing to see here.  Move along.  Load and run a program, or something.";
+
         this.reset();
+        _StdIn.advanceLine();
+        _OsShell.putPrompt();
     };
 }
