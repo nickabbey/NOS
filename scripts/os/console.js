@@ -32,7 +32,7 @@ function CLIconsole() {
         this.fontWidth = _DrawingContext.measureText("A").width;  //Simple test, all are the same for monospace
         this.clearScreen();
         this.resetXY();
-        this.startCursorBlinkInterval();  //TODO get cursor blink working
+//        this.startCursorBlinkInterval();  //TODO get cursor blink working
     };
 
 //    this.startCursorBlinkInterval = function()
