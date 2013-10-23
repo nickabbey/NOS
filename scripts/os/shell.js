@@ -144,11 +144,25 @@ function Shell()
             if (shellProgramValidation(program))
             {
                 _StdOut.putLine("Program is valid, loading...");
-                //tokenize
+                var partition = _MMU.getFreePartition();
+                if(partition === -1)
+                {   //no free memory slots
+                    krnTrace(this + "failed to load user program");
+                    _StatusBar.value = "Memory is full, kill a process and try again";
+                }
+                else
+                {   //We got memory, so we can load the thread
+                    _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, _MainMemory[_MMU.logical.tlb[partition][0]]);
+                    _MMU.logical.freeParts[partition] = false;
+                }
+
+                //tokenize program input
                 var opCodes = program.split(" ");
+
+                //TODO - modify for logical memory
                 _MMU.load(opCodes);
-                //TODO - This needs to change for project 3
-                _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, _MMU.getNextPcbAddress());
+
+
                 _StdOut.putLine("Program loaded with PID: " + _NextPID);
                 //update PID and the last tlb address
                 _NextPID++;

@@ -15,10 +15,10 @@ function Mmu()
     //TODO - control ensures that this won't be null but prob a good idea to check in case that fails or changes
     this.physical = _MainMemory;
 
-    //the logical tlb of the system
+    //the logical memory of the system
     this.logical =
         {
-            tlb         :   [], //2d array, the indexing is analogous to a TLB (see this.partition(p) for more)
+            tlb         :   [], //2d array, translates logical to physical addresses
             numParts    :   0,  //set by init
             freeParts   :   []  // set by init - freeParts[n] returns boolean true only if partition n is free
         };
@@ -75,6 +75,7 @@ function Mmu()
     //load a program from the user program input section in to tlb
     //argument should be an array of strings length 2 representing opcodes
     //load command should ensure that this requirement is met
+    //TODO - Modify this to use the tlb
     this.load = function(args)
     {
         //make sure there are opcodes to load
@@ -109,10 +110,11 @@ function Mmu()
         }
     };
 
-    //TODO - For now, mmu.getNextPcbAddress() returns "00".  Will eventually return the start address for a pcb
-    this.getNextPcbAddress = function()
+    //returns the partition id of the first available partition
+    this.getFreePartition = function()
     {
-        return 0;
+        //get first free partition
+        return this.logical.freeParts.indexOf(true);
     };
 }
 
