@@ -33,14 +33,14 @@ function hostInit()
 	// Clear the log text box.
 	document.getElementById("taLog").value="";
 
-    //initialize the host memory
+    //initialize the host tlb
     _MainMemory = new Memory();
 
     //create an mmu
     _MMU = new Mmu();
 
 
-    //Get a reference to the memory table for output
+    //Get a reference to the tlb table for output
     _MemoryTable = document.getElementById("taMemory");
 
     _MemoryTable.appendChild(memoryToTable());
@@ -160,6 +160,9 @@ function hostBtnStartOS_click(btn)
     // ... Create and initialize the CPU ...
     _CPU = new Cpu();
     _CPU.init();
+
+    //initialize the MMU
+    _MMU.init();
 
     // ... then set the host clock pulse ...
     _hardwareClockID = setInterval(hostClockPulse, CPU_CLOCK_INTERVAL);

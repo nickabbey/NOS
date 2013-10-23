@@ -92,22 +92,22 @@ function Cpu()
                     this.Acc = this.fetch();  //advances the PC by 1
                     break;
 
-                //load accumulator with a value from memory
+                //load accumulator with a value from tlb
                 case "AD":
                     addy = translateAddress();  //advances the PC by 2
                     this.Acc = _MainMemory[addy];
                     break;
 
-                //store the accumulator in memory
+                //store the accumulator in tlb
                 case "8D":
                     addy = translateAddress();  //advances the PC by 2
                     _MainMemory[addy] = this.Acc;
                     break;
 
-                //Add with carry (store result of acc + value at memory address in acc)
+                //Add with carry (store result of acc + value at tlb address in acc)
                 case "6D":
                     addy = translateAddress();
-                    //          (acc hex to int         + hex at memory address to int) as hex
+                    //          (acc hex to int         + hex at tlb address to int) as hex
                     this.Acc = (parseInt(this.Acc, 16) + parseInt(_MainMemory[addy], 16)).toString(16);
                     break;
 
@@ -116,7 +116,7 @@ function Cpu()
                     this.Xreg = this.fetch();  //advances the PC by 1
                     break;
 
-                //load x register from memory
+                //load x register from tlb
                 case "AE":
                     addy = translateAddress();  //advances the PC by 2
                     this.Xreg = _MainMemory[addy];
@@ -127,7 +127,7 @@ function Cpu()
                     this.Yreg = this.fetch();  //advances the PC by 1
                     break;
 
-                //load y register from memory
+                //load y register from tlb
                 case "AC":
                     addy = translateAddress();  //advances the PC by 2
                     this.Yreg = _MainMemory[addy];
@@ -142,10 +142,10 @@ function Cpu()
                     this.sysBreak();
                     break;
 
-                //compare x (zflag true if value at memory address = value in x reg, false otherwise)
+                //compare x (zflag true if value at tlb address = value in x reg, false otherwise)
                 case "EC":
                     addy = translateAddress();  // advances the pc by 2
-                    // if integer value of memory at addy === integer value of the x register, z = 1.  Else, z = 0
+                    // if integer value of tlb at addy === integer value of the x register, z = 1.  Else, z = 0
                     //why doesn't this work? syntax?
                     //this.Zflag = (parseInt(_MainMemory[addy], 16) === parseInt(this.Xreg)) ? 1 : 0;
                     if(parseInt(_MainMemory[addy], 16) === parseInt(this.Xreg))
@@ -165,12 +165,12 @@ function Cpu()
                     {   // you need to branch, so figure out how far to increment pc
                         var branchIncrement = parseInt(this.fetch(), 16);
 
-                        //make sure you haven't been asked to branch past the end of memory
+                        //make sure you haven't been asked to branch past the end of tlb
                         if( this.PC + branchIncrement > _InstalledMemory - 1)
-                        //You did exceed max memory address, inform the user and wrap around
+                        //You did exceed max tlb address, inform the user and wrap around
                         {
                             krnTrace("CPU Branch error (destination address out of bounds)");
-                            //alert("You've branched beyond the end of memory.  I've wrapped the PC, but this could be bad.  'Try to imagine all life as you know it stopping instantaneously and every molecule in your body exploding at the speed of light.', bad.");
+                            //alert("You've branched beyond the end of tlb.  I've wrapped the PC, but this could be bad.  'Try to imagine all life as you know it stopping instantaneously and every molecule in your body exploding at the speed of light.', bad.");
                             this.PC =  (this.PC + branchIncrement) % _InstalledMemory;
                             //TODO - should this do something more reliable?  halt the operation, reset the displays and inform the user, perhaps?
                         }
@@ -188,7 +188,7 @@ function Cpu()
                     }
                     break;
 
-                //increment value at a memory address by 1 (wrap ff to 00)
+                //increment value at a tlb address by 1 (wrap ff to 00)
                 case "EE":
                     addy = translateAddress();
                     //TODO - is wrapping form 255 to 00 on an increment really the best idea?
@@ -242,7 +242,7 @@ function Cpu()
 
                         _StdIn.putText(output);
 
-                        //return PC to position of memory call (don't need to increment PC, next cycle fetch does it)
+                        //return PC to position of tlb call (don't need to increment PC, next cycle fetch does it)
                         this.PC = returnAddy;
 
                     }
@@ -256,7 +256,7 @@ function Cpu()
     };
 
     // returns the next opcode as a hex string and advances the CPU PC
-    // *NOTE* - Use _MMU.translateAddress() to retrieve memory addresses in opcodes that need memory access
+    // *NOTE* - Use _MMU.translateAddress() to retrieve tlb addresses in opcodes that need tlb access
     this.fetch = function()
     {
         //next op is located at the program's starting address + CPU's PC
@@ -267,7 +267,7 @@ function Cpu()
     };
 
     //"00" as an opCode is a sysBreak.  It represents the end of a user program
-    //"00" can also be part of a memory address or a string terminator, but sysBreak is only called when it's an opCode
+    //"00" can also be part of a tlb address or a string terminator, but sysBreak is only called when it's an opCode
     this.sysBreak = function()
     {
         //Stop operation of the CPU

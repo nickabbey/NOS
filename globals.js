@@ -68,21 +68,21 @@ var _Testing = false;
 // For testing...
 var _GLaDNOS = null;
 
-//The total "memory" "installed" in this system
+//The total "tlb" "installed" in this system
 //should be 768, with smaller values for testing things like branch out of bounds, etc...
-//var _InstalledMemory = 768;
-var _InstalledMemory = 256;
+var _InstalledMemory = 768;
+//var _InstalledMemory = 256;
 
 // how big each segment will be
 var _MemorySegmentSize = 256;
 
-//The actual main memory of our host
+//The actual main tlb of our host
 var _MainMemory = null;
 
-//the memory manager
+//the tlb manager
 var _MMU = null;
 
-//The memory display in index.html
+//The tlb display in index.html
 var _MemoryTable = null;
 
 //The CPU table display in index.html

@@ -69,16 +69,16 @@ function qotd() //gets a quote of the day from the internet
     return(output);
 }
 
-//returns a fully populated and formatted table the entire contents of the system's main memory
+//returns a fully populated and formatted table the entire contents of the system's main tlb
 function memoryToTable()
 {
     var tblBody = document.createElement("tbody");
     var row = document.createElement("tr");
     var cell = document.createElement("td");
     var cellText = null;
-    var addressBlock = -1; //keep track of which memory block you're in for figuring out row headings
+    var addressBlock = -1; //keep track of which tlb block you're in for figuring out row headings
 
-    //iterate over all installed memory
+    //iterate over all installed tlb
     for (var i = 0; i < _InstalledMemory ; i++)
     {
         //true for 256/512/768, these rows need to stand out
@@ -109,7 +109,7 @@ function memoryToTable()
 
             tblBody.appendChild(row);
         }
-        else //append the value of the memory at address i to the current row
+        else //append the value of the tlb at address i to the current row
         {
             //add cells to a row
             cell = document.createElement("td");
@@ -399,7 +399,7 @@ function pcbToTable()
     return tblBody;
 }
 
-//for use with the <integer>.toString(16) method, to ensure that memory address strings are always size 2 , even "00"
+//for use with the <integer>.toString(16) method, to ensure that tlb address strings are always size 2 , even "00"
 function formatMemoryAddress(str)
 {
     var retVal = str;
@@ -414,7 +414,7 @@ function formatMemoryAddress(str)
 //Pretty self explanatory, updates all the tables on the host display
 function updateDisplayTables()
 {
-    //refresh the memory display
+    //refresh the tlb display
     _MemoryTable.innerHTML = "";
     _MemoryTable.appendChild(memoryToTable());
 

@@ -12,7 +12,7 @@ function Pcb (state, pid, pc)
     // Member variables
     this.pid		= pid;  	// Process id
     this.state      = state;    // Process state
-    this.pc         = pc;       // Program counter - entry point for the program in memory
+    this.pc         = pc;       // Program counter - entry point for the program in tlb
 
     // Registers are members too
     this.acc = 0;

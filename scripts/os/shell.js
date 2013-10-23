@@ -148,9 +148,9 @@ function Shell()
                 var opCodes = program.split(" ");
                 _MMU.load(opCodes);
                 //TODO - This needs to change for project 3
-                _ThreadList[0] = new Pcb("LOADED", _NextPID, _MMU.getNextPcbAddress());
+                _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, _MMU.getNextPcbAddress());
                 _StdOut.putLine("Program loaded with PID: " + _NextPID);
-                //update PID and the last memory address
+                //update PID and the last tlb address
                 _NextPID++;
                 //TODO - This needs to change for later projects
                 _CurrentThread = _ThreadList[0];
@@ -495,7 +495,7 @@ function shellProgramValidation(args)
 
 }
 
-////do the actual work to move the user program in to memory
+////do the actual work to move the user program in to tlb
 //function shellProgramLoader(args)
 //{
 //    var opCodes = args.split(" ");
