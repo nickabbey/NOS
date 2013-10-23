@@ -76,19 +76,19 @@ function Mmu()
     //argument should be an array of strings length 2 representing opcodes
     //load command should ensure that this requirement is met
     //TODO - Modify this to use the tlb
-    this.load = function(args)
+    this.load = function(opCodes, partition)
     {
         //make sure there are opcodes to load
-        if (args === null || args.size === 0)
+        if (opCodes === null || opCodes.size === 0)
         {
             _StdOut.putLine("MMU load operation failed");
             return;
         }
         else  //opcodes were passed in, move them to tlb
         {
-            for(var i = 0; i < (args.length); i++)
+            for(var i = 0; i < (opCodes.length); i++)
             {
-                this.physical[i] = args[i];
+                this.physical[this.logical.tlb[partition][i]] = opCodes[i];
             }
 
             //refresh the displays

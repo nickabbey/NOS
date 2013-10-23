@@ -151,23 +151,27 @@ function Shell()
                     _StatusBar.value = "Memory is full, kill a process and try again";
                 }
                 else
-                {   //We got memory, so we can load the thread
+                {   //We got free memory, so we can load the thread
                     _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, _MainMemory[_MMU.logical.tlb[partition][0]]);
+
+                    //update the free partition table
                     _MMU.logical.freeParts[partition] = false;
+
+                    //tokenize program input
+                    var opCodes = program.split(" ");
+
+                    //load opcodes to the appropriate partition
+                    _MMU.load(opCodes, partition);
+
+                    _StdOut.putLine("Program loaded with PID: " + _NextPID);
+
+                    //update PID and the last tlb address
+                    _NextPID++;
+                    //TODO - This needs to change for later projects
+                    _CurrentThread = _ThreadList[0];
                 }
 
-                //tokenize program input
-                var opCodes = program.split(" ");
 
-                //TODO - modify for logical memory
-                _MMU.load(opCodes);
-
-
-                _StdOut.putLine("Program loaded with PID: " + _NextPID);
-                //update PID and the last tlb address
-                _NextPID++;
-                //TODO - This needs to change for later projects
-                _CurrentThread = _ThreadList[0];
             }
             else
             {
