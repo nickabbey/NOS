@@ -23,7 +23,7 @@ function Keymap() {
 
     //Methods
     this.init = function() {
-        for (i=0; i < 128; i++)
+        for (var i=0; i < 128; i++)
         {  //initialize the stuff we know about and is easy (scancode=ascii and in a contiguous segment)
             if ((i >= 0 && i <= 32)     ||  //everything up to and including space
                 (i >= 37 && i <= 40)    ||  // arrows
@@ -103,7 +103,7 @@ function Keymap() {
     this.fromShiftedScanCode = function(code)
     {
         var retVal = 7;
-        for (i = 0; i < this.shiftedCodes.length -1; i++)
+        for (var i = 0; i < this.shiftedCodes.length -1; i++)
         {
             if (this.shiftedCodes[i].asciiCode === code)
             {
@@ -140,7 +140,7 @@ function Keymap() {
     //ditto
     this.isNumeric = function(scanCode) {
         var retVal = false;
-        if(keyCode >= 48 && keyCode <= 57)   // 0..9
+        if(scanCode >= 48 && scanCode <= 57)   // 0..9
         {
             retVal = true;
         }
@@ -150,8 +150,8 @@ function Keymap() {
     //samesies
     this.isOther = function(scanCode) {
         var retVal = false;
-        if((keyCode >= 219 && keyCode <= 222)  ||  //brackets
-            (keyCode >= 186 && keyCode <= 192)  )  //punctuations
+        if((scanCode >= 219 && scanCode <= 222)  ||  //brackets
+            (scanCode >= 186 && scanCode <= 192)  )  //punctuations
         {
             retVal = true;
         }

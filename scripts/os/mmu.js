@@ -3,7 +3,10 @@
 
  requires globals.js
 
- The memory management unit, allows access to main memory.  Provides logical address space
+ The memory management unit, allows access to main memory.  Provides logical address space.
+ The CPU is the only thing that should access main memory directly.  All "software" portions
+ of the code should use MMU.logical and related methods for memory access.
+  IE) shell.js load should be using the mmu, as should pcb.js
 
  ------------ */
 
@@ -18,22 +21,22 @@ function Mmu()
     //the logical memory of the system
     this.logical =
         {
-            tlb         :   [], //2d array, translates logical to physical addresses
+            partitionMap     :   [], //2d array, translates logical to physical addresses
             numParts    :   0,  //set by init
             freeParts   :   []  // set by init - freeParts[n] returns boolean true only if partition n is free
         };
 
-    //initializes the logical tlb
+    //initializes the logical memory
     //TODO - something better than a kernel trap if this fails - kernel panic mode?
     this.init = function()
     {
-        //make sure your segments will fit in your tlb
+        //make sure your segments will fit in your system memory
         if (_InstalledMemory % _MemorySegmentSize === 0 )
             {
                 //Determine how many partitions there will be
-                this.logical.numParts = _InstalledMemory / _MemorySegmentSize
+                this.logical.numParts = _InstalledMemory / _MemorySegmentSize;
 
-                //partition the tlb
+                //initialize the partitionMap
                 this.partition(this.logical.numParts);
 
                 //set them all free
@@ -49,15 +52,17 @@ function Mmu()
             }
     };
 
-    //creates logical partitions and maps offset addresses to physical addresses
+    //creates logical partitions and maps offset addresses to physical addresses using this.logical.partitionMap
+    //stores a memory map in this.logical.partitionMap in the format:
+    //partition 1 offset 0 === this.logical.partitionMap[1][0] === _MainMemory[256]
     //parameter p is the number of partitions to be created
     this.partition = function(p)
     {
         for(var i = 0; i < p; i++)
-        {   //i is now the logical tlb partition id, and accessed as this.logical[i]
+        {   //i is now the logical partition id, and accessed as this.logical.partitionMap[i]
 
             //initialize the partition with an empty array
-            this.logical.tlb[this.logical.tlb.length] = [];
+            this.logical.partitionMap[this.logical.partitionMap.length] = [];
 
             //initialize the translation table
             for (var j = 0; j < _MemorySegmentSize; j++)
@@ -66,29 +71,26 @@ function Mmu()
                 //an array index for _MainMemory
                 var pointer = _MemorySegmentSize * (i) + j;
                 //fill in the pointer value
-                this.logical.tlb[i][j] = pointer;
+                this.logical.partitionMap[i][j] = pointer;
             }
         }
-        //this.logical[i][j] is an analog of a tlb.  partition 1 offset 0 === this.logical[1][0] === _MainMemory[256]
     };
 
-    //load a program from the user program input section in to tlb
+    //load a program from the user program input section in to memory
     //argument should be an array of strings length 2 representing opcodes
     //load command should ensure that this requirement is met
-    //TODO - Modify this to use the tlb
     this.load = function(opCodes, partition)
     {
         //make sure there are opcodes to load
         if (opCodes === null || opCodes.size === 0)
         {
             _StdOut.putLine("MMU load operation failed");
-            return;
         }
-        else  //opcodes were passed in, move them to tlb
+        else  //opcodes were passed in, move them to memory
         {
             for(var i = 0; i < (opCodes.length); i++)
             {
-                this.physical[this.logical.tlb[partition][i]] = opCodes[i];
+                this.physical[this.logical.partitionMap[partition][i]] = opCodes[i];
             }
 
             //refresh the displays
@@ -97,74 +99,60 @@ function Mmu()
 
     };
 
-    //parameters are an opcode and a tlb address
-    this.write = function(args)
-    {
-        var opCode = null;
-        var address = null;
-        if (args != null)
-        {
-            opCode = args[0];
-            address = args[1];
-            _MainMemory[address] = opCode;
-        }
-    };
-
     //returns the partition id of the first available partition
     this.getFreePartition = function()
     {
         //get first free partition
         return this.logical.freeParts.indexOf(true);
     };
-}
 
-//Memory addresses come in a pair, and they're in reverse order.
-// IE 40 00 means 00 40, or technically the 64th slot in the 00th tlb array
-// returns the integer equivalent of a hex tlb pair, to be used as an index for _MainMemory
-function translateAddress(args)
-{
-    //initialize a return value
-    var retVal = null;
-
-    if(!args) //called with no arguments, translate the next address in main tlb
+    //takes a partition id, returns an integer index for _MainMemory, or null if the partition doesn't exist
+    this.getPartitionBegin = function(p)
     {
-        //comes first in tlb
-        var slot = parseInt(_MainMemory[_CurrentThread.pc + _CPU.PC], 16); //00 - FF
-        //comes next in tlb
-        var bank = parseInt(_MainMemory[_CurrentThread.pc + _CPU.PC + 1], 16); // 0, 1, 2 corresponding to a tlb cells
+        //initialize return to null
+        var retVal = null;
 
-        //assigned, will stay null iff cells isn't 0, 1, 2
-        var offset = null;  //distance of current tlb address from main tlb slot 0
-
-        switch (bank)
-        {
-            case 0:
-                offset = 0 + slot;  //cells 0
-                break;
-            case 1:
-                offset = 255 + slot;  //cells 1
-                break;
-            case 2:
-                offset = 511 + slot;  //cells 2
-                break
-            default:
-                offset = null;
-                break
+        if (this.logical.partitionMap[p])
+        {   //p is a valid logical partition
+            retVal = this.logical.partitionMap[p][0];
         }
 
-        //don't forget to advance _CPU PC so it doesn't read these tlb address as opcodes on next fetch
-        _CPU.PC += 2;  //TODO possible defect if this returns null and PC is not reset (shell.run SHOULD be setting PC to 0)
+        //either null or a index to _MainMemory
+        return retVal;
+    };
 
-        //should only return: null, 0, 1, 2
-        retVal = offset;
-    }
-    // arguments were given in the form of a string (IE: from the Y register on a system call), so translate them
-    else if (typeof args === 'string')
+    //takes a partion id, returns an integer index for _MainMemory, or null if the partition doesn't exist
+    this.getPartitionEnd = function(p)
     {
-        //there's a discrepancy here, in that tlb addresses should be a pair, but the y register only holds 1 value
-        //for now, we assume the strings will be stored in valid addresses between 00 and FF.
-        retVal = parseInt(args, 16)
-    }
+        //initialize return to null
+        var retVal = null;
 
-    return retVal;
+        //if p is valid, return its end address
+        if (this.logical.partitionMap[p])
+        {
+            retVal = this.logical.partitionMap[p][_MemorySegmentSize - 1];
+        }
+
+        //either null or a index to _MainMemory
+        return retVal;
+    };
+
+    //flushes the memory in a partition p (resets all values to 00)
+    this.flushPartition = function(p)
+    {
+        //verify its a valid partition
+        if (this.logical.partitionMap[p])
+        {   //if so, loop through and zero out the memory
+
+            var offset = this.getPartitionBegin(p);
+            for (var i = 0; i < this.logical.partitionMap[p].length -1; i++)
+            {
+                _MainMemory[offset + i] = "00";
+            }
+        }
+        else
+        {   //something went wrong, log it
+            krnTrace(this + "failed to flush partition " + parseInt(p));
+        }
+    };
 }

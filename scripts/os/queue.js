@@ -10,7 +10,7 @@
 function Queue()
 {
     // Properties
-    this.q = new Array();
+    this.q = [];
 
     // Methods
     this.getSize = function() {

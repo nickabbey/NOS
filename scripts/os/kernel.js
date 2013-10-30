@@ -19,7 +19,7 @@ function krnBootstrap()      // Page 8.
 
    // Initialize our global queues.
    _KernelInterruptQueue = new Queue();  // A (currently) non-priority queue for interrupt requests (IRQs).
-   _KernelBuffers = new Array();         // Buffers... for the kernel.
+   _KernelBuffers = [];                  // Buffers... for the kernel.
    _KernelInputQueue = new Queue();      // Where device input lands before being processed out somewhere.
    _Console = new CLIconsole();          // The command line interface / console I/O device.
 
@@ -89,34 +89,30 @@ function krnOnCPUClockPulse()
     //Otherwise, triage the work to be done on this pulse
     else
     {
-
-    }
-
-    // First, check for an interrupt, are any. Page 560
-    if (_KernelInterruptQueue.getSize() > 0)
-    {
-        // Process the first interrupt on the interrupt queue.
-        // TODO: Implement a priority queue based on the IRQ number/id to enforce interrupt priority.
-        var interrupt = _KernelInterruptQueue.dequeue();
-        krnInterruptHandler(interrupt.irq, interrupt.params);
-    }
-    // Next, check for an active thread that needs cpu time
-    //TODO this will have to change when preemptive threading or cpu scheduling are added
-    else if (_CurrentThread)
-    {
-        _CPU.cycle();
-        //there might not always be a current thread after a cycle, but if so it needs to be updated
-       if(_CurrentThread)
-       {
-           _CurrentThread.update();
-       }
+        // First, check for an interrupt, are any. Page 560
+        if (_KernelInterruptQueue.getSize() > 0)
+        {
+            // Process the first interrupt on the interrupt queue.
+            // TODO: Implement a priority queue based on the IRQ number/id to enforce interrupt priority.
+            var interrupt = _KernelInterruptQueue.dequeue();
+            krnInterruptHandler(interrupt.irq, interrupt.params);
+        }
+        // Next, check for an active thread that needs cpu time
+        //TODO this will have to change when preemptive threading or cpu scheduling are added
+        else if (_CurrentThread)
+        {
+            _CPU.cycle();
+            //there might not always be a current thread after a cycle, but if so it needs to be updated
+            if(_CurrentThread)
+            {
+                _CurrentThread.update();
+            }
+        }
     }
 
     //This is done in lots of places where it may be desirable to see an immediate update to host status
     //Doing it here may be slightly redundant, but ensures that the displays are always accurate after a pulse
     updateDisplayTables();
-
-
 }
 
 
@@ -212,5 +208,4 @@ function krnTrapError(msg)
     _StdIn.bsod();
     krnShutdown();
     clearInterval(_hardwareClockID);
-    _Console.clearCursorBlinkInterval();
 }

@@ -28,7 +28,7 @@ var _CPU = null;
 
 var _OSclock = 0;       // Page 23.
 
-var _Mode = 0;   // 0 = Kernel Mode, 1 = User Mode.  See page 21.
+//var _Mode = 0;   // 0 = Kernel Mode, 1 = User Mode.  See page 21.
 
 var _Canvas = null;               // Initialized in hostInit().
 var _DrawingContext = null;       // Initialized in hostInit().
@@ -53,7 +53,7 @@ var _StdOut = null;
 var _Console = null;
 var _OsShell = null;
 var _Cursor = false;
-var _CursorBlinkInterval= 0;  //cursor blink interval set in init //TODO make this actually work
+//var _CursorBlinkInterval= 0;  //cursor blink interval set in init //TODO make this actually work
 
 // At least this OS is not trying to kill you. (Yet.)
 var _SarcasticMode = false;
@@ -68,7 +68,7 @@ var _Testing = false;
 // For testing...
 var _GLaDNOS = null;
 
-//The total "tlb" "installed" in this system
+//The total "memory" "installed" in this system
 //should be 768, with smaller values for testing things like branch out of bounds, etc...
 var _InstalledMemory = 768;
 //var _InstalledMemory = 256;
@@ -76,20 +76,20 @@ var _InstalledMemory = 768;
 // how big each segment will be
 var _MemorySegmentSize = 256;
 
-//The actual main tlb of our host
+//The actual main memory of our host
 var _MainMemory = null;
 
-//the tlb manager
+//the memory manager
 var _MMU = null;
 
-//The tlb display in index.html
+//The memory display in index.html
 var _MemoryTable = null;
 
 //The CPU table display in index.html
 var _CpuTable = null;
 
 //The PCB display in index.html
-var _PcbTable = null
+var _PcbTable = null;
 
 //List of processes as an array
 var _NextPID = 0;
@@ -119,11 +119,11 @@ var _ProgramOne = "A9 03 8D 41 00 A9 01 8D 40 00 AC 40 00 A2 01 FF EE 40 00 AE 4
 
 var _ProgramTwo = "A9 00 8D 00 00 A9 00 8D 3B 00 A9 01 8D 3B 00 A9 00 8D 3C 00 A9 02 8D 3C 00 A9 01 " +
     "6D 3B 00 8D 3B 00 A9 03 6D 3C 00 8D 3C 00 AC 3B 00 A2 01 FF A0 3D A2 02 FF AC 3C 00 A2 01 FF 00 " +
-    "00 00 20 61 6E 64 20 00"
+    "00 00 20 61 6E 64 20 00";
 
 var _ProgramThree = "A9 00 8D 00 00 A9 00 8D 4B 00 A9 00 8D 4B 00 A2 03 EC 4B 00 D0 07 A2 01 EC 00 00 " +
     "D0 05 A2 00 EC 00 00 D0 26 A0 4C A2 02 FF AC 4B 00 A2 01 FF A9 01 6D 4B 00 8D 4B 00 A2 02 EC 4B 00 " +
-    "D0 05 A0 55 A2 02 FF A2 01 EC 00 00 D0 C5 00 00 63 6F 75 6E 74 69 6E 67 00 68 65 6C 6C 6F 20 77 6F 72 6C 64 00"
+    "D0 05 A0 55 A2 02 FF A2 01 EC 00 00 D0 C5 00 00 63 6F 75 6E 74 69 6E 67 00 68 65 6C 6C 6F 20 77 6F 72 6C 64 00";
 
 //various incarnations of testing programs for individual opcodes
 //var _TestProg = "A9 A2 8D 30 00 A9 FF 8D 31 00 D0 24";

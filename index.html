@@ -95,12 +95,12 @@
                 </canvas>
             </div>
             <div id="divStatusBar">
-                        <textarea name="taStatusBar"
+                <label for="taStatusBar"></label>
+                <textarea name="taStatusBar"
                                   id="taStatusBar"
                                   rows="4"
                                   cols="70"
                                 ></textarea>
-                        </label>
             </div>
 
         </td>
@@ -155,7 +155,7 @@
                 </div>
             </div>
             <div id="divCPU">
-                CPU <input type="checkbox" id="chkStep" name="chkStep" disabled="disabled" onclick="hostChkStep()"> Stepping enabled <input type="button" id="btnStep" name="btnStep" disabled="disabled" value="Step" onclick="hostBtnStepClick(this)"> <br>
+                <input type="checkbox" id="chkStep" name="chkStep" disabled="disabled" onclick="hostChkStep()"> Stepping enabled <input type="button" id="btnStep" name="btnStep" disabled="disabled" value="Step" onclick="hostBtnStepClick()"> <br>
                 <div id="divCPUTable">
                     <table id="taCPU"></table>
                 </div>

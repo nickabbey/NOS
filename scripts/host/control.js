@@ -33,14 +33,14 @@ function hostInit()
 	// Clear the log text box.
 	document.getElementById("taLog").value="";
 
-    //initialize the host tlb
+    //initialize the host memory
     _MainMemory = new Memory();
 
     //create an mmu
     _MMU = new Mmu();
 
 
-    //Get a reference to the tlb table for output
+    //Get a reference to the memory table for output
     _MemoryTable = document.getElementById("taMemory");
 
     _MemoryTable.appendChild(memoryToTable());
@@ -69,8 +69,9 @@ function hostInit()
     _StatusBar.value = new Date().toString();
 
    // Check for our testing and enrichment core.
-   if (typeof Glados === "function")
+   if (typeof _GLaDOS === "function")
    {
+       //Compiler will see this as an unresolved type if alan's test script isn't enabled in index.html
       _GLaDOS = new Glados();
        alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
            "The script executes, but this disables keyboard input! " +
@@ -81,7 +82,7 @@ function hostInit()
    }
 
     // Personal testing
-    if (typeof GladNos === "function")
+    if (typeof _GLaDNOS === "function")
     {
         _GLaDNOS = new GladNos();
         _GLaDNOS.init();
@@ -183,7 +184,7 @@ function hostBtnHaltOS_click(btn)
     krnShutdown();
     // Stop the JavaScript interval that's simulating our clock pulse.
     clearInterval(_hardwareClockID);
-    _Console.clearCursorBlinkInterval();
+//    _Console.clearCursorBlinkInterval();
 
     // TODO: Is there anything else we need to do here?
 }
@@ -191,7 +192,7 @@ function hostBtnHaltOS_click(btn)
 function hostBtnReset_click(btn)
 {
     // The easiest and most thorough way to do this is to reload (not refresh) the document.
-    location.reload(true);  
+    location.reload();
     // That boolean parameter is the 'forceget' flag. When it is true it causes the page to always
     // be reloaded from the server. If it is false or not specified, the browser may reload the 
     // page from its cache, which is not what we want.
@@ -201,7 +202,7 @@ function hostBtnPurge_click(btn)
 {    //Disable _Testing so that we can have an interactive session
     _Testing = false;
     //refocus on the console
-    hostStat("Cleared the air.")
+    hostStat("Cleared the air.");
     document.getElementById("display").focus();
 }
 
@@ -220,7 +221,7 @@ function hostChkStep()
     {
         _StepStatus = false;
         document.getElementById("btnStep").disabled = true;
-        document.getElementById("btnStep").removeEventListener("onclick");
+        document.getElementById("btnStep").removeEventListener("onclick", hostBtnStepClick());
     }
 }
 

@@ -7,12 +7,14 @@
 */
 
 
-function Pcb (state, pid, pc)
+function Pcb (state, pid, base, limit)
 {
     // Member variables
     this.pid		= pid;  	// Process id
     this.state      = state;    // Process state
-    this.pc         = pc;       // Program counter - entry point for the program in tlb
+    this.pc         = 0;        // Program counters always start at 0
+    this.base       = base;     // Address of pcb start (as an integer representing an index for _MainMemory)
+    this.limit      = limit;    // Address of pcb end (as an integer representing an index for _MainMemory)
 
     // Registers are members too
     this.acc = 0;
@@ -27,5 +29,6 @@ function Pcb (state, pid, pc)
         this.x = _CPU.Xreg;
         this.y = _CPU.Yreg;
         this.z = _CPU.Zflag;
+        this.pc = _CPU.PC;
     };
 }

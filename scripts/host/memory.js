@@ -8,11 +8,11 @@
 
 function Memory()
 {
-    //tlb cells
+    //memory cells
     this.cells = [];
 
     //initilalize them all to "00"
-    for(i=0; i < _InstalledMemory; i++)
+    for(var i=0; i < _InstalledMemory; i++)
     {
         this.cells[i] = "00";
     }

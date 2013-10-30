@@ -140,41 +140,59 @@ function Shell()
             var program = document.getElementById("taProgramInput").value;
             //format it
             program = trim(program.toUpperCase());
+            //display it
             _StdIn.putLine(program);
+            //verify it
             if (shellProgramValidation(program))
-            {
+            {   //opcodes verified
                 _StdOut.putLine("Program is valid, loading...");
+                //ask the mmu where it should go
                 var partition = _MMU.getFreePartition();
                 if(partition === -1)
                 {   //no free memory slots
                     krnTrace(this + "failed to load user program");
-                    _StatusBar.value = "Memory is full, kill a process and try again";
+                    _StatusBar.value = "Memory is full.  Kill or allow a process to finish and try again";
                 }
                 else
                 {   //We got free memory, so we can load the thread
-                    _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, _MainMemory[_MMU.logical.tlb[partition][0]]);
 
-                    //update the free partition table
-                    _MMU.logical.freeParts[partition] = false;
+                    //Start by getting pointers to main memory
+                    var start = _MMU.getPartitionBegin(partition);
+                    var end = _MMU.getPartitionEnd(partition);
 
-                    //tokenize program input
-                    var opCodes = program.split(" ");
+                    //verify good start and end addresses
+                    if(typeof start === 'number'  && typeof end === 'number')
+                    {
+                        //Then construct the PCB and put it in the _ThreadList
+                        _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, start, end);
 
-                    //load opcodes to the appropriate partition
-                    _MMU.load(opCodes, partition);
+                        //update the free partition table
+                        _MMU.logical.freeParts[partition] = false;
 
-                    _StdOut.putLine("Program loaded with PID: " + _NextPID);
+                        //tokenize program input
+                        var opCodes = program.split(" ");
 
-                    //update PID and the last tlb address
-                    _NextPID++;
-                    //TODO - This needs to change for later projects
-                    _CurrentThread = _ThreadList[0];
+                        //load opcodes to the appropriate partition
+                        _MMU.load(opCodes, partition);
+
+                        _StdOut.putLine("Program loaded with PID: " + _NextPID);
+
+                        //update PID and the last memory address
+                        _NextPID++;
+
+                        //TODO - Add logic to ShellLoad() to set _CurrentThread appropriately (vis-a-vis the cpu scheduler)
+                        //maybe move this to krnOnClockPulse?
+                        _CurrentThread = _ThreadList[_ThreadList.length - 1];
+                    }
+                    else
+                    {
+                        //feedback if that failed for some reason
+                        krnTrace(this + "MMU returned bad PCB start or end address")
+                    }
                 }
-
-
             }
             else
-            {
+            {   //opCodes were invalid
                 _StdOut.putLine("Program is invalid");
             }
         };
@@ -196,10 +214,24 @@ function Shell()
                 _CPU.PC = 0;
 
                 //set CPU execution based on whether or not stepping is enabled
-                (_StepStatus) ? _CPU.isExecuting = false : _CPU.isExecuting = true;
+                if(_StepStatus)
+                {
+                    _CPU.isExecuting = false;
+                }
+                else
+                {
+                    _CPU.isExecuting = true;
+                }
 
                 //set the thread state based on _CPU execution status
-                (_CPU.isExecuting) ? _CurrentThread.state = "RUNNING" : _CurrentThread.state = "SUSPENDED";
+                if (_CPU.isExecuting)
+                {
+                    _CurrentThread.state = "RUNNING";
+                }
+                else
+                {
+                    _CurrentThread.state = "SUSPENDED";
+                }
             }
             else
             {
@@ -513,7 +545,7 @@ function shellProgramValidation(args)
 
 }
 
-////do the actual work to move the user program in to tlb
+////do the actual work to move the user program in to memory
 //function shellProgramLoader(args)
 //{
 //    var opCodes = args.split(" ");

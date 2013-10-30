@@ -48,16 +48,27 @@ function Cpu()
         // TODO: Accumulate CPU usage and profiling statistics here.
         // Do the real work here. Be sure to set this.isExecuting appropriately.
 
-        //if single step is in and the cpu is executing operations
+        //if single step is on and the cpu is executing operations
         if(_StepStatus && this.isExecuting)
-        {
+        {   //then we need to step through a cycle
+
             //fetch and execute your next opcode
             this.execute(this.fetch()); //advances PC by 1
             //set executing to false and update the current process state (reversed in Control.hostBtnStepClick())
             this.isExecuting = false;
+
             //if the last op was a sysbreak, then _CurrentThread will be null
-            (_CurrentThread)? _CurrentThread.state = "SUSPENDED": krnTrace("No current thread");
-            krnTrace("CPU cycle completed. Next execution deferred.");
+            if(_CurrentThread)
+            {
+                _CurrentThread.state = "SUSPENDED";
+                krnTrace("CPU cycle completed. Next execution deferred.");
+            }
+            else
+            {
+                krnTrace("No current thread");
+            }
+
+
         }
         //otherwise single step is off, and there are no real concerns
         else if (!_StepStatus && this.isExecuting)
@@ -66,6 +77,75 @@ function Cpu()
             this.execute(this.fetch()); //advances PC by 1
             krnTrace("CPU cycle completed.  Next execute on cycle.");
         }
+    };
+
+    // returns the next opcode as a hex string and advances the CPU PC
+    // *NOTE* - Use this.fetch for opcodes, use this.translateAddress() to read in memory addresses as swapped hex pairs
+    this.fetch = function()
+    {
+        //next op is located at the program's starting address + CPU's PC
+        var entryPoint = _CurrentThread.base + this.PC;
+        //advance the PC for next fetch or translateAddress()
+        ++_CPU.PC;
+        return _MainMemory[entryPoint];
+    };
+
+    //Memory addresses come in a pair, and they're in reverse order.
+    // IE) "01 40" === _MMU.logical.partitionMap[1][64] === _MainMemory[316]
+    // returns the integer equivalent of a hex memory address pair, to be used as an index for _MainMemory
+    this.translateAddress = function(args)
+    {
+        //default return value is null
+        var retVal  = null;     //placeholder for a return value
+        var base    = null;     //start index of _MainMemory (logical memory partition start)
+        var offset  = null;     //offset in to a logical memory partition
+        var addy    = null;     //an index to _MainMemory
+
+        if(!args) //called with no arguments, translate the next address in main memory
+        {
+            //the offset is stored first in memory
+            offset = _CurrentThread.base + _CPU.PC;
+            offset = parseInt(_MainMemory[offset], 16);
+
+            //the base is stored next
+            base = _CurrentThread.base + _CPU.PC + 1;
+            base = parseInt(_MainMemory[base], 16); // 0, 1, 2 ... n where n = _InstalledMemory / _MemorySegmentSize
+
+            //make sure that a valid base and offset was found
+            if (typeof base === 'number' && typeof offset ==='number')
+            {   //if so, you can figure out your index in _MainMemory
+
+                addy =  base * _MemorySegmentSize + offset;
+
+                //don't forget to advance _CPU PC so it doesn't read these memory address as opcodes on next fetch
+                _CPU.PC += 2;  //TODO possible defect if this returns null and PC is not reset (shell.run SHOULD be setting PC to 0)
+
+                //retVal is an index for _MainMemory
+                retVal = addy;
+            }
+
+        }
+        // arguments were given in the form of a string (IE: from the Y register on a system call), so translate them
+        else if (typeof args === 'string')
+        {
+
+            //this only matters when branching, but it's an important case
+            if (args.length === 2)
+            {
+
+                base = _CurrentThread.base;
+
+                //retVal is an index for _MainMemory
+                retVal = base + parseInt(args, 16);
+            }
+            else
+            {
+                krnTrace(this + "Failed to translate the string " + args.toString());
+            }
+        }
+
+        //null or an integer from 0.._MainMemory.length - 1
+        return retVal;
     };
 
     this.execute = function(opCode)
@@ -92,22 +172,22 @@ function Cpu()
                     this.Acc = this.fetch();  //advances the PC by 1
                     break;
 
-                //load accumulator with a value from tlb
+                //load accumulator with a value from memory
                 case "AD":
-                    addy = translateAddress();  //advances the PC by 2
+                    addy = this.translateAddress();  //advances the PC by 2
                     this.Acc = _MainMemory[addy];
                     break;
 
-                //store the accumulator in tlb
+                //store the accumulator in memory
                 case "8D":
-                    addy = translateAddress();  //advances the PC by 2
+                    addy = this.translateAddress();  //advances the PC by 2
                     _MainMemory[addy] = this.Acc;
                     break;
 
-                //Add with carry (store result of acc + value at tlb address in acc)
+                //Add with carry (store result of acc + value at memory address in acc)
                 case "6D":
-                    addy = translateAddress();
-                    //          (acc hex to int         + hex at tlb address to int) as hex
+                    addy = this.translateAddress();
+                    //          (acc hex to int         + hex at memory address to int) as hex
                     this.Acc = (parseInt(this.Acc, 16) + parseInt(_MainMemory[addy], 16)).toString(16);
                     break;
 
@@ -116,9 +196,9 @@ function Cpu()
                     this.Xreg = this.fetch();  //advances the PC by 1
                     break;
 
-                //load x register from tlb
+                //load x register from memory
                 case "AE":
-                    addy = translateAddress();  //advances the PC by 2
+                    addy = this.translateAddress();  //advances the PC by 2
                     this.Xreg = _MainMemory[addy];
                     break;
 
@@ -127,25 +207,26 @@ function Cpu()
                     this.Yreg = this.fetch();  //advances the PC by 1
                     break;
 
-                //load y register from tlb
+                //load y register from memory
                 case "AC":
-                    addy = translateAddress();  //advances the PC by 2
+                    addy = this.translateAddress();  //advances the PC by 2
                     this.Yreg = _MainMemory[addy];
                     break;
 
                 case "EA":
                     //no actual operation, advance the PC to move past this operation
                     ++this.PC;
+                    break;
 
                 // Break
                 case "00":
                     this.sysBreak();
                     break;
 
-                //compare x (zflag true if value at tlb address = value in x reg, false otherwise)
+                //compare x (zflag true if value at memory address = value in x reg, false otherwise)
                 case "EC":
-                    addy = translateAddress();  // advances the pc by 2
-                    // if integer value of tlb at addy === integer value of the x register, z = 1.  Else, z = 0
+                    addy = this.translateAddress();  // advances the pc by 2
+                    // if integer value of memory at addy === integer value of the x register, z = 1.  Else, z = 0
                     //why doesn't this work? syntax?
                     //this.Zflag = (parseInt(_MainMemory[addy], 16) === parseInt(this.Xreg)) ? 1 : 0;
                     if(parseInt(_MainMemory[addy], 16) === parseInt(this.Xreg))
@@ -165,13 +246,13 @@ function Cpu()
                     {   // you need to branch, so figure out how far to increment pc
                         var branchIncrement = parseInt(this.fetch(), 16);
 
-                        //make sure you haven't been asked to branch past the end of tlb
-                        if( this.PC + branchIncrement > _InstalledMemory - 1)
-                        //You did exceed max tlb address, inform the user and wrap around
+                        //make sure you haven't been asked to branch past the end of memory
+                        if( this.PC + branchIncrement > _MemorySegmentSize - 1)
+                        //You did exceed max memory address, inform the user and wrap around
                         {
                             krnTrace("CPU Branch error (destination address out of bounds)");
-                            //alert("You've branched beyond the end of tlb.  I've wrapped the PC, but this could be bad.  'Try to imagine all life as you know it stopping instantaneously and every molecule in your body exploding at the speed of light.', bad.");
-                            this.PC =  (this.PC + branchIncrement) % _InstalledMemory;
+                            //alert("You've branched beyond the end of memory.  I've wrapped the PC, but this could be bad.  'Try to imagine all life as you know it stopping instantaneously and every molecule in your body exploding at the speed of light.', bad.");
+                            this.PC =  (this.PC + branchIncrement) % _MemorySegmentSize;
                             //TODO - should this do something more reliable?  halt the operation, reset the displays and inform the user, perhaps?
                         }
                         //your branch value is acceptable, so just branch as requested
@@ -188,9 +269,9 @@ function Cpu()
                     }
                     break;
 
-                //increment value at a tlb address by 1 (wrap ff to 00)
+                //increment value at a memory address by 1 (wrap ff to 00)
                 case "EE":
-                    addy = translateAddress();
+                    addy = this.translateAddress();
                     //TODO - is wrapping form 255 to 00 on an increment really the best idea?
                     //why didn't it like this syntax?
 //                    _MainMemory[addy] = (_MainMemory[addy] === "FF")?
@@ -223,7 +304,7 @@ function Cpu()
                         var returnAddy = this.PC;
 
                         //set the PC to the start address given by the Y register, so we can fetch the string
-                        this.PC = translateAddress(this.Yreg);
+                        this.PC = this.translateAddress(this.Yreg);
 
                         // for loop control
                         var nextCode = this.fetch();
@@ -242,32 +323,24 @@ function Cpu()
 
                         _StdIn.putText(output);
 
-                        //return PC to position of tlb call (don't need to increment PC, next cycle fetch does it)
+                        //return PC to position of memory call (don't need to increment PC, next cycle fetch does it)
                         this.PC = returnAddy;
 
                     }
                     break;
 
                 default:
+
+                    //TODO - send an interrupt for invalid opCode, don't just break
                     this.sysBreak();
                     break;
             }
         }
     };
 
-    // returns the next opcode as a hex string and advances the CPU PC
-    // *NOTE* - Use _MMU.translateAddress() to retrieve tlb addresses in opcodes that need tlb access
-    this.fetch = function()
-    {
-        //next op is located at the program's starting address + CPU's PC
-        var entryPoint = _CurrentThread.pc + this.PC;
-        //advance the PC for next fetch or translateAddress()
-        ++_CPU.PC;
-        return _MainMemory[entryPoint];
-    };
-
-    //"00" as an opCode is a sysBreak.  It represents the end of a user program
-    //"00" can also be part of a tlb address or a string terminator, but sysBreak is only called when it's an opCode
+    //"00" is interpreted as a system break when fetched as an opCode
+    //Can also be an end of string character in a system call or a partition for a memory address
+    //this routine only runs when it's fetched as an opCode, though.
     this.sysBreak = function()
     {
         //Stop operation of the CPU
