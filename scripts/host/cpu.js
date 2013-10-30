@@ -104,12 +104,20 @@ function Cpu()
         if(!args) //called with no arguments, translate the next address in main memory
         {
             //the offset is stored first in memory
-            offset = _CurrentThread.base + _CPU.PC;
-            offset = parseInt(_MainMemory[offset], 16);
+            offset = this.fetch();
+            offset = parseInt(offset, 16);  //00..255
 
             //the base is stored next
-            base = _CurrentThread.base + _CPU.PC + 1;
-            base = parseInt(_MainMemory[base], 16); // 0, 1, 2 ... n where n = _InstalledMemory / _MemorySegmentSize
+            base = this.fetch();
+            base = parseInt(base, 16); // 0, 1, 2 ... n where n = _InstalledMemory / _MemorySegmentSize
+
+            //check for memory access violations
+            if (base * _MemorySegmentSize != _CurrentThread.base)
+            {
+                //TODO RAISE MEMORY ACCESS VIOLATION!
+                //for now, just massage it in to the right partition
+                base = _CurrentThread.base / _MemorySegmentSize;
+            }
 
             //make sure that a valid base and offset was found
             if (typeof base === 'number' && typeof offset ==='number')
@@ -117,11 +125,12 @@ function Cpu()
 
                 addy =  base * _MemorySegmentSize + offset;
 
-                //don't forget to advance _CPU PC so it doesn't read these memory address as opcodes on next fetch
-                _CPU.PC += 2;  //TODO possible defect if this returns null and PC is not reset (shell.run SHOULD be setting PC to 0)
-
                 //retVal is an index for _MainMemory
                 retVal = addy;
+            }
+            else
+            {
+                //TODO implement and send interrupt for memory translation failure
             }
 
         }
@@ -133,10 +142,8 @@ function Cpu()
             if (args.length === 2)
             {
 
-                base = _CurrentThread.base;
-
                 //retVal is an index for _MainMemory
-                retVal = base + parseInt(args, 16);
+                retVal = parseInt(args, 16);
             }
             else
             {
@@ -213,6 +220,7 @@ function Cpu()
                     this.Yreg = _MainMemory[addy];
                     break;
 
+                //no op
                 case "EA":
                     //no actual operation, advance the PC to move past this operation
                     ++this.PC;

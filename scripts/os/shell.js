@@ -204,12 +204,19 @@ function Shell()
         sc = new ShellCommand();
         sc.command = "run";
         sc.description = "- Run a user program";
-        sc.function = function shellRunProgram() {
-            //action and output based on successfully loaded thread
-            if(_CurrentThread)
-            {
+        sc.function = function shellRunProgram(args) {
+            if (typeof _ThreadList[args] === 'undefined' || isNaN(args))
+            {   //the pid given is either not a number or doesn't correspond to a loaded thread
+                _StdIn.putLine('Please specify a process ID.  (Hint: list processes with "ps" command');
+            }
+            else
+            {   //The pid given matches a valid thread
+
+                //set the current thread to the one specified and let the user know
+                _CurrentThread = _ThreadList[args];
                 _StdIn.putText("Executing user PID " + _CurrentThread.pid);
                 _StdIn.advanceLine();
+
                 //reset CPU PC
                 _CPU.PC = 0;
 
@@ -232,14 +239,10 @@ function Shell()
                 {
                     _CurrentThread.state = "SUSPENDED";
                 }
+
+                //update the pcb display to reflect initial state
+                updateDisplayTables();
             }
-            else
-            {
-                _StdIn.putLine("Unable to Run, nothing loaded");
-                krnTrace(this + " executed bad run (no process loaded)");
-            }
-            //update the pcb display to reflect initial state
-            updateDisplayTables();
         };
 
         this.commandList[this.commandList.length] = sc;
@@ -455,7 +458,7 @@ function shellShutdown(args)
 
 function shellCls(args)
 {
-    //TODO werid defect with prompt appearing twice when 'cls' entered at prompt
+    //TODO weird defect with prompt appearing twice when 'cls' entered at prompt
     _StdIn.clearScreen();
     _StdIn.resetXY();
     _OsShell.putPrompt();
