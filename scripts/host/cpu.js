@@ -111,47 +111,51 @@ function Cpu()
             base = this.fetch();
             base = parseInt(base, 16); // 0, 1, 2 ... n where n = _InstalledMemory / _MemorySegmentSize
 
-            //check for memory access violations
+            //  Enforce memory protection
             if (base * _MemorySegmentSize != _CurrentThread.base)
-            {
-                //TODO RAISE MEMORY ACCESS VIOLATION!
-                //for now, just massage it in to the right partition
+            {   // base doesn't line up with the memory partition of the active thread
+
+                //force the base to use the correct partition
                 base = _CurrentThread.base / _MemorySegmentSize;
             }
 
             //make sure that a valid base and offset was found
             if (typeof base === 'number' && typeof offset ==='number')
-            {   //if so, you can figure out your index in _MainMemory
+            {   //they're numbers
 
+                //so you can just plug and chug to get the correct address from the correct partition
                 addy =  base * _MemorySegmentSize + offset;
 
                 //retVal is an index for _MainMemory
                 retVal = addy;
             }
             else
-            {
-                //TODO implement and send interrupt for memory translation failure
+            {   //they're not numbers. translation fails. Raise SWI 2 (memory translation failure)
+                _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[2]) );
             }
 
         }
         // arguments were given in the form of a string (IE: from the Y register on a system call), so translate them
         else if (typeof args === 'string')
-        {
+        {   //only ever called by branch
 
-            //this only matters when branching, but it's an important case
+            //make sure the args are the right length to be read
             if (args.length === 2)
-            {
+            {   //  args are the right length
 
                 //retVal is an index for _MainMemory
                 retVal = parseInt(args, 16);
             }
             else
-            {
-                krnTrace(this + "Failed to translate the string " + args.toString());
+            {  // args are not the right length
+
+                // Raise SWI 2 (memory translation failure)
+                _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[2]) );
+
             }
         }
 
-        //null or an integer from 0.._MainMemory.length - 1
+        //null or an integer from 0.._MainMemory.length - 1 (with memory protection in place)
         return retVal;
     };
 
@@ -160,15 +164,14 @@ function Cpu()
         //reused by any opcodes that need access to _MainMemory, to be set by translateAddress()
         var addy = null;
 
-        //TODO - some kind of error checking on addy within the opcode cases.
-        //something like an if(addy)? this.fetch(): krnTrapError("Error");
-        //or something more graceful than a krnTrapError, which will result in a bsod - maybe treat it like a sysbreak?
-
-        //when the opcode is bad the process needs to be killed
+        //make sure an opcode param was passed
         if(!opCode)
-        {
+        {   //no opcode encountered - might be redundant if switch handles opCode === null via default case?
+
+            //Raise SWI 0 = invalid opcode
+            _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[0]) );
+
             //TODO - kill the ps on invalid opcode (also, implement kill)
-            krnTrace(this + "Something went wrong while the CPU was executing an opCode!");
         }
         //Otherwise, it's a gravy train with biscuit wheels, baby!
         else
@@ -257,45 +260,30 @@ function Cpu()
 
                         //make sure you haven't been asked to branch past the end of memory
                         if( this.PC + branchIncrement > _MemorySegmentSize - 1)
-                        //You did exceed max memory address, inform the user and wrap around
-                        {
-                            krnTrace("CPU Branch error (destination address out of bounds)");
-                            //alert("You've branched beyond the end of memory.  I've wrapped the PC, but this could be bad.  'Try to imagine all life as you know it stopping instantaneously and every molecule in your body exploding at the speed of light.', bad.");
+                        {   //You did exceed max memory address, so you need to wrap around to your base address
+
                             this.PC =  (this.PC + branchIncrement) % _MemorySegmentSize;
-                            //TODO - should this do something more reliable?  halt the operation, reset the displays and inform the user, perhaps?
                         }
-                        //your branch value is acceptable, so just branch as requested
                         else
-                        {
+                        {   //your branch value is acceptable, so just branch as requested
+
                             this.PC += branchIncrement;
                         }
                     }
-                    //the z flag check failed, so there's no branch
                     else
-                    {
+                    {   //the z flag check failed, so there's no branch
+
                         //and all we need to do is throw away the op and increment the PC by 1 to move past it
                         this.fetch();
                     }
                     break;
 
-                //increment value at a memory address by 1 (wrap ff to 00)
+                //increment value at a memory address by 1
                 case "EE":
+                    //translateAddress() guarantees that addy will ALWAYS be in bounds for the current PCB
                     addy = this.translateAddress();
-                    //TODO - is wrapping form 255 to 00 on an increment really the best idea?
-                    //why didn't it like this syntax?
-//                    _MainMemory[addy] = (_MainMemory[addy] === "FF")?
-//                        _MainMemory[addy] = "00" :
-//                        _MainMemory[addy] = formatMemoryAddress(((parseInt(_MainMemory[addy], 16)) + 1).toString(16)) ;
-                    if(_MainMemory[addy] === "FF")
-                    {
-                        _MainMemory[addy] = "00";
-                    }
-                    else
-                    //convert hex val at _MainMemory[addy] to int.  Add 1 to it and convert back to hex
-                    {
-                        var base = parseInt(_MainMemory[addy], 16);
-                        _MainMemory[addy] = formatMemoryAddress((base + 1).toString(16));
-                    }
+                    var base = parseInt(_MainMemory[addy], 16);
+                    _MainMemory[addy] = formatMemoryAddress((base + 1).toString(16));
                     break;
 
                 //system call - print contents of y register, format based on x register (x=1 print integer, x=2 print string terminated by "00")
@@ -339,7 +327,9 @@ function Cpu()
                     break;
 
                 default:
+                    //invalid opcode received
 
+                    //Raise SWI 0 = invalid opcode
                     _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[0]) );
                     break;
             }

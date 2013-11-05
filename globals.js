@@ -22,7 +22,11 @@ var KEYBOARD_IRQ = 1;
 
 var SOFTWARE_IRQ = 2;  //  Software IRQ (for things like invlaid opcodes, memory access violations, etc)
 
-var SOFT_IRQ_CODES = [ "OPCODE", "MEMORY"];  //Software IRQ descriptors
+//software IRQ code. Use their indices when raising opcodes
+// IE) _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[0]) );
+var SOFT_IRQ_CODES = [  "OP_INV"    ,   // 0 = invalid opcode
+                        "MEM_OOB"   ,   // 1 = memory out of bounds
+                        "MEM_TRF"]  ;   // 2 = memory translation failure
 
 
 //
