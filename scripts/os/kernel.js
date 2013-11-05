@@ -36,6 +36,12 @@ function krnBootstrap()      // Page 8.
    krnKeyboardDriver.driverEntry();                    // Call the driverEntry() initialization routine.
    krnTrace(krnKeyboardDriver.status);
 
+    //Load the Software Interrupt Driver
+    krnTrace("Loading Software Interrupt Driver");
+    krnSoftwareInterruptDriver = new DeviceDriverSoftware();
+    krnSoftwareInterruptDriver.driverEntry();
+    krnTrace(krnSoftwareInterruptDriver.status);
+
    //
    // ... more?
    //
@@ -150,6 +156,9 @@ function krnInterruptHandler(irq, params)    // This is the Interrupt Handler Ro
         case KEYBOARD_IRQ: 
             krnKeyboardDriver.isr(params);   // Kernel mode device driver
             _StdIn.handleInput();
+            break;
+        case SOFTWARE_IRQ:                  //  Software Interrupt (SWI) driver
+            krnSWIHandler(params);
             break;
         default: 
             krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");

@@ -3,9 +3,9 @@
 
  requires globals.js
 
- The memory management unit, allows access to main memory.  Provides logical address space.
- The CPU is the only thing that should access main memory directly.  All "software" portions
- of the code should use MMU.logical and related methods for memory access.
+ The memory management unit.  Only the CPU should be accessing main memory directly. Any other part of the
+ OS that needs access to memory (Notably, shell) should use MMU.logical and related methods for memory access.
+
   IE) shell.js load should be using the mmu, as should pcb.js
 
  ------------ */

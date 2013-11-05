@@ -164,9 +164,10 @@ function Cpu()
         //something like an if(addy)? this.fetch(): krnTrapError("Error");
         //or something more graceful than a krnTrapError, which will result in a bsod - maybe treat it like a sysbreak?
 
-        //Make sure we have a good opcode, otherwise let the user know
+        //when the opcode is bad the process needs to be killed
         if(!opCode)
-        {   //TODO - recover from this more gracefully
+        {
+            //TODO - kill the ps on invalid opcode (also, implement kill)
             krnTrace(this + "Something went wrong while the CPU was executing an opCode!");
         }
         //Otherwise, it's a gravy train with biscuit wheels, baby!
@@ -339,8 +340,7 @@ function Cpu()
 
                 default:
 
-                    //TODO - send an interrupt for invalid opCode, don't just break
-                    this.sysBreak();
+                    _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[0]) );
                     break;
             }
         }
