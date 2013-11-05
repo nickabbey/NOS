@@ -309,31 +309,33 @@ function readyQueueToTable()
             cellText = document.createTextNode((_ThreadList[i].limit).toString());
             cell.appendChild(cellText);
             row.appendChild(cell);
+
+            //append the row to the table
+            tblBody.appendChild(row);
         }
         else
-        {   //there isn't a thread at this index, so insert a blank line
-            cellText = document.createTextNode(" ");
-            cell.appendChild(cellText);
-            row.appendChild(cell);
+        {   //there isn't a thread at this index, so don't do anything
 
-            cell = document.createElement("td");
-            cellText = document.createTextNode(" ");
-            cell.appendChild(cellText);
-            row.appendChild(cell);
-
-            cell = document.createElement("td");
-            cellText = document.createTextNode(" ");
-            cell.appendChild(cellText);
-            row.appendChild(cell);
-
-            cell = document.createElement("td");
-            cellText = document.createTextNode(" ");
-            cell.appendChild(cellText);
-            row.appendChild(cell);
+//            //there isn't a thread at this index, so insert a blank line
+//            cellText = document.createTextNode(" ");
+//            cell.appendChild(cellText);
+//            row.appendChild(cell);
+//
+//            cell = document.createElement("td");
+//            cellText = document.createTextNode(" ");
+//            cell.appendChild(cellText);
+//            row.appendChild(cell);
+//
+//            cell = document.createElement("td");
+//            cellText = document.createTextNode(" ");
+//            cell.appendChild(cellText);
+//            row.appendChild(cell);
+//
+//            cell = document.createElement("td");
+//            cellText = document.createTextNode(" ");
+//            cell.appendChild(cellText);
+//            row.appendChild(cell);
         }
-
-        //append the row to the table
-        tblBody.appendChild(row);
     }
 
     return tblBody;

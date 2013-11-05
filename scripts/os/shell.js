@@ -151,7 +151,7 @@ function Shell()
                 if(partition === -1)
                 {   //no free memory slots
                     krnTrace(this + "failed to load user program");
-                    _StatusBar.value = "Memory is full.  Kill or allow a process to finish and try again";
+                    _StatusBar.value = "Memory is full.  Kill or run a process and try again";
                 }
                 else
                 {   //We got free memory, so we can load the thread
@@ -164,7 +164,8 @@ function Shell()
                     if(typeof start === 'number'  && typeof end === 'number')
                     {
                         //Then construct the PCB and put it in the _ThreadList
-                        _ThreadList[_ThreadList.length] = new Pcb("LOADED", _NextPID, start, end);
+                        var myPCB = new Pcb("LOADED", _NextPID, start, end);
+                        _ThreadList[_ThreadList.length] = myPCB;
 
                         //update the free partition table
                         _MMU.logical.freeParts[partition] = false;
@@ -177,12 +178,9 @@ function Shell()
 
                         _StdOut.putLine("Program loaded with PID: " + _NextPID);
 
-                        //update PID and the last memory address
+                        //update PID counter
                         _NextPID++;
 
-                        //TODO - Add logic to ShellLoad() to set _CurrentThread appropriately (vis-a-vis the cpu scheduler)
-                        //maybe move this to krnOnClockPulse?
-                        _CurrentThread = _ThreadList[_ThreadList.length - 1];
                     }
                     else
                     {
@@ -200,49 +198,97 @@ function Shell()
         this.commandList[this.commandList.length] = sc;
 
         // Run
-        //TODO - later revisions of run will require a PID parameter
         sc = new ShellCommand();
         sc.command = "run";
         sc.description = "- Run a user program";
-        sc.function = function shellRunProgram(args) {
-            if (typeof _ThreadList[args] === 'undefined' || isNaN(args))
+        sc.function = function shellRunProgram(param) {
+            if (param.length === 0)
             {   //the pid given is either not a number or doesn't correspond to a loaded thread
                 _StdIn.putLine('Please specify a process ID.  (Hint: list processes with "ps" command');
             }
             else
-            {   //The pid given matches a valid thread
+            {   //A PID was given
+                var pidIndex = shellPIDcheck(param);
 
-                //set the current thread to the one specified and let the user know
-                _CurrentThread = _ThreadList[args];
-                _StdIn.putText("Executing user PID " + _CurrentThread.pid);
-                _StdIn.advanceLine();
+                //check to see if that PID was found
+                if (pidIndex != null)
+                {   //when it exists, we can run it
 
-                //reset CPU PC
-                _CPU.PC = 0;
+                    //set the current thread to the one specified and let the user know
+                    _CurrentThread = _ThreadList[pidIndex];
+                    _StdIn.putLine("Executing user PID " + (_CurrentThread.pid).toString());
 
-                //set CPU execution based on whether or not stepping is enabled
-                if(_StepStatus)
-                {
-                    _CPU.isExecuting = false;
+                    //reset CPU PC
+                    _CPU.PC = 0;
+
+                    //set CPU execution based on whether or not stepping is enabled
+                    if(_StepStatus)
+                    {
+                        _CPU.isExecuting = false;
+                    }
+                    else
+                    {
+                        _CPU.isExecuting = true;
+                    }
+
+                    //set the thread state based on _CPU execution status
+                    if (_CPU.isExecuting)
+                    {
+                        _CurrentThread.state = "RUNNING";
+                    }
+                    else
+                    {
+                        _CurrentThread.state = "SUSPENDED";
+                    }
                 }
                 else
-                {
-                    _CPU.isExecuting = true;
+                {   //when the pid is null, however, we cannot actually do anything
+                    _StdIn.putLine("No process found with that PID.")
                 }
-
-                //set the thread state based on _CPU execution status
-                if (_CPU.isExecuting)
-                {
-                    _CurrentThread.state = "RUNNING";
-                }
-                else
-                {
-                    _CurrentThread.state = "SUSPENDED";
-                }
-
-                //update the pcb display to reflect initial state
-                updateDisplayTables();
             }
+
+            //update the pcb display to reflect initial state
+            updateDisplayTables();
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // Kill
+        sc = new ShellCommand();
+        sc.command = "kill";
+        sc.description = "- kill a program with the given pid";
+        sc.function = function shellKillProgram(param) {
+
+            if (param.length === 0)
+            {   //the pid given is either not a number or doesn't correspond to a loaded thread
+                _StdIn.putLine('Please specify a process ID.  (Hint: list processes with "ps" command');
+            }
+            else
+            {   //A PID was given
+                var pidIndex = shellPIDcheck(param);
+
+                if (pidIndex != null)
+                {   //we got a pid, so we can get a handle on the thread to be killed
+
+                    //the thread that we will kill
+                    var thread = _ThreadList[pidIndex];
+
+                    //first, clean up memory for the partition holding this thread
+                    _MMU.flushPartition(thread.base / _MemorySegmentSize );
+
+                    //next, set CPU.isExecuting false
+                    _CPU.isExecuting = false;
+
+                    //finally, remove the PCB from the ready queue
+                    _ThreadList.splice(_ThreadList.indexOf(thread), 1);
+                }
+                else
+                {   //when the pid is null, however, we cannot actually do anything because the thread wasn't found
+                    _StdIn.putLine("No process found with that PID.")
+                }
+            }
+            //update the pcb display to reflect initial state
+            updateDisplayTables();
         };
 
         this.commandList[this.commandList.length] = sc;
@@ -261,10 +307,7 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
-
-
         // processes - list the running processes and their IDs
-        // kill <id> - kills the specified process id.
 
         // Display the welcome message and initial prompt.
         _StdIn.putLine("Welcome to NOS - The turbocharged operating system!");
@@ -548,12 +591,19 @@ function shellProgramValidation(args)
 
 }
 
-////do the actual work to move the user program in to memory
-//function shellProgramLoader(args)
-//{
-//    var opCodes = args.split(" ");
-//    for (i = 0; i < opCodes.size - 1; i++)
-//    {
-//        _MMU.load()
-//    }
-//}
+//loop through pids to fin the index that corresponds to the given pid
+//param = the pid you are looking for
+//returns the index of the pid you're looking for.  Null if not found
+function shellPIDcheck(args)
+{
+    var retVal = null;
+    //loop through all pid's to see of the paramter specified
+    for (var i = 0; i < _ThreadList.length; i++)
+    {   //Start by checking the pid of the PCB in the _ThreadList at index i
+        if (_ThreadList[i].pid === parseInt(args[0]))
+        {   //the pcb at _ThreadList[i] is the one we want to kill
+            retVal = i;
+        }
+    }
+    return retVal;
+}

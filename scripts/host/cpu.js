@@ -355,10 +355,10 @@ function Cpu()
         _CurrentThread.state = "TERMINATED";
 
         //keep track of thread final state (for project2 req's, but any additional value beyond this assignment?)
-        _LastPCB = _ThreadList[0];
+        _LastPCB = _CurrentThread.pid;
 
-        // kernel only executes a cycle when there is a thread, setting it null is analogous to having an empty ready queue
-        _CurrentThread = null;
+//        // kernel only executes a cycle when there is a thread, setting it null is analogous to having an empty ready queue
+//        _CurrentThread = null;
 
         //reset the status bar, if needed
         _StatusBar.value = "Nothing to see here.  Move along.  Load and run a program, or something.";

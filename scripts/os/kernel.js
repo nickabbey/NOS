@@ -88,10 +88,14 @@ function krnOnCPUClockPulse()
        that it has to look for interrupts and process them if it finds any.                           */
 
     //Check if we're idle first
-    if (_KernelInterruptQueue.getSize() === 0 && (!_CurrentThread || _CurrentThread.state === "TERMINATED" || _CurrentThread.state ==="SUSPENDED"))
+    if (_KernelInterruptQueue.getSize() === 0 && (!_CurrentThread || _CurrentThread.state ==="SUSPENDED"))
     {
         krnTrace("Idle");
     }
+//    else if(_KernelInterruptQueue.getSize() === 0 && _CurrentThread.state ==="TERMINATED")
+//    {
+//        _OsShell.shellKillProgram(_CurrentThread.pid);
+//    }
     //Otherwise, triage the work to be done on this pulse
     else
     {

@@ -149,6 +149,9 @@ function Mmu()
             {
                 _MainMemory[offset + i] = "00";
             }
+
+            //and mark the flushed partition free
+            this.logical.freeParts[p] = true;
         }
         else
         {   //something went wrong, log it
