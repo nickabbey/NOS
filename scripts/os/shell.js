@@ -151,7 +151,7 @@ function Shell()
                 if(partition === -1)
                 {   //no free memory slots
                     krnTrace(this + "failed to load user program");
-                    _StatusBar.value = "Memory is full.  Kill or run a process and try again";
+                    _StdIn.putLine("Memory is full.  Kill or run a process and try again");
                 }
                 else
                 {   //We got free memory, so we can load the thread
