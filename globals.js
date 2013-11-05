@@ -25,8 +25,9 @@ var SOFTWARE_IRQ = 2;  //  Software IRQ (for things like invlaid opcodes, memory
 //software IRQ code. Use their indices when raising opcodes
 // IE) _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[0]) );
 var SOFT_IRQ_CODES = [  "OP_INV"    ,   // 0 = invalid opcode
-                        "MEM_OOB"   ,   // 1 = memory out of bounds
-                        "MEM_TRF"]  ;   // 2 = memory translation failure
+                        "MEM_OOB"   ,   // 1 = memory out of bounds - shouldn't be possible, see cpu.translateAddress()
+                        "MEM_TRF"   ,   // 2 = memory translation failure
+                        "CTX_SWP"   ]   // 3 = context switch
 
 
 //

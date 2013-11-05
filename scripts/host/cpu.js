@@ -90,9 +90,11 @@ function Cpu()
         return _MainMemory[entryPoint];
     };
 
+
+    // returns the integer equivalent of a hex memory address pair, to be used as an index for _MainMemory
     //Memory addresses come in a pair, and they're in reverse order.
     // IE) "01 40" === _MMU.logical.partitionMap[1][64] === _MainMemory[316]
-    // returns the integer equivalent of a hex memory address pair, to be used as an index for _MainMemory
+    //This implementation enforces memory protection, so OOB errors *SHOULD* be impossible
     this.translateAddress = function(args)
     {
         //default return value is null
@@ -135,27 +137,28 @@ function Cpu()
             }
 
         }
-        // arguments were given in the form of a string (IE: from the Y register on a system call), so translate them
+        // arguments were given in the form of a string (only ever done by branch)
         else if (typeof args === 'string')
-        {   //only ever called by branch
+        {
+            //an address passed in as a string must be length 2
+            if (args.length != 2)
+            {   //if its not then something went wrong
 
-            //make sure the args are the right length to be read
-            if (args.length === 2)
-            {   //  args are the right length
-
-                //retVal is an index for _MainMemory
-                retVal = parseInt(args, 16);
-            }
-            else
-            {  // args are not the right length
+                //log this!
+                krnTrace(this + "TranslateAddress() received invalid string input: " + args);
 
                 // Raise SWI 2 (memory translation failure)
                 _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[2]) );
 
             }
+            //otherwise, we got something we can work with
+            else
+            {   //retVal should be 0-255 here (don't need an OOB test because you can only have 0-255 when len = 2)
+                retVal = parseInt(args, 16);
+            }
         }
 
-        //null or an integer from 0.._MainMemory.length - 1 (with memory protection in place)
+        //null when invalid args is a "bad" string, otherwise an an integer from 0.._MainMemory.length - 1
         return retVal;
     };
 
@@ -238,9 +241,8 @@ function Cpu()
                 //compare x (zflag true if value at memory address = value in x reg, false otherwise)
                 case "EC":
                     addy = this.translateAddress();  // advances the pc by 2
-                    // if integer value of memory at addy === integer value of the x register, z = 1.  Else, z = 0
-                    //why doesn't this work? syntax?
-                    //this.Zflag = (parseInt(_MainMemory[addy], 16) === parseInt(this.Xreg)) ? 1 : 0;
+
+                    //Check if the value in memory at addy is the same as the current x register value
                     if(parseInt(_MainMemory[addy], 16) === parseInt(this.Xreg))
                     {
                         this.Zflag = 1;
@@ -251,11 +253,13 @@ function Cpu()
                     }
                     break;
 
-                //branch ahead (if z flag = 0, increment PC by byte value specified in next slot
+                //branch ahead <val> bytes. (if z flag = 0, increment PC by byte value specified by <val>)
+                // <val> is read from the next memory slot and must be a hex val between 00 and FF.
+                //NOTE - <val>'s are read via fetches because they are NOT memory addresses!
                 case "D0":
                     //the z flag check
                     if( this.Zflag === 0 )
-                    {   // you need to branch, so figure out how far to increment pc
+                    {   // you need to branch, so figure out your <val>
                         var branchIncrement = parseInt(this.fetch(), 16);
 
                         //make sure you haven't been asked to branch past the end of memory
@@ -273,8 +277,8 @@ function Cpu()
                     else
                     {   //the z flag check failed, so there's no branch
 
-                        //and all we need to do is throw away the op and increment the PC by 1 to move past it
-                        this.fetch();
+                        //but we still need to consume and move past the <val>
+                        this.fetch();  //advance pc by 1
                     }
                     break;
 

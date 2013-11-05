@@ -244,6 +244,101 @@ function cpuToTable()
     return tblBody;
 }
 
+//returns a fully populated and formatted table containing the ready queue and realted process information
+function readyQueueToTable()
+{
+    //set up the initial table
+    var tblBody = document.createElement("tbody");
+    var row = document.createElement("tr");
+    var cell = document.createElement("td");
+    var cellText = null;
+
+    //first row is headings
+    row =  document.createElement("tr");
+    cell = document.createElement("td");
+
+    cellText = document.createTextNode("PID");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("State");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("Base");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    cell = document.createElement("td");
+    cellText = document.createTextNode("Limit");
+    cell.appendChild(cellText);
+    row.appendChild(cell);
+
+    //append the header row
+    tblBody.appendChild(row);
+
+    //build out the rest of the table
+
+    for (var i = 0; i <= _InstalledMemory / _MemorySegmentSize; i++)
+    {
+        //reset the table elements
+        row = document.createElement("tr");
+        cell = document.createElement("td");
+        cellText = null;
+
+        //check if there's a thread in the ready queue at index i
+        if (_ThreadList[i])
+        {   //There is, so populate the row with the info for that PCB
+            cellText = document.createTextNode((_ThreadList[i].pid).toString());
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+
+            cell = document.createElement("td");
+            cellText = document.createTextNode((_ThreadList[i].state).toString());
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+
+            cell = document.createElement("td");
+            cellText = document.createTextNode((_ThreadList[i].base).toString());
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+
+            cell = document.createElement("td");
+            cellText = document.createTextNode((_ThreadList[i].limit).toString());
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+        }
+        else
+        {   //there isn't a thread at this index, so insert a blank line
+            cellText = document.createTextNode(" ");
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+
+            cell = document.createElement("td");
+            cellText = document.createTextNode(" ");
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+
+            cell = document.createElement("td");
+            cellText = document.createTextNode(" ");
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+
+            cell = document.createElement("td");
+            cellText = document.createTextNode(" ");
+            cell.appendChild(cellText);
+            row.appendChild(cell);
+        }
+
+        //append the row to the table
+        tblBody.appendChild(row);
+    }
+
+    return tblBody;
+}
+
 //returns a fully populated and formatted table containing either the current or last completed PCB
 function pcbToTable()
 {
@@ -423,7 +518,12 @@ function updateDisplayTables()
     _CpuTable.innerHTML = "";
     _CpuTable.appendChild(cpuToTable());
 
+    //old way shows current thread pcb
     //refresh pcbTable
+//    _PcbTable.innerHTML = "";
+//    _PcbTable.appendChild(pcbToTable());
+
+    //new way shows ready queue
     _PcbTable.innerHTML = "";
-    _PcbTable.appendChild(pcbToTable());
+    _PcbTable.appendChild(readyQueueToTable());
 }

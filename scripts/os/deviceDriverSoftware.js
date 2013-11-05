@@ -20,14 +20,21 @@ function krnSwDriverEntry()
 
 //Software Interrupt Handler, the ISR for software interrupts
 function krnSWIHandler(params)
+//reference:  var SOFT_IRQ_CODES = ["OP_INV", "MEM_OOB", "MEM_TRF", "CTX_SWP"];
 {
     switch (params)
     {
-        case "MEMORY":
-            krnTrace(this + "A Memory error has occurred");
-            break;
-        case "OPCODE":
+        case "OP_INV":
             krnTrace(this + "Invalid Opcode detected");
+            break;
+        case "MEM_OOB":
+            krnTrace(this + "Memory Access Out Of Bounds!");
+            break;
+        case "MEM_TRF":
+            krnTrace(this + "Memory Translation Failure!");
+            break;
+        case "CTX_SWP":
+            krnTrace(this + "Context Swap Initiated!");
             break;
         default:
             krnTrace(this + "Unhandled software interrupt!");

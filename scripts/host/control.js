@@ -53,7 +53,11 @@ function hostInit()
     //Get a reference to the PCB table for output
     _PcbTable = document.getElementById("taPCB");
 
-    _PcbTable.appendChild(pcbToTable());
+    //old version, shows the PCB contents for active thread
+    //_PcbTable.appendChild(pcbToTable());
+
+    //new version, shows the PCBs in the ready queue
+    _PcbTable.appendChild(readyQueueToTable());
 
     _UserProgramText = document.getElementById("taProgramInput");
 
