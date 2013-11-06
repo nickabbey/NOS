@@ -296,6 +296,20 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
+        // ps
+        sc = new ShellCommand();
+        sc.command = "ps";
+        sc.description = "- list processes loaded in memory";
+        sc.function = function shellPs() {
+            for (var i = 0; i < _ThreadList.length; i++)
+            {
+                _StdOut.putLine("PID: "     + (_ThreadList[i].pid).toString() +
+                                " State: "  + (_ThreadList[i].state).toString());
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
         // processes - list the running processes and their IDs
 
         // Display the welcome message and initial prompt.
