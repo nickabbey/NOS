@@ -42,10 +42,6 @@ function krnBootstrap()      // Page 8.
     krnSoftwareInterruptDriver.driverEntry();
     krnTrace(krnSoftwareInterruptDriver.status);
 
-   //
-   // ... more?
-   //
-
    // Enable the OS Interrupts.  (Not the CPU clock interrupt, as that is done in the hardware sim.)
    krnTrace("Enabling the interrupts.");
    krnEnableInterrupts();
@@ -92,10 +88,11 @@ function krnOnCPUClockPulse()
     {
         krnTrace("Idle");
     }
-//    else if(_KernelInterruptQueue.getSize() === 0 && _CurrentThread.state ==="TERMINATED")
-//    {
-//        _OsShell.shellKillProgram(_CurrentThread.pid);
-//    }
+    else if(_KernelInterruptQueue.getSize() === 0 && _CurrentThread.state ==="TERMINATED")
+    {
+        //tostring is counter-intuitive, until you realize that the shell works with strings and the kernel doesn't
+        krnKillProgram(shellPIDcheck(_CurrentThread.pid.toString()));
+    }
     //Otherwise, triage the work to be done on this pulse
     else
     {
@@ -103,7 +100,6 @@ function krnOnCPUClockPulse()
         if (_KernelInterruptQueue.getSize() > 0)
         {
             // Process the first interrupt on the interrupt queue.
-            // TODO: Implement a priority queue based on the IRQ number/id to enforce interrupt priority.
             var interrupt = _KernelInterruptQueue.dequeue();
             krnInterruptHandler(interrupt.irq, interrupt.params);
         }
@@ -162,7 +158,7 @@ function krnInterruptHandler(irq, params)    // This is the Interrupt Handler Ro
             _StdIn.handleInput();
             break;
         case SOFTWARE_IRQ:                  //  Software Interrupt (SWI) driver
-            krnSWIHandler(params);
+            krnSoftwareInterruptDriver.isr(params);
             break;
         default: 
             krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");
@@ -172,25 +168,7 @@ function krnInterruptHandler(irq, params)    // This is the Interrupt Handler Ro
 function krnTimerISR()  // The built-in TIMER (not clock) Interrupt Service Routine (as opposed to an ISR coming from a device driver).
 {
     // Check multiprogramming parameters and enforce quanta here. Call the scheduler / context switch here if necessary.
-}   
-
-
-
-//
-// System Calls... that generate software interrupts via tha Application Programming Interface library routines.
-//
-// Some ideas:
-// - ReadConsole
-// - WriteConsole
-// - CreateProcess
-// - ExitProcess
-// - WaitForProcessToExit
-// - CreateFile
-// - OpenFile
-// - ReadFile
-// - WriteFile
-// - CloseFile
-
+}
 
 //
 // OS Utility Routines
@@ -221,4 +199,25 @@ function krnTrapError(msg)
     _StdIn.bsod();
     krnShutdown();
     clearInterval(_hardwareClockID);
+}
+
+//Kills a process, param is a process ID
+//Called by shell, does no error checking (this is the shell's responsibility)
+//Called by kernel to do process cleanup on clock pulse (Only when a process with a valid id is done running)
+function krnKillProgram(param)
+{
+   //the thread that we will kill
+    var thread = _ThreadList[param];
+
+    //first, clean up memory for the partition holding this thread
+    _MMU.flushPartition(thread.base / _MemorySegmentSize );
+
+    //next, set CPU.isExecuting false
+    _CPU.isExecuting = false;
+
+    //finally, remove the PCB from the ready queue
+    _ThreadList.splice(_ThreadList.indexOf(thread), 1);
+
+    //so the krnOnClockPulse
+    _CurrentThread = null;
 }

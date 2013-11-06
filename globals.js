@@ -29,15 +29,16 @@ var SOFT_IRQ_CODES = [  "OP_INV"    ,   // 0 = invalid opcode
                         "MEM_TRF"   ,   // 2 = memory translation failure
                         "CTX_SWP"   ]   // 3 = context switch
 
-
 //
 // Global Variables
 //
 var _CPU = null;
 
-var _OSclock = 0;       // Page 23.
+var _Scheduler = null;  // a reference to our CPU scheduler
 
-//var _Mode = 0;   // 0 = Kernel Mode, 1 = User Mode.  See page 21.
+var _Quantum = 6;  // reference to our RR Quantum (Default = 6 cycles)
+
+var _OSclock = 0;       // Page 23.
 
 var _Canvas = null;               // Initialized in hostInit().
 var _DrawingContext = null;       // Initialized in hostInit().
@@ -75,18 +76,18 @@ var krnSoftwareInterruptDriver = null;
 
 
 // For testing...
-var _GLaDOS = null;
+var _GLaDOS = null;     //Alan's test routines
 var _Testing = false;
 
 // For testing...
-var _GLaDNOS = null;
+var _GLaDNOS = null;    //My test routines
 
 //The total "memory" "installed" in this system
-//should be 768, with smaller values for testing things like branch out of bounds, etc...
+//Should always be a multiple of the _MemorySegmentSize
 var _InstalledMemory = 768;
 //var _InstalledMemory = 256;
 
-// how big each segment will be
+// how big each memory partition will be
 var _MemorySegmentSize = 256;
 
 //The actual main memory of our host

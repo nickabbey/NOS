@@ -102,7 +102,7 @@ function CLIconsole() {
         {
             // Get the next character from the kernel input queue.
             var chr = _KernelInputQueue.dequeue();
-            //Wrapper for Alan's test script, since I changed the way the console interprets scancodes
+            //Wrapper for Alan's test script, since I changed the way the console interprets scan codes
             //Unfortnately, you can't keep throwing input at it afterwards.
             if(_Testing)
             {

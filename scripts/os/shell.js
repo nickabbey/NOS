@@ -268,19 +268,8 @@ function Shell()
                 var pidIndex = shellPIDcheck(param);
 
                 if (pidIndex != null)
-                {   //we got a pid, so we can get a handle on the thread to be killed
-
-                    //the thread that we will kill
-                    var thread = _ThreadList[pidIndex];
-
-                    //first, clean up memory for the partition holding this thread
-                    _MMU.flushPartition(thread.base / _MemorySegmentSize );
-
-                    //next, set CPU.isExecuting false
-                    _CPU.isExecuting = false;
-
-                    //finally, remove the PCB from the ready queue
-                    _ThreadList.splice(_ThreadList.indexOf(thread), 1);
+                {
+                    krnKillProgram(pidIndex);
                 }
                 else
                 {   //when the pid is null, however, we cannot actually do anything because the thread wasn't found

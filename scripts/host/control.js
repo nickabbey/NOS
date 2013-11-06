@@ -166,6 +166,9 @@ function hostBtnStartOS_click(btn)
     _CPU = new Cpu();
     _CPU.init();
 
+    //Create the CPU scheduler
+    _Scheduler = new Scheduler();
+
     //initialize the MMU
     _MMU.init();
 
