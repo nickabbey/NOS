@@ -77,7 +77,7 @@ function CLIconsole() {
         imageObj.onload = function() {
             _DrawingContext.drawImage(imageObj, 0, 0);
         };
-        imageObj.src = '/images/glados_bsod.jpg';
+        imageObj.src = "images/glados_bsod.jpg";
     };
 
     this.clearLine = function()

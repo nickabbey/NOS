@@ -203,7 +203,7 @@ function Shell()
         sc.description = "- Run a user program";
         sc.function = function shellRunProgram(param) {
             if (param.length === 0)
-            {   //the pid given is either not a number or doesn't correspond to a loaded thread
+            {   //the pid is empty
                 _StdIn.putLine('Please specify a process ID.  (Hint: list processes with "ps" command');
             }
             else
@@ -305,6 +305,26 @@ function Shell()
             {
                 _StdOut.putLine("PID: "     + (_ThreadList[i].pid).toString() +
                                 " State: "  + (_ThreadList[i].state).toString());
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // quantum
+        sc = new ShellCommand();
+        sc.command = "quantum";
+        sc.description = "- sets or changes the round robin quantum";
+        sc.function = function shellQuantum(param) {
+
+            if (param.length === 0)
+            {   //the quantum was not entered
+                _StdIn.putLine("Quantum = " + _Quantum);
+                _StdIn.putLine("Quantum <int> - sets the quantum to <int>.");
+            }
+            else
+            {   //A quantum was given
+                _Quantum = parseInt(param[0]);
+                _StdIn.putLine("Quantum = " + _Quantum);
             }
         };
 
