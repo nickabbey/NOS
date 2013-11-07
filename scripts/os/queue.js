@@ -26,12 +26,7 @@ function Queue()
     };
     
     this.dequeue = function() {
-        var retVal = null;
-        if (this.q.length > 0)
-        {
-            retVal = this.q.shift();
-        }
-        return retVal;        
+        return this.q.shift();
     };
     
     this.toString = function() {

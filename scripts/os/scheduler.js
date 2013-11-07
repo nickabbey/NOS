@@ -7,7 +7,6 @@ function Scheduler()
 {
     //fields
     this.cycles     =   0;          // the number of cycles executed since the last context switch
-    this.activeThread = false;
 
     //methods
     this.contextSwitch  = function()
@@ -23,72 +22,21 @@ function Scheduler()
         //more?
     };
 
-    //evaluates PCB's in _ThreadList, updates _ReadyQueue as needed
     this.check = function()
     {
-        //Loop through the threadlist
-        for (var i = 0; i < _ThreadList.length; i++)
+        if (_CPU.isExecuting)
         {
-            switch (_ThreadList[i].state)
-            {
-
-                case "LOADED":
-                    if (this.activeThread)
-                    {
-                        _ThreadList[i].state = "WAITING";
-                    }
-                    else
-                    {
-                        _ThreadList[i].state = "READY";
-                        _ReadyQueue.push(_ThreadList[i].pid);
-                    }
-                    break;
-
-                case "READY":
-                    if (!this.activeThread)
-                    {
-                        _ThreadList[i].state = "RUNNING";
-                        _CurrentThread = _ThreadList[i];
-                        this.activeThread = true;
-                    }
-                    break;
-
-                case "WAITING":
-                    if (!this.activeThread)
-                    {
-                        _ThreadList[i].state = "READY";
-                        _ReadyQueue.push(_ThreadList[i].pid);
-                    }
-                    break;
-
-                case "RUNNING":
-                    _CPU.isExecuting = true;
-                    break;
-
-//                case "SUSPENDED":
-//                    if (this.activeThread)
-//                    {
-//
-//                    }
-//                    else
-//                    {
-//
-//                    }
-//                    break;
-
-                case "TERMINATED":
-                    //can't change the length of _ThreadList while looping through it, so flag this thread for cleanup
-//                        krnKillProgram(shellGetPidIndex(_ThreadList[i].pid.toString()));
-                        this.activeThread = false;
-                        _CurrentThread = null;
-                    break;
-
-                default:
-
-                    break;
-
-            }
-
-      }
+            _CPU.cycle();
+            //TODO - context switch here?
+        }
+        else if (_ReadyQueue.getSize() > 0 )
+        {
+            var index = _ReadyQueue.dequeue();
+            index = shellGetPidIndex(index.pid.toString());
+            _CurrentThread = _ThreadList[index];
+            _CurrentThread.state = "RUNNING";
+            _CPU.update(_CurrentThread);
+            _CPU.isExecuting = true;
+        }
     };
 }

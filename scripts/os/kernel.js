@@ -18,10 +18,11 @@ function krnBootstrap()      // Page 8.
    hostLog("bootstrap", "host");  // Use hostLog because we ALWAYS want this, even if _Trace is off.
 
    // Initialize our global queues.
-   _KernelInterruptQueue = new Queue();  // A (currently) non-priority queue for interrupt requests (IRQs).
-   _KernelBuffers = [];                  // Buffers... for the kernel.
-   _KernelInputQueue = new Queue();      // Where device input lands before being processed out somewhere.
-   _Console = new CLIconsole();          // The command line interface / console I/O device.
+   _KernelInterruptQueue = new Queue(); // A (currently) non-priority queue for interrupt requests (IRQs).
+   _KernelBuffers = [];                 // Buffers... for the kernel.
+   _KernelInputQueue = new Queue();     // Where device input lands before being processed out somewhere.
+   _ReadyQueue = new Queue();           // The ready queue
+   _Console = new CLIconsole();         // The command line interface / console I/O device.
 
    // Initialize the CLIconsole.
    _Console.init();
@@ -83,43 +84,18 @@ function krnOnCPUClockPulse()
        This, on the other hand, is the clock pulse from the hardware (or host) that tells the kernel 
        that it has to look for interrupts and process them if it finds any.                           */
 
-    // First, check for an interrupt, are any. Page 560
     if (_KernelInterruptQueue.getSize() > 0)
     {
-        // Process the first interrupt on the interrupt queue.
         var interrupt = _KernelInterruptQueue.dequeue();
         krnInterruptHandler(interrupt.irq, interrupt.params);
     }
-    else if (_CPU.isExecuting)
-    {   // true when the scheduler sets a thread active, or when run <pid> is called
-
-        //Check for a context switch
-        if (_Scheduler.cycles <= _Quantum)
-        {   //No switch this pulse
-
-            //so just cycle
-            _CPU.cycle();
-            updateDisplayTables();
-        }
-          else
-        {   // A switch needs to happen
-
-            //Raise SWI 3 = Context Switch
-            _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
-        }
-    }
-    //See if the scheduler has queued anything up
-    else if (_ReadyQueue.peek())
-    {   //True when ready queue has PIDS waiting for CPU time
-
-        //_CurrentThread is in the threadlist, shellGetPidIndex gives location of the pid at the head of the rq
-        _CurrentThread = _ThreadList[shellGetPidIndex(_ReadyQueue.pop())];
-        _CPU.isExecuting = true;
-    }
-    else
-    {   //Let the scheduler do it's thing for the next cycle
+    else if (_CPU.isExecuting || _ReadyQueue.getSize() > 0)
+    {
         _Scheduler.check();
-        krnTrace(this + " Idle");
+    }
+    else // If there are no interrupts and there is nothing being executed then just be idle.
+    {
+        krnTrace("Idle");
     }
 
     //This is done in lots of places where it may be desirable to see an immediate update to host status
@@ -260,5 +236,15 @@ function krnContextSwitch()
         _CPU.isExecuting = true;                //  The CPU will execute the new currentThread on next cycle
 
     }
+}
 
+function krnRunAll() {
+    for (var i = 0; i < _ThreadList.length; i++)
+    {
+        if (_ThreadList[i])
+        {
+        _ReadyQueue.enqueue(_ThreadList[i]);
+            _ThreadList[i].state = "READY";
+        }
+    }
 }

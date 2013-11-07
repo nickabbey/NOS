@@ -58,7 +58,7 @@ function Cpu()
         }
         else
         {
-            krnTrace(this + "CPU Context Switch FAILED!")
+            krnTrace(this + "CPU update from PCB FAILED!")
         }
     };
     

@@ -261,21 +261,7 @@ function Shell()
 
             if (_ThreadList.length > 0)
             {
-                var count = 0;
-
-                while (!_CurrentThread) //this SHOULD always work, but could get caught in an infinite loop
-                {
-                    _Scheduler.check();
-                    count++;
-                    //infinite loop guard - if the scheduler cant figure it out in 5 cycles, something is up
-                    if (count > 5) break;
-                }
-
-                //another guard incase the scheduler freaked out in the loop above
-                if (_CurrentThread != undefined)
-                {
-                    _CPU.isExecuting = true;
-                }
+                krnRunAll();
             }
             else
             {

@@ -17,14 +17,13 @@ function ReadyQueue()
     //undefined when this.rq is zero length
     this.peek = function()
     {
+        var retVal = undefined;
         if (this.rq.size > 0)
         {
-            return this.rq[0];
+            retVal =  true;
         }
-        else
-        {
-            return null;
-        }
+
+        return retVal;
 
     };
 
