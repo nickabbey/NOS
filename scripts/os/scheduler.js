@@ -15,19 +15,17 @@ function Scheduler()
         _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
     };
 
-    //task runs per cycle
-    this.update = function()
-    {
-      this.cycles++;
-        //more?
-    };
-
     this.check = function()
     {
         if (_CPU.isExecuting)
         {
             _CPU.cycle();
-            //TODO - context switch here?
+            this.cycles++;
+            if (this.cycles > _Quantum && _ReadyQueue.getSize() > 0)
+            {
+                _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
+            }
+
         }
         else if (_ReadyQueue.getSize() > 0 )
         {
@@ -38,5 +36,10 @@ function Scheduler()
             _CPU.update(_CurrentThread);
             _CPU.isExecuting = true;
         }
+    };
+
+    this.resetCycles = function()
+    {
+        this.cycles = 0;
     };
 }

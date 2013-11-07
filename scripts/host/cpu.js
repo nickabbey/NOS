@@ -47,19 +47,11 @@ function Cpu()
     // param is a PCB
     this.update = function(param)
     {
-        if (typeof param === 'pcb')
-        {
             this.PC             = param.pc;
             this.Acc            = param.acc;
             this.Xreg           = param.x;
             this.Yreg           = param.y;
             this.Zflag          = param.z;
-            this.isExecuting    = param.state;
-        }
-        else
-        {
-            krnTrace(this + "CPU update from PCB FAILED!")
-        }
     };
     
     this.cycle = function()
@@ -315,7 +307,7 @@ function Cpu()
                     if( parseInt(this.Xreg, 16) === 1)
                     {
                         //parse the y register as a hex number, print its decimal value
-                        _StdIn.putText(parseInt(this.Yreg, 16).toString(10));
+                        _StdIn.putLine(parseInt(this.Yreg, 16).toString(10));
                     }
                     //	check the harder case second, where we must construct and display a "00" terminated character string
                     else if( parseInt(this.Xreg) === 2)
@@ -341,7 +333,7 @@ function Cpu()
                             nextCode = this.fetch();
                         }
 
-                        _StdIn.putText(output);
+                        _StdIn.putLine(output);
 
                         //return PC to position of memory call (don't need to increment PC, next cycle fetch does it)
                         this.PC = returnAddy;
@@ -373,8 +365,7 @@ function Cpu()
         //Tell the thread it's terminated
         _CurrentThread.state = "TERMINATED";
 
-        //keep track of thread final state (for project2 req's, but any additional value beyond this assignment?)
-        //_LastPCB = _CurrentThread.pid;
+        krnTrace(this + "PID " + _CurrentThread.pid + " terminated.");
 
         //clean up this thread
         krnKillProgram(shellGetPidIndex(_CurrentThread.pid.toString()));
@@ -382,7 +373,7 @@ function Cpu()
         _Scheduler.activeThread = false;
 
         //reset the status bar, if needed
-        _StatusBar.value = "Nothing to see here.  Move along.  Load and run a program, or something.";
+        _StatusBar.value = "Completed program execution";
 
         this.reset();
         _StdIn.advanceLine();

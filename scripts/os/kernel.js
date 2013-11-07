@@ -207,35 +207,50 @@ function krnKillProgram(param)
 //does the actual work of switching contexts when the SWI for context switch is encountered
 function krnContextSwitch()
 {
-    //context switch only valid if there's stuff in the rq
-    if (_ReadyQueue.peek())
-    {   //we have at least 1 thing in the ready queue
-
-        //first things first, stop cpu execution and update current PCB
-        _CPU.isExecuting = false;
+    if (!_CurrentThread)
+    {
+        krnTrace(this + "Context switch failed: no active thread!");
+        return;
+    }
+    else
+    {
+        krnTrace(this + "Moving process " + _CurrentThread.pid + " out of ready queue.")
+        _CurrentThread.state = "READY";
         _CurrentThread.update();
-        _CurrentThread.state = "SUSPENDED";     //in memory
 
-        //next, current pid goes to the end of the rq
-        _ReadyQueue.push(_CurrentThread.pid);
+        _ReadyQueue.enqueue(_CurrentThread);
 
-        //then we get the pid of the next job in the rq
-        var nextPid = _ReadyQueue.pop();
+        _CurrentThread = _ReadyQueue.dequeue();
 
-        //and look up the index for that pid in the thread list
-        var nextPidIndex = shellGetPidIndex(nextPid);
+        krnTrace(this + "Moving process " + _CurrentThread.pid + " in to ready queue.")
+        _CurrentThread.state = "RUNNING";
 
-        //now we update the current thread
-        _CurrentThread = _ThreadList[nextPidIndex];
-        _CurrentThread.state = "RUNNING";       //  ready for execution on next cycle
-
-        //Finally, we update the CPU fields
         _CPU.update(_CurrentThread);
 
-        //And tell the CPU that it's OK to process again
-        _CPU.isExecuting = true;                //  The CPU will execute the new currentThread on next cycle
-
+        _Scheduler.resetCycles();
     }
+
+//
+//    var nextProcess = Kernel.getNextProcess();
+//
+//    Kernel.trace("Context switch: Process " + Kernel.runningProcess.pid + " -> " + nextProcess.pid);
+//
+//    // Move current process to ready queue.
+//    Kernel.runningProcess.status = "Ready";
+//    Kernel.runningProcess.lastAccessTime = _OsClock;
+//    Kernel.runningProcess.setRegisters(_CPU);
+//    Kernel.readyQueue.enqueue(Kernel.runningProcess);
+//
+//    // Dequeue next process and start execution.
+//    Kernel.runningProcess = nextProcess;
+//    nextProcess.status = "Running";
+//
+//    Kernel.memoryManager.setRelocationRegister(nextProcess);
+//    _CPU.setRegisters(nextProcess);
+//
+//    // Reset number of cycles
+//    Kernel.processCycles = 0;set number of cycles
+//    Kernel.processCycles = 0;
 }
 
 function krnRunAll() {
