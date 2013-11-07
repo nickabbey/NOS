@@ -9,28 +9,33 @@ function Scheduler()
     this.cycles     =   0;          // the number of cycles executed since the last context switch
 
     //methods
-    this.contextSwitch  = function()
-    {
-        //Raise SWI 3 = Context switch
-        _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
-    };
 
-    this.check = function()
+    // Update the ready queue
+    this.update = function()
     {
+        // Allow anything that's already running to continue
         if (_CPU.isExecuting)
         {
+            //the actual work is done
             _CPU.cycle();
+            //keep track of how far in to this quantum you are
             this.cycles++;
+            //Check if you need to do a context switch
             if (this.cycles > _Quantum && _ReadyQueue.getSize() > 0)
-            {
+            {   //true when you have exceeded the cycles in this quantum and there are more items on the ready queue
+
+                //put an SWI on the interrupt queue to trigger a context switch
                 _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
             }
-
         }
+        //if there were no threads in execution, check if there's anything on the ready queue
         else if (_ReadyQueue.getSize() > 0 )
         {
+            //get the head of the rq
             var index = _ReadyQueue.dequeue();
+            //figure out where in the list of loaded threads this pcb is
             index = shellGetPidIndex(index.pid.toString());
+            //make the popped pcs the current thread of execution
             _CurrentThread = _ThreadList[index];
             _CurrentThread.state = "RUNNING";
             _CPU.update(_CurrentThread);
@@ -38,6 +43,7 @@ function Scheduler()
         }
     };
 
+    //for resetting the cycles, called on context switches
     this.resetCycles = function()
     {
         this.cycles = 0;

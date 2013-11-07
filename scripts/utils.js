@@ -288,7 +288,7 @@ function readyQueueToTable()
         cell = document.createElement("td");
         cellText = null;
 
-        //check if there's a thread in the ready queue at index i
+        //update if there's a thread in the ready queue at index i
         if (_ThreadList[i])
         {   //There is, so populate the row with the info for that PCB
             cellText = document.createTextNode((_ThreadList[i].pid).toString());

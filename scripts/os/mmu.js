@@ -15,7 +15,7 @@ function Mmu()
 
     //fields
 
-    //TODO - control ensures that this won't be null but prob a good idea to check in case that fails or changes
+    //TODO - control ensures that this won't be null but prob a good idea to update in case that fails or changes
     this.physical = _MainMemory;
 
     //the logical memory of the system

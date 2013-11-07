@@ -91,7 +91,7 @@ function krnOnCPUClockPulse()
     }
     else if (_CPU.isExecuting || _ReadyQueue.getSize() > 0)
     {
-        _Scheduler.check();
+        _Scheduler.update();
     }
     else // If there are no interrupts and there is nothing being executed then just be idle.
     {

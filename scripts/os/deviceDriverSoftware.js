@@ -23,16 +23,16 @@ function krnSWIHandler(params)
 //reference:  var SOFT_IRQ_CODES = ["OP_INV", "MEM_OOB", "MEM_TRF", "CTX_SWP"];
 {
     switch (params)
-    {
-        case "OP_INV":
+    {   //these are self documenting.
+        case "OP_INV":  //best indicator of bad user code
             krnTrace(this + "Invalid Opcode detected");
             krnKillProgram(_CurrentThread.pid.toString());
             break;
-        case "MEM_OOB":
+        case "MEM_OOB": //will never actually get called because the MMU prevents them
             krnTrace(this + "Memory Access Out Of Bounds!");
             krnKillProgram(_CurrentThread.pid.toString());
             break;
-        case "MEM_TRF":
+        case "MEM_TRF": //most likely to occur due to bad user code
             krnTrace(this + "Memory Translation Failure!");
             krnKillProgram(_CurrentThread.pid.toString());
             break;

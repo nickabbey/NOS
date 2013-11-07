@@ -28,7 +28,7 @@ function CLIconsole() {
     this.init = function()
     {
         //Kind of unsafe, but technically the Drawing context should never be null by the time console.init runs
-        _DrawingContext.font = this.font;  //TODO - is it worth it to wrap this in a check for null or some such?
+        _DrawingContext.font = this.font;  //TODO - is it worth it to wrap this in a update for null or some such?
         this.fontWidth = _DrawingContext.measureText("A").width;  //Simple test, all are the same for monospace
         this.clearScreen();
         this.resetXY();

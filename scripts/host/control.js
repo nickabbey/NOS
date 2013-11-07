@@ -124,7 +124,7 @@ function hostStat(status)  //sends a message to the host status bar
 {
     var taStatus = document.getElementById("taStatusBar");
     var msg = "This is one UGLY error!";
-    //check the message
+    //update the message
     if(status) {
         msg = status;
         taStatus.value = msg;

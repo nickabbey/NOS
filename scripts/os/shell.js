@@ -202,6 +202,8 @@ function Shell()
         sc.command = "run";
         sc.description = "- Run a user program";
         sc.function = function shellRunProgram(param) {
+
+            //TODO - Move run in to the kernel (for consistency, since runall is there)
             if (param.length === 0)
             {   //the pid is empty
                 _StdIn.putLine('Please specify a process ID.  (Hint: list processes with "ps" command');
@@ -210,7 +212,7 @@ function Shell()
             {   //A PID was given
                 var pidIndex = shellGetPidIndex(param);
 
-                //check to see if that PID was found
+                //update to see if that PID was found
                 if (pidIndex != null)
                 {   //when it exists, we can run it
 
@@ -259,12 +261,15 @@ function Shell()
         sc.description = "- Run all loaded user programs";
         sc.function = function shellRunProgram() {
 
+            //update for loaded threads
             if (_ThreadList.length > 0)
-            {
+            {   //true any time there's something on the _ThreadList
+
+                //the kernel will execute the threads
                 krnRunAll();
             }
             else
-            {
+            {   //there were no processes, let the user know
                 _StdIn.putLine("There are no processes loaded");
             }
 
@@ -351,18 +356,6 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
-        // RR context switch
-        sc = new ShellCommand();
-        sc.command = "switch";
-        sc.description = "- Force a context switch";
-        sc.function = function shellContextSwitch() {
-
-            //Raise SWI 3 = Context switch
-            _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
-        };
-
-        this.commandList[this.commandList.length] = sc;
-
         // Display the welcome message and initial prompt.
         _StdIn.putLine("Welcome to NOS - The turbocharged operating system!");
         this.putPrompt();
@@ -404,7 +397,7 @@ function Shell()
         }
         else
         {
-            // It's not found, so check for curses and apologies before declaring the command invalid.
+            // It's not found, so update for curses and apologies before declaring the command invalid.
             if (this.curses.indexOf("[" + rot13(cmd) + "]") >= 0)      // Check for curses.
             {
                 this.execute(shellCurse);

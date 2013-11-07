@@ -268,7 +268,7 @@ function Cpu()
                 // <val> is read from the next memory slot and must be a hex val between 00 and FF.
                 //NOTE - <val>'s are read via fetches because they are NOT memory addresses!
                 case "D0":
-                    //the z flag check
+                    //the z flag update
                     if( this.Zflag === 0 )
                     {   // you need to branch, so figure out your <val>
                         var branchIncrement = parseInt(this.fetch(), 16);
@@ -286,7 +286,7 @@ function Cpu()
                         }
                     }
                     else
-                    {   //the z flag check failed, so there's no branch
+                    {   //the z flag update failed, so there's no branch
 
                         //but we still need to consume and move past the <val>
                         this.fetch();  //advance pc by 1
@@ -303,13 +303,13 @@ function Cpu()
 
                 //system call - print contents of y register, format based on x register (x=1 print integer, x=2 print string terminated by "00")
                 case "FF":
-                    // check the easy case first, where we are printing an integer value:
+                    // update the easy case first, where we are printing an integer value:
                     if( parseInt(this.Xreg, 16) === 1)
                     {
                         //parse the y register as a hex number, print its decimal value
                         _StdIn.putLine(parseInt(this.Yreg, 16).toString(10));
                     }
-                    //	check the harder case second, where we must construct and display a "00" terminated character string
+                    //	update the harder case second, where we must construct and display a "00" terminated character string
                     else if( parseInt(this.Xreg) === 2)
                     {
                         //store the current PC
