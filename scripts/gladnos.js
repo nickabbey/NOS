@@ -30,6 +30,28 @@ function GladNos() {
          _KernelInputQueue.enqueue('d');
          krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
+        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('o');
+        _KernelInputQueue.enqueue('a');
+        _KernelInputQueue.enqueue('d');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
+        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('o');
+        _KernelInputQueue.enqueue('a');
+        _KernelInputQueue.enqueue('d');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
+        // Execute the 'load' and 'run' commands.
+        _KernelInputQueue.enqueue('r');
+        _KernelInputQueue.enqueue('u');
+        _KernelInputQueue.enqueue('n');
+        _KernelInputQueue.enqueue('a');
+        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('l');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
+
 //        //turn on single step and update the display appropriately
 //        document.getElementById('chkStep').disabled = false;
 //        document.getElementById('btnStep').disabled = false;
@@ -37,11 +59,6 @@ function GladNos() {
 //        //enable single step operation before sending commands
 //        hostChkStep();
 
-        // Execute the 'load' and 'run' commands.
-        _KernelInputQueue.enqueue('r');
-        _KernelInputQueue.enqueue('u');
-        _KernelInputQueue.enqueue('n');
-        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
         /*
          // Execute the 'ver' command.

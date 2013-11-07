@@ -83,37 +83,43 @@ function krnOnCPUClockPulse()
        This, on the other hand, is the clock pulse from the hardware (or host) that tells the kernel 
        that it has to look for interrupts and process them if it finds any.                           */
 
-    //Check if we're idle first
-    if (_KernelInterruptQueue.getSize() === 0 && (!_CurrentThread || _CurrentThread.state ==="SUSPENDED"))
+    // First, check for an interrupt, are any. Page 560
+    if (_KernelInterruptQueue.getSize() > 0)
     {
-        krnTrace("Idle");
+        // Process the first interrupt on the interrupt queue.
+        var interrupt = _KernelInterruptQueue.dequeue();
+        krnInterruptHandler(interrupt.irq, interrupt.params);
     }
-    else if(_KernelInterruptQueue.getSize() === 0 && _CurrentThread.state ==="TERMINATED")
-    {
-        //tostring is counter-intuitive, until you realize that the shell works with strings and the kernel doesn't
-        krnKillProgram(shellPIDcheck(_CurrentThread.pid.toString()));
-    }
-    //Otherwise, triage the work to be done on this pulse
-    else
-    {
-        // First, check for an interrupt, are any. Page 560
-        if (_KernelInterruptQueue.getSize() > 0)
-        {
-            // Process the first interrupt on the interrupt queue.
-            var interrupt = _KernelInterruptQueue.dequeue();
-            krnInterruptHandler(interrupt.irq, interrupt.params);
-        }
-        // Next, check for an active thread that needs cpu time
-        //TODO this will have to change when preemptive threading or cpu scheduling are added
-        else if (_CurrentThread)
-        {
+    else if (_CPU.isExecuting)
+    {   // true when the scheduler sets a thread active, or when run <pid> is called
+
+        //Check for a context switch
+        if (_Scheduler.cycles <= _Quantum)
+        {   //No switch this pulse
+
+            //so just cycle
             _CPU.cycle();
-            //there might not always be a current thread after a cycle, but if so it needs to be updated
-            if(_CurrentThread)
-            {
-                _CurrentThread.update();
-            }
+            updateDisplayTables();
         }
+          else
+        {   // A switch needs to happen
+
+            //Raise SWI 3 = Context Switch
+            _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
+        }
+    }
+    //See if the scheduler has queued anything up
+    else if (_ReadyQueue.peek())
+    {   //True when ready queue has PIDS waiting for CPU time
+
+        //_CurrentThread is in the threadlist, shellGetPidIndex gives location of the pid at the head of the rq
+        _CurrentThread = _ThreadList[shellGetPidIndex(_ReadyQueue.pop())];
+        _CPU.isExecuting = true;
+    }
+    else
+    {   //Let the scheduler do it's thing for the next cycle
+        _Scheduler.check();
+        krnTrace(this + " Idle");
     }
 
     //This is done in lots of places where it may be desirable to see an immediate update to host status
@@ -215,9 +221,44 @@ function krnKillProgram(param)
     //next, set CPU.isExecuting false
     _CPU.isExecuting = false;
 
-    //finally, remove the PCB from the ready queue
+    //finally, remove the PCB from the _ThreadList
     _ThreadList.splice(_ThreadList.indexOf(thread), 1);
 
     //so the krnOnClockPulse
     _CurrentThread = null;
+}
+
+//does the actual work of switching contexts when the SWI for context switch is encountered
+function krnContextSwitch()
+{
+    //context switch only valid if there's stuff in the rq
+    if (_ReadyQueue.peek())
+    {   //we have at least 1 thing in the ready queue
+
+        //first things first, stop cpu execution and update current PCB
+        _CPU.isExecuting = false;
+        _CurrentThread.update();
+        _CurrentThread.state = "SUSPENDED";     //in memory
+
+        //next, current pid goes to the end of the rq
+        _ReadyQueue.push(_CurrentThread.pid);
+
+        //then we get the pid of the next job in the rq
+        var nextPid = _ReadyQueue.pop();
+
+        //and look up the index for that pid in the thread list
+        var nextPidIndex = shellGetPidIndex(nextPid);
+
+        //now we update the current thread
+        _CurrentThread = _ThreadList[nextPidIndex];
+        _CurrentThread.state = "RUNNING";       //  ready for execution on next cycle
+
+        //Finally, we update the CPU fields
+        _CPU.update(_CurrentThread);
+
+        //And tell the CPU that it's OK to process again
+        _CPU.isExecuting = true;                //  The CPU will execute the new currentThread on next cycle
+
+    }
+
 }

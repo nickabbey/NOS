@@ -208,7 +208,7 @@ function Shell()
             }
             else
             {   //A PID was given
-                var pidIndex = shellPIDcheck(param);
+                var pidIndex = shellGetPidIndex(param);
 
                 //check to see if that PID was found
                 if (pidIndex != null)
@@ -218,8 +218,8 @@ function Shell()
                     _CurrentThread = _ThreadList[pidIndex];
                     _StdIn.putLine("Executing user PID " + (_CurrentThread.pid).toString());
 
-                    //reset CPU PC
-                    _CPU.PC = 0;
+                    //reset CPU
+                    _CPU.reset();
 
                     //set CPU execution based on whether or not stepping is enabled
                     if(_StepStatus)
@@ -253,6 +253,41 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
+        // Runall
+        sc = new ShellCommand();
+        sc.command = "runall";
+        sc.description = "- Run all loaded user programs";
+        sc.function = function shellRunProgram() {
+
+            if (_ThreadList.length > 0)
+            {
+                var count = 0;
+
+                while (!_CurrentThread) //this SHOULD always work, but could get caught in an infinite loop
+                {
+                    _Scheduler.check();
+                    count++;
+                    //infinite loop guard - if the scheduler cant figure it out in 5 cycles, something is up
+                    if (count > 5) break;
+                }
+
+                //another guard incase the scheduler freaked out in the loop above
+                if (_CurrentThread != undefined)
+                {
+                    _CPU.isExecuting = true;
+                }
+            }
+            else
+            {
+                _StdIn.putLine("There are no processes loaded");
+            }
+
+            //update the pcb display to reflect initial state
+            updateDisplayTables();
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
         // Kill
         sc = new ShellCommand();
         sc.command = "kill";
@@ -265,7 +300,7 @@ function Shell()
             }
             else
             {   //A PID was given
-                var pidIndex = shellPIDcheck(param);
+                var pidIndex = shellGetPidIndex(param);
 
                 if (pidIndex != null)
                 {
@@ -330,7 +365,17 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
-        // processes - list the running processes and their IDs
+        // RR context switch
+        sc = new ShellCommand();
+        sc.command = "switch";
+        sc.description = "- Force a context switch";
+        sc.function = function shellContextSwitch() {
+
+            //Raise SWI 3 = Context switch
+            _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
+        };
+
+        this.commandList[this.commandList.length] = sc;
 
         // Display the welcome message and initial prompt.
         _StdIn.putLine("Welcome to NOS - The turbocharged operating system!");
@@ -617,7 +662,7 @@ function shellProgramValidation(args)
 //loop through pids to fin the index that corresponds to the given pid
 //param = the pid you are looking for
 //returns the index of the pid you're looking for.  Null if not found
-function shellPIDcheck(args)
+function shellGetPidIndex(args)
 {
     var retVal = null;
     //loop through all pid's to see of the paramter specified

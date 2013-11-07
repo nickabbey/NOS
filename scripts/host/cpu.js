@@ -42,6 +42,25 @@ function Cpu()
         this.Zflag = 0;     // Z-ero flag (Think of it as "isZero".)
         this.isExecuting = false;
     };
+
+    //Sets current CPU values to those passed in
+    // param is a PCB
+    this.update = function(param)
+    {
+        if (typeof param === 'pcb')
+        {
+            this.PC             = param.pc;
+            this.Acc            = param.acc;
+            this.Xreg           = param.x;
+            this.Yreg           = param.y;
+            this.Zflag          = param.z;
+            this.isExecuting    = param.state;
+        }
+        else
+        {
+            krnTrace(this + "CPU Context Switch FAILED!")
+        }
+    };
     
     this.cycle = function()
     {
@@ -355,10 +374,12 @@ function Cpu()
         _CurrentThread.state = "TERMINATED";
 
         //keep track of thread final state (for project2 req's, but any additional value beyond this assignment?)
-        _LastPCB = _CurrentThread.pid;
+        //_LastPCB = _CurrentThread.pid;
 
-//        // kernel only executes a cycle when there is a thread, setting it null is analogous to having an empty ready queue
-//        _CurrentThread = null;
+        //clean up this thread
+        krnKillProgram(shellGetPidIndex(_CurrentThread.pid.toString()));
+        _CurrentThread = null;
+        _Scheduler.activeThread = false;
 
         //reset the status bar, if needed
         _StatusBar.value = "Nothing to see here.  Move along.  Load and run a program, or something.";

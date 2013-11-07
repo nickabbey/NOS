@@ -26,15 +26,19 @@ function krnSWIHandler(params)
     {
         case "OP_INV":
             krnTrace(this + "Invalid Opcode detected");
+            krnKillProgram(_CurrentThread.pid.toString());
             break;
         case "MEM_OOB":
             krnTrace(this + "Memory Access Out Of Bounds!");
+            krnKillProgram(_CurrentThread.pid.toString());
             break;
         case "MEM_TRF":
             krnTrace(this + "Memory Translation Failure!");
+            krnKillProgram(_CurrentThread.pid.toString());
             break;
         case "CTX_SWP":
             krnTrace(this + "Context Swap Initiated!");
+            krnContextSwitch();
             break;
         default:
             krnTrace(this + "Unhandled software interrupt!");

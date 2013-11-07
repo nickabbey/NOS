@@ -36,6 +36,8 @@ var _CPU = null;
 
 var _Scheduler = null;  // a reference to our CPU scheduler
 
+var _ReadyQueue = null; // FIFO queue - short term scheduler
+
 var _Quantum = 6;  // reference to our RR Quantum (Default = 6 cycles)
 
 var _OSclock = 0;       // Page 23.
@@ -111,7 +113,7 @@ var _NextPID = 0;
 //A reference to whichever thread is currently being executed by the CPU
 var _CurrentThread = null;
 
-//array of PCB's
+//Long term scheduler - array of PCB's
 var _ThreadList = [];
 
 // a reference to easily access the status bar
