@@ -39,6 +39,8 @@ function hostInit()
     //create an mmu
     _MMU = new Mmu();
 
+    //create a hard drive
+    _HddList[0] = new Hdd();
 
     //Get a reference to the memory table for output
     _MemoryTable = document.getElementById("taMemory");
@@ -76,13 +78,13 @@ function hostInit()
 //   if (typeof _GLaDOS === "function")
 //   {
        //Interpreter will see this as an unresolved type if alan's test script isn't enabled in index.html
-      _GLaDOS = new Glados();
-       alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
-           "The script executes, but this disables keyboard input! " +
-            "Luckily, you can purge the Neurotoxins after the script has run. " +
-            "Just click the 'Purge' button when you want to regain control");
-      _GLaDOS.init();
-      _Testing = true;
+//      _GLaDOS = new Glados();
+//       alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
+//           "The script executes, but this disables keyboard input! " +
+//            "Luckily, you can purge the Neurotoxins after the script has run. " +
+//            "Just click the 'Purge' button when you want to regain control");
+//      _GLaDOS.init();
+//      _Testing = true;
 //   }
 
 //    // Personal testing
@@ -171,6 +173,9 @@ function hostBtnStartOS_click(btn)
 
     //initialize the MMU
     _MMU.init();
+
+    //initialize the first hard drive
+    _HddList[0].init();
 
     // ... then set the host clock pulse ...
     _hardwareClockID = setInterval(hostClockPulse, CPU_CLOCK_INTERVAL);

@@ -141,7 +141,40 @@ var _ProgramThree = "A9 00 8D 00 00 A9 00 8D 4B 00 A9 00 8D 4B 00 A2 03 EC 4B 00
     "D0 05 A2 00 EC 00 00 D0 26 A0 4C A2 02 FF AC 4B 00 A2 01 FF A9 01 6D 4B 00 8D 4B 00 A2 02 EC 4B 00 " +
     "D0 05 A0 55 A2 02 FF A2 01 EC 00 00 D0 C5 00 00 63 6F 75 6E 74 69 6E 67 00 68 65 6C 6C 6F 20 77 6F 72 6C 64 00";
 
-//various incarnations of testing programs for individual opcodes
-//var _TestProg = "A9 A2 8D 30 00 A9 FF 8D 31 00 D0 24";
-//var _TestProg = "A9 FF 8D 30 00 EE 30 00 EE 30 00"
-//var _TestProg = "A9 41 8D 30 00 A9 42 8D 31 00 A9 43 8D 32 00 A0 30 A2 02 FF A9 EE";
+
+//an array to store logical hard drives (I'll allow for mounting/cloning disks later to allow offline hdd storage)
+var _HddList = [];
+
+//file system stuff
+var HDD_NUM_TRACKS  = 4;
+var HDD_NUM_SECTORS = 8;
+var HDD_NUM_BLOCKS  = 8;
+var HDD_BLOCK_SIZE  = 64;
+
+//this is what an empty uninitialized block looks like - fsDD should set this
+//TODO - SET THIS IN THE DRIVER!!!!
+var HDD_FILE_DEFAULT_DATA   = null;
+
+
+
+//file system meta data for mbr - these are numbers and need to be converted to strings before storing
+var HDD_MAX_BLOCKS      = HDD_NUM_TRACKS * HDD_NUM_SECTORS * HDD_NUM_BLOCKS;
+var HDD_USED_BLOCKS     = 0;
+var HDD_FREE_BLOCKS     = HDD_MAX_BLOCKS - HDD_USED_BLOCKS;
+
+
+
+
+// file system defaults
+
+//driver details
+
+//address of mbr "t.s.b"
+var HDD_MBR_ADDRESS     = "0.0.0";  //TODO SET THIS IN THE DRIVER!!!
+
+//driver details
+//key for next free slot, total blocks, used blocks, EOF
+//TODO -
+var HDD_MBR_DEFAULT_DATA     = ["0.0.1", HDD_MAX_BLOCKS.toString(), HDD_FREE_BLOCKS.toString(), "$$"];
+
+
