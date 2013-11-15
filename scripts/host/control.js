@@ -42,24 +42,25 @@ function hostInit()
     //create a hard drive
     _HddList[0] = new Hdd();
 
-    //Get a reference to the memory table for output
-    _MemoryTable = document.getElementById("taMemory");
-
-    _MemoryTable.appendChild(memoryToTable());
-
     //Get a reference to the CPU table for output
     _CpuTable = document.getElementById("taCPU");
 
     _CpuTable.appendChild(cpuToTable());
 
+    //Get a reference to the memory table for output
+    _MemoryTable = document.getElementById("taMemory");
+
+    _MemoryTable.appendChild(memoryToTable());
+
     //Get a reference to the PCB table for output
     _PcbTable = document.getElementById("taPCB");
 
-    //old version, shows the PCB contents for active thread
-    //_PcbTable.appendChild(pcbToTable());
-
-    //new version, shows the PCBs in the ready queue
+    //show the PCBs in the ready queue
     _PcbTable.appendChild(readyQueueToTable());
+
+    _FsTable = document.getElementById("taFileSystem");
+
+    _FsTable.appendChild(fileSystemToTable());
 
     _UserProgramText = document.getElementById("taProgramInput");
 

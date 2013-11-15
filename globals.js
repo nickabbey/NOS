@@ -107,6 +107,9 @@ var _CpuTable = null;
 //The PCB display in index.html
 var _PcbTable = null;
 
+//The File System display in index.html
+var _FsTable = null;
+
 //List of processes as an array
 var _NextPID = 0;
 

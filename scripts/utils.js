@@ -244,7 +244,7 @@ function cpuToTable()
     return tblBody;
 }
 
-//returns a fully populated and formatted table containing the ready queue and realted process information
+//returns a fully populated and formatted table containing the ready queue and related process information
 function readyQueueToTable()
 {
     //set up the initial table
@@ -312,29 +312,6 @@ function readyQueueToTable()
 
             //append the row to the table
             tblBody.appendChild(row);
-        }
-        else
-        {   //there isn't a thread at this index, so don't do anything
-
-//            //there isn't a thread at this index, so insert a blank line
-//            cellText = document.createTextNode(" ");
-//            cell.appendChild(cellText);
-//            row.appendChild(cell);
-//
-//            cell = document.createElement("td");
-//            cellText = document.createTextNode(" ");
-//            cell.appendChild(cellText);
-//            row.appendChild(cell);
-//
-//            cell = document.createElement("td");
-//            cellText = document.createTextNode(" ");
-//            cell.appendChild(cellText);
-//            row.appendChild(cell);
-//
-//            cell = document.createElement("td");
-//            cellText = document.createTextNode(" ");
-//            cell.appendChild(cellText);
-//            row.appendChild(cell);
         }
     }
 
@@ -497,6 +474,38 @@ function pcbToTable()
     return tblBody;
 }
 
+//TODO - Document this
+function fileSystemToTable()
+{
+    var tblBody = document.createElement("tbody");
+    var row = document.createElement("tr");
+    var cell = document.createElement("td");
+    var cellText = null;
+
+    for (var i = 0; i < sessionStorage.length; i++)
+    {
+        //reset the row and cell
+        row =  document.createElement("tr");
+        cell = document.createElement("td");
+
+        //build the row label
+        cellText = document.createTextNode(sessionStorage.key(i) + "=");
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        //build the row label
+        cellText = document.createTextNode(sessionStorage.getItem(sessionStorage.key(i)));
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+
+        tblBody.appendChild(row);
+    }
+
+    //append the row to the table
+    tblBody.appendChild(row);
+    return tblBody;
+}
+
 //for use with the <integer>.toString(16) method, to ensure that memory address strings are always size 2 , even "00"
 function formatMemoryAddress(str)
 {
@@ -520,12 +529,11 @@ function updateDisplayTables()
     _CpuTable.innerHTML = "";
     _CpuTable.appendChild(cpuToTable());
 
-    //old way shows current thread pcb
-    //refresh pcbTable
-//    _PcbTable.innerHTML = "";
-//    _PcbTable.appendChild(pcbToTable());
-
     //new way shows ready queue
     _PcbTable.innerHTML = "";
     _PcbTable.appendChild(readyQueueToTable());
+
+    //refresh file system display
+    _FsTable.innerHTML = "";
+    _FsTable.appendChild(fileSystemToTable());
 }
