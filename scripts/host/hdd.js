@@ -11,7 +11,8 @@
  *      this.spindle is a reference to localStorage containing keys for all blocks on the disk
  *      This file provides the raw virtual device and lowest level operations for modifying block contents.
  *      The driver provides an API to these low level routines.
- *      The kernel makes API calls based on commands received via the shell
+ *      The file system describes how the data is represented on the disk.
+ *      The kernel makes API calls based on commands received via the shell.
  *
  */
 
@@ -25,7 +26,7 @@ function Hdd()
     this.secotrs    = HDD_NUM_SECTORS;  //0-7
     this.blocks     = HDD_NUM_BLOCKS;   //0-7
     this.blockSize  = HDD_BLOCK_SIZE;   //0-63
-    this.mbr        = HDD_MBR_ADDRESS;  //address of the mbr
+    this.rawData    = "~~";             //represents an uninitialized block
 
     //methods
 
@@ -55,19 +56,16 @@ function Hdd()
 
     };
 
-    //Generates a default empty block for this system based on the globals for t,s,b and block size
-    //NOTE - No EOFs generated because those are fs implementation details handled by the driver (format)
+    //Creates the "physical" blocks.  Notes that these are "raw" unformatted blocks.
+    //a hard drive's initial state is "raw" or unformatted blocks, symbolized by "~~"
     this.initFileBlock = function()
     {
-        //TODO MOVE THIS TO THE DRIVER!!!!
-        //default file information  [0/1/2 = free/used/chain, tt(next), ss(next), bb(next)]
-        var val = ["00","--","--","--"];  //not much better than a magic number
-        var metaDataLength = val.length;
+        //the base array, will grow to size this.blocksize to represent an unformatted block
+        var val = [];
 
-        //build the rest of the "physical" blocks
-        for (var i = 0; i < (this.blockSize - metaDataLength); i++)
+        for (var i = 0; i < (this.blockSize); i++)
         {
-            val.push("--");
+            val.push(this.rawData);
         }
 
         return val;
@@ -95,14 +93,4 @@ function Hdd()
     {
         this.spindle.setItem(param[0], param[1]);
     };
-
-    //Clear a block of data on the spindle
-    //Param = spindle key ("t.s.b")
-    this.clearBlock = function(param)
-    {
-        //TODO - MAKE SURE DRIVER SETS HDD_FILE_DEFAULT_DATA
-        this.spindle.setItem(param, HDD_FILE_DEFAULT_DATA);
-    };
-
-    //TODO - implement functions to keep MBR up to date (next block, used, free, etc...)
 }

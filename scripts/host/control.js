@@ -178,6 +178,11 @@ function hostBtnStartOS_click(btn)
     //initialize the first hard drive
     _HddList[0].init();
 
+    //Make the file system information available to the OS
+    _FS = new Nosfs();
+    //set up the global info that the OS needs to use the FS
+    _FS.init();
+
     // ... then set the host clock pulse ...
     _hardwareClockID = setInterval(hostClockPulse, CPU_CLOCK_INTERVAL);
     //_CursorBlinkInterval = setInterval(cursorBlink, 1000);

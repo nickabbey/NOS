@@ -43,6 +43,12 @@ function krnBootstrap()      // Page 8.
     krnSoftwareInterruptDriver.driverEntry();
     krnTrace(krnSoftwareInterruptDriver.status);
 
+    //load the HDD Device Driver
+    krnTrace("Loading Hard Disk Controller");
+    krnHddDriver = new DeviceDriverSoftware();
+    krnHddDriver.driverEntry();
+    krnTrace(krnHddDriver.status);
+
    // Enable the OS Interrupts.  (Not the CPU clock interrupt, as that is done in the hardware sim.)
    krnTrace("Enabling the interrupts.");
    krnEnableInterrupts();
@@ -133,14 +139,17 @@ function krnInterruptHandler(irq, params)    // This is the Interrupt Handler Ro
     switch (irq)
     {
         case TIMER_IRQ: 
-            krnTimerISR();                   // Kernel built-in routine for timers (not the clock).
+            krnTimerISR();                  // Kernel built-in routine for timers (not the clock).
             break;
         case KEYBOARD_IRQ: 
-            krnKeyboardDriver.isr(params);   // Kernel mode device driver
+            krnKeyboardDriver.isr(params);  // Kernel mode device driver for Keyboard
             _StdIn.handleInput();
             break;
-        case SOFTWARE_IRQ:                  //  Software Interrupt (SWI) driver
+        case SOFTWARE_IRQ:                  //  Kernem mode device driver for Software Interrupts (SWI)
             krnSoftwareInterruptDriver.isr(params);
+            break;
+        case HDD_IRQ:                       //Kernel mode device driver for Hard Disk Drive
+            krnHddDriver.isr(params);
             break;
         default: 
             krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");
@@ -229,28 +238,6 @@ function krnContextSwitch()
 
         _Scheduler.resetCycles();
     }
-
-//
-//    var nextProcess = Kernel.getNextProcess();
-//
-//    Kernel.trace("Context switch: Process " + Kernel.runningProcess.pid + " -> " + nextProcess.pid);
-//
-//    // Move current process to ready queue.
-//    Kernel.runningProcess.status = "Ready";
-//    Kernel.runningProcess.lastAccessTime = _OsClock;
-//    Kernel.runningProcess.setRegisters(_CPU);
-//    Kernel.readyQueue.enqueue(Kernel.runningProcess);
-//
-//    // Dequeue next process and start execution.
-//    Kernel.runningProcess = nextProcess;
-//    nextProcess.status = "Running";
-//
-//    Kernel.memoryManager.setRelocationRegister(nextProcess);
-//    _CPU.setRegisters(nextProcess);
-//
-//    // Reset number of cycles
-//    Kernel.processCycles = 0;set number of cycles
-//    Kernel.processCycles = 0;
 }
 
 function krnRunAll() {
@@ -261,5 +248,12 @@ function krnRunAll() {
         _ReadyQueue.enqueue(_ThreadList[i]);
             _ThreadList[i].state = "READY";
         }
+    }
+
+    function krnFormatDisk(params)
+    {
+        //put an SWI on the interrupt queue to trigger a context switch
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+
     }
 }

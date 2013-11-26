@@ -356,6 +356,23 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
+        // format
+        sc = new ShellCommand();
+        sc.command = "format";
+        sc.description = "- format a hard drive";
+        sc.function = function shellFormat(params) {
+            if (params.length === 0)
+            {
+                krnFormatDisk([HDD_IRQ_CODES[0], 0]);
+            }
+            else
+            {
+                krnFormatDisk([HDD_IRQ_CODES[0], params[0]]);
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
         // Display the welcome message and initial prompt.
         _StdIn.putLine("Welcome to NOS - The turbocharged operating system!");
         this.putPrompt();
