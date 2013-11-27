@@ -12,32 +12,27 @@
 function Nosfs()
 {
     //fields
-    this.mbrDescriptor  = "NOS File System, V1";    //A way to identify the file system installed on the disk.
-    this.mbrBlockData   = "";                       //the block data version of the descriptor
-    this.mbrAddress     = "00.00.00";               //the default location of the mbr
-    this.eof            = "$$";                     //The end of file character
-    this.dirMeta        = "00.00.00.00";            //the meta data for a blank formatted directory
-    this.dirData        = "";                       //the data for a blank formatted directory aka "file name"
-    this.fileMeta       = "00.00.00.00";            //the meta data for a blank formatted file
-    this.fileData       = "";                       //the data for a blank formatted file aka "file contents"
-    this.emptyCell      = "--";                     //this is what a formatted, empty block data looks like
+    this.mbrDescriptor  = "NOS File System Version 1";  //A way to identify the file system installed on the disk.
+    this.mbrBlockData   = "";                           //the block data version of the descriptor
+    this.mbrAddress     = "0.0.0";                      //the default location of the mbr
+    this.eof            = "$";                          //The end of file character
+    this.dirData        = "";                           //the data for a blank formatted directory aka "file name"
+    this.fileMeta       = "0.0.0.0";                    //the meta data for a blank files and dirs
+    this.fileData       = "";                           //the data for a blank formatted file aka "file contents"
+    this.emptyCell      = "-";                          //this is what a formatted, empty byte looks like
 
     //MBR data section is reserved for fs info:
-    //                next free t,s,b,    max blocks,             free blocks,                file system info
+    //                next free t.s.b, max blocks, free blocks, fs descriptor info
     this.mbrData        = "";
 
-
-
     //methods
-
     this.init = function()
     {
-
         //set the fs globals
         HDD_MBR_ADDRESS = this.mbrAddress;
         HDD_MAX_BLOCKS = this.getMaxBlocks();
-        HDD_FREE_BLOCKS = this.getFreeBlocks();
-        HDD_USED_BLOCKS = this.getUsedBlocks();
+        HDD_FREE_BLOCKS = HDD_MAX_BLOCKS;       //doing getFreeBlocks() the first time is wasteful
+        HDD_USED_BLOCKS = 0;                    //doing getUsedblocks() the first time is wasteful
         FS_NEXT_FREE_BLOCK = this.mbrAddress;
         FS_META_BITS = 4;
 
@@ -45,13 +40,16 @@ function Nosfs()
         this.fileData = this.initEmptyFileBlock();
         this.dirData = this. initEmptyFileBlock();
         this.mbrBlockData = this.makeBlock(this.mbrDescriptor)[0];
-        this.mbrData = this.updateMbrData();
+        this.updateMbrData();
     };
 
     //updates the MBR data, uses the cached mbrBlockData so that the mbrBlockData isn't rebuilt every time
     this.updateMbrData = function()
     {
-        this.mbrData = FS_NEXT_FREE_BLOCK + "." + HDD_MAX_BLOCKS + "." + HDD_FREE_BLOCKS + "." + this.mbrBlockData;
+        var str = FS_NEXT_FREE_BLOCK + "." + HDD_MAX_BLOCKS + "." + HDD_FREE_BLOCKS + "." + this.mbrBlockData;
+        str = this.padBlock(str);
+
+        this.mbrData = str;
     };
 
     //finds the next available free block.  If next free block is already set, it starts there.  Otherwise, it starts
@@ -99,7 +97,8 @@ function Nosfs()
 
         //passes is incremented when the last block of the last sector of the last track is passed
         //AND when the next block has wrapped around back to the first one we looked at
-        while (!nextBlockIsFree || passes < 2)
+        outerWhile:
+        while (!nextBlockIsFree)
         {   //start at the current FS_NEXT_FREE_BLOCK + 1
 
             //loop through the tracks
@@ -116,14 +115,15 @@ function Nosfs()
                         //get the block
                         nextBlockIndicator = _HddList[0].spindle.getItem(nextAddy);
                         //look at the first 2 chars of the block
-                        nextBlockIndicator = nextBlockIndicator.slice(0,2);
+                        nextBlockIndicator = nextBlockIndicator.slice(0,1);
 
                         //is it free?
-                        if(nextBlockIndicator === "00")
+                        if(nextBlockIndicator === "0")
                         {   //if so update our retval
                             retVal = nextAddy;
                             //and break out of our loop
                             nextBlockIsFree = true;
+                            break outerWhile;
                         }
 
                         //have we visited every availlable t.s.b and looped around to our start point?
@@ -132,6 +132,10 @@ function Nosfs()
 
                             //this should only ever be done once, and will result in the retVal staying null
                             passes++;
+                        }
+                        if (passes >= 2)
+                        {
+                            break outerWhile;
                         }
                     }
                 }
@@ -145,7 +149,7 @@ function Nosfs()
             b = 1;
 
             // and we increment pass counter to guard against infinite loop (this should only ever happen once)
-            passes++;
+            passes += 1;
         }
 
         //will be null if nothing was found, or a t.s.b if something was found
@@ -183,11 +187,11 @@ function Nosfs()
                 //get the data at this block
                 testStr = _HddList[0].spindle.getItem(_HddList[0].spindle.key(i));
 
-                //focus on it's first bit
-                testStr = testStr.substr(0,2);
+                //focus on its first bit
+                testStr = testStr.substr(0,1);
 
                 //if the first bit is not zero, raw, or empty, then the block is in use
-                if (!(testStr === "00" || testStr === "~~" || testStr == "--"))
+                if (!(testStr === "0" || testStr === "~" || testStr == "-"))
                 {   // so we update the counter
                     used++;
                 }
@@ -242,14 +246,14 @@ function Nosfs()
     //creates a string that can be used in HTML5 storage to represent an empty, formatted block
     this.initEmptyFileBlock = function()
     {
-        var str = this.fileMeta + "." + "$$";
+        var str = this.fileMeta + "." + "$" + ".";
 
-        for (var i = 0; i < HDD_BLOCK_SIZE - FS_META_BITS - 1; i++) //-1 for the eof
+        for (var i = 0; i < (HDD_BLOCK_SIZE - FS_META_BITS - 1); i++) //-1 for the eof
         {
             str = str.concat(this.emptyCell + ".");
         }
         //remove the trailing "."
-        str = str.slice(0, - 1);
+        str = str.slice(0, (str.length -1));
 
         return str;
     };
@@ -276,23 +280,15 @@ function Nosfs()
             //check for strings that are too big to fit in a block
             if (str.length > (HDD_BLOCK_SIZE - FS_META_BITS - 1)) // the -1 is for the eof
             {   //string was too big to fit, so truncate it for conversion while saving overflow
-                retOverflow = str.slice(str.length - HDD_BLOCK_SIZE - FS_META_BITS - 1, str.length);
-                str = str.slice(0, HDD_BLOCK_SIZE - FS_META_BITS - 1);
+                retOverflow = str.slice((str.length - HDD_BLOCK_SIZE - FS_META_BITS - 1), str.length);
+                str = str.slice(0, (HDD_BLOCK_SIZE - FS_META_BITS - 1));
             }
 
             //loop through the string and insert "." delimiters
             for (var i = 0; i < str.length; i++)
             {
-                if (i%2 === 0)  //always generates a leading ".", and a trailing "." when str is even length
-                {
-                    retString = retString + ".";
-                    retString = retString + str[i];
-
-                }
-                else
-                {
-                    retString = retString + str[i];
-                }
+                retString = retString + ".";
+                retString = retString + str[i];
             }
 
             //remove the leading "."
@@ -303,7 +299,8 @@ function Nosfs()
             {   //add the "." if needed
                 retString = retString + ".";
             }
-            //finally, append the eof char to the string
+
+            //Append the eof char to the string
             retString = retString + this.eof;
         }
         //params are null
@@ -317,4 +314,30 @@ function Nosfs()
 
         return retVal;
     };
+
+    //takes block of length < HD_BLOCK_SIZE and pads it with empty space to fill a block
+    this.padBlock = function(param)
+    {
+        //split the input on periods
+        var inVal = param.split(".");
+        var retVal = "";
+
+        //pad the block
+        for (var i = inVal.length - 1; i < HDD_BLOCK_SIZE -1 ; i++)  //the -1 is to account for the eof char
+        {
+            inVal.push("-");
+        }
+
+        //and turn it back in to a "." delimited string (join doesn't work for some weird reason?)
+
+        for (var j = 0; j < inVal.length; j++)
+        {
+            retVal = retVal + inVal[j] + ".";
+        }
+
+        //trim the trailing "."
+        retVal = retVal.slice(0, retVal.length - 1);
+
+        return retVal;
+    }
 }

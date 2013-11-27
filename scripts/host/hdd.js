@@ -26,7 +26,7 @@ function Hdd()
     this.secotrs    = HDD_NUM_SECTORS;  //0-7
     this.blocks     = HDD_NUM_BLOCKS;   //0-7
     this.blockSize  = HDD_BLOCK_SIZE;   //0-63
-    this.rawData    = "~~";             //represents an uninitialized block
+    this.rawData    = "~";             //represents an uninitialized block
 
     //methods
 
@@ -90,7 +90,8 @@ function Hdd()
     //param[0] = spindle key ("t.s.b"), param[1] = data at key
     //NOTE - NO error checking here because the hardware needs to be FAST.  Let the driver handle error checking
     this.writeBlock = function(param)
-    {
-        this.spindle.setItem(param[0], param[1]);
+    {   //"overwrite" blocks
+
+        this.spindle.setItem(param[0],param[1]);
     };
 }

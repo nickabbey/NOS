@@ -28,12 +28,13 @@ function krnHddDriverEntry()
 //Implementation of disk I/O API
 function krnHddHandler(params)
 {
-//for reference HDD_IRQ_CODES = 0="FORMAT", 1="CREATE", 2="DELETE", 3="LIST", 4="READ", 5="WRITE"
+    //"unwrap" the parameters
+    var parameters = params[0];
+    var command         = parameters[0];    //"zeroth" arugument is always the command
+    var firstArgument   = parameters[1];    //first argument is usually the filename, exceptions listed below
+    var nextArgument    = parameters[2];    //second argument is usually the data, exceptions listed below
 
-    var command         = params[0];    //"zeroth" arugument is always the command
-    var firstArgument   = params[1];    //first argument is usually the filename, exceptions listed below
-    var nextArgument    = params[2];    //second argument is usually the data, exceptions listed below
-
+    //for reference HDD_IRQ_CODES = 0="FORMAT", 1="CREATE", 2="DELETE", 3="LIST", 4="READ", 5="WRITE"
     switch (command)
     {
         case "FORMAT":
@@ -54,8 +55,12 @@ function krnHddHandler(params)
 
                         //get the disk we're formatting by diskID
                         disk = _HddList[diskID];
+
+                        //write the mbr
+                        disk.writeBlock([FS_NEXT_FREE_BLOCK, _FS.mbrData]);
+
                         //and do that actual work of formatting
-                        for (var i = 0; i < disk.spindle.length; i++)
+                        for (var i = 1; i < disk.spindle.length; i++) //start at one to skip past the mbr
                         {
                             disk.writeBlock([sessionStorage.key(i), _FS.dirData]);
                         }
@@ -79,7 +84,11 @@ function krnHddHandler(params)
                 {   //when the default drive is there, we just format it
 
                     disk = _HddList[0];
-                    for (var i = 0; i < disk.spindle.length; i++)
+
+                    //write the mbr
+                    disk.writeBlock([FS_NEXT_FREE_BLOCK, _FS.mbrData]);
+
+                    for (var i = 1; i < disk.spindle.length; i++)  //start at 1 to skip over the mbr
                     {
                         disk.writeBlock([sessionStorage.key(i), _FS.dirData]);
                     }
@@ -91,9 +100,6 @@ function krnHddHandler(params)
                 }
             }
 
-            //format complete, write MBR
-            disk.writeBlock([FS_NEXT_FREE_BLOCK, _FS.mbrData]);
-
             //advance the next free block marker
             FS_NEXT_FREE_BLOCK = _FS.findNextFreeBlock();
 
@@ -102,6 +108,10 @@ function krnHddHandler(params)
 
             //update the mbr
             _FS.updateMbrData();
+
+            //update the MBR after
+            disk.writeBlock([_FS.mbrAddress, _FS.mbrData]);
+
             break;
 
         case "CREATE":

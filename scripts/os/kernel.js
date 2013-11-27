@@ -45,7 +45,7 @@ function krnBootstrap()      // Page 8.
 
     //load the HDD Device Driver
     krnTrace("Loading Hard Disk Controller");
-    krnHddDriver = new DeviceDriverSoftware();
+    krnHddDriver = new DeviceDriverHDD();
     krnHddDriver.driverEntry();
     krnTrace(krnHddDriver.status);
 
@@ -249,11 +249,11 @@ function krnRunAll() {
             _ThreadList[i].state = "READY";
         }
     }
+}
 
-    function krnFormatDisk(params)
-    {
-        //put an SWI on the interrupt queue to trigger a context switch
-        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+function krnFormatDisk(params)
+{
+    //put a disk I/O interrupt on the queue
+    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
 
-    }
 }
