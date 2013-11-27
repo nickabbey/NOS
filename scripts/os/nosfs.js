@@ -12,7 +12,8 @@
 function Nosfs()
 {
     //fields
-    this.mbrDescriptor  = "NOS File System, V1.0";  //A way to identify the file system installed on the disk.
+    this.mbrDescriptor  = "NOS File System, V1";    //A way to identify the file system installed on the disk.
+    this.mbrBlockData   = "";                       //the block data version of the descriptor
     this.mbrAddress     = "00.00.00";               //the default location of the mbr
     this.eof            = "$$";                     //The end of file character
     this.dirMeta        = "00.00.00.00";            //the meta data for a blank formatted directory
@@ -20,7 +21,6 @@ function Nosfs()
     this.fileMeta       = "00.00.00.00";            //the meta data for a blank formatted file
     this.fileData       = "";                       //the data for a blank formatted file aka "file contents"
     this.emptyCell      = "--";                     //this is what a formatted, empty block data looks like
-    this.nextFreeBlock  = "00.00.01";               //The first writable block of the hard drive
 
     //MBR data section is reserved for fs info:
     //                next free t,s,b,    max blocks,             free blocks,                file system info
@@ -32,22 +32,124 @@ function Nosfs()
 
     this.init = function()
     {
-        var mbrString = "";  //the initial mbrData
 
         //set the fs globals
         HDD_MBR_ADDRESS = this.mbrAddress;
         HDD_MAX_BLOCKS = this.getMaxBlocks();
         HDD_FREE_BLOCKS = this.getFreeBlocks();
         HDD_USED_BLOCKS = this.getUsedBlocks();
-        FS_NEXT_FREE_BLOCK = this.nextFreeBlock;
+        FS_NEXT_FREE_BLOCK = this.mbrAddress;
         FS_META_BITS = 4;
 
         //set the fs defaults
         this.fileData = this.initEmptyFileBlock();
         this.dirData = this. initEmptyFileBlock();
+        this.mbrBlockData = this.makeBlock(this.mbrDescriptor)[0];
+        this.mbrData = this.updateMbrData();
+    };
 
-        mbrString = this.makeBlock(this.mbrDescriptor);
-        this.mbrData = this.nextFreeBlock + "." + HDD_MAX_BLOCKS + "." + HDD_FREE_BLOCKS + "." + mbrString[0] + this.eof;
+    //updates the MBR data, uses the cached mbrBlockData so that the mbrBlockData isn't rebuilt every time
+    this.updateMbrData = function()
+    {
+        this.mbrData = FS_NEXT_FREE_BLOCK + "." + HDD_MAX_BLOCKS + "." + HDD_FREE_BLOCKS + "." + this.mbrBlockData;
+    };
+
+    //finds the next available free block.  If next free block is already set, it starts there.  Otherwise, it starts
+    //at mbr + 1 block
+    //returns a t.s.b index if a free block is found, and  null if not
+    this.findNextFreeBlock = function()
+    {
+        var retVal = null;              //initialize a return value
+        var nextAddy = "";              //the next address to look at inside the loop
+        var addyArray = [];             //for splitting FS_NEXT_FREE_BLOCK
+        var t = 0;                      //Track counter
+        var s = 0;                      //Sector counter
+        var b = 0;                      //Block counter
+        var nextBlockIndicator = "";    //the first byte in a block, tells if the block is free or not
+        var nextBlockIsFree = false;    //while loop control
+        var passes = 0;                 //while loop backup control
+        var startAddy = "";             //while loop bakcup control
+
+        //First, we need to know if already had a free block pointer
+        if (FS_NEXT_FREE_BLOCK)
+        {   //if we did, then break it down in to t.s.b for the loop
+
+            addyArray = FS_NEXT_FREE_BLOCK.split(".");
+            t = addyArray[0];
+            s = addyArray[1];
+            b = addyArray[2];
+
+        }
+        //We didn't have a free block, so we start at the beginning
+        else
+        {   //start by looking at the mbr (note that the b is incremented after this block so we don't risk overwriting the mbr)
+
+            FS_NEXT_FREE_BLOCK = this.mbrAddress;
+            addyArray = FS_NEXT_FREE_BLOCK.split(".");
+            t = addyArray[0];
+            s = addyArray[1];
+            b = addyArray[2];
+        }
+
+        //we need to know which t.s.b we started at so we don't waste time in the while loop
+        startAddy = t + "." + s + "." + b;
+
+        //increment b to be sure that we don't overwrite the mbr or look at the current address in FS_NEXT_FREE_BLOCK
+        b++;
+
+        //passes is incremented when the last block of the last sector of the last track is passed
+        //AND when the next block has wrapped around back to the first one we looked at
+        while (!nextBlockIsFree || passes < 2)
+        {   //start at the current FS_NEXT_FREE_BLOCK + 1
+
+            //loop through the tracks
+            for (t; t < HDD_NUM_TRACKS; t++)
+            {
+                //loop through the sectors
+                for(s; s < HDD_NUM_SECTORS; s++)
+                {
+                    //loop through the blocks
+                    for (b; b < HDD_NUM_BLOCKS; b++)
+                    {
+                        //for each block, we get it's full t.s.b address
+                        nextAddy = t + "." + s + "." + b;
+                        //get the block
+                        nextBlockIndicator = _HddList[0].spindle.getItem(nextAddy);
+                        //look at the first 2 chars of the block
+                        nextBlockIndicator = nextBlockIndicator.slice(0,2);
+
+                        //is it free?
+                        if(nextBlockIndicator === "00")
+                        {   //if so update our retval
+                            retVal = nextAddy;
+                            //and break out of our loop
+                            nextBlockIsFree = true;
+                        }
+
+                        //have we visited every availlable t.s.b and looped around to our start point?
+                        if(nextAddy === startAddy)
+                        {   //if so, then update passes again
+
+                            //this should only ever be done once, and will result in the retVal staying null
+                            passes++;
+                        }
+                    }
+                }
+            }
+            // if we've gotten this far, the first pass of the while loop (from the initial state of FS_NEXT_FREE_BLOCK
+            // through the last t.s.b address) failed to find a free block and we need to start at the beginning again
+
+            //so we reset the t.s.b (to the mbr + 1)
+            t = 0;
+            s = 0;
+            b = 1;
+
+            // and we increment pass counter to guard against infinite loop (this should only ever happen once)
+            passes++;
+        }
+
+        //will be null if nothing was found, or a t.s.b if something was found
+        return retVal;
     };
 
     //determines the number of total blocks available to the system
@@ -55,13 +157,11 @@ function Nosfs()
     //Supports maximum of 65,535 blocks (0000 - FFFF)
     this.getMaxBlocks = function()
     {
-        // 0-6535 as integer
-        var total = HDD_NUM_TRACKS * HDD_NUM_SECTORS * HDD_NUM_BLOCKS * HDD_BLOCK_SIZE;
-        //"0000" - "FFFF"
-        var retVal = parseInt(total, 16).toString();
+        // 0-256 as integer
+        var total = (HDD_NUM_TRACKS * HDD_NUM_SECTORS * HDD_NUM_BLOCKS) - 1; //-1 to make it 0-255 instead of 0-256
+        //"00" - "FF"
+        return total.toString(16);
 
-        //"00.00" to "FF.FF"
-        return retVal.substring(0, 1) + "." + retVal.substring(3);
     };
 
     //determines used blocks by reading the mbr or counting if mbr isn't initialized
@@ -81,13 +181,13 @@ function Nosfs()
             for(var i = 0; i < _HddList[0].spindle.length; i++)
             {
                 //get the data at this block
-                testStr = _HddList[0].spindle.getItem(i);
+                testStr = _HddList[0].spindle.getItem(_HddList[0].spindle.key(i));
 
                 //focus on it's first bit
                 testStr = testStr.substr(0,2);
 
-                //if the first bit is not zero, then the block is in use
-                if (testStr != "00")
+                //if the first bit is not zero, raw, or empty, then the block is in use
+                if (!(testStr === "00" || testStr === "~~" || testStr == "--"))
                 {   // so we update the counter
                     used++;
                 }
@@ -98,13 +198,11 @@ function Nosfs()
         {   //so we just translate the hex
 
             used = HDD_USED_BLOCKS;
-            used = used.substr(0,1) + used.substr(3,4);
             used = parseInt(used, 16);
         }
 
-        //and translate the integer to 4 digit hex string split by a "."
+        //and translate the integer to hex
         used = used.toString(16);
-        used = used.substr(0,1) + "." + used.substr(2,3);
 
         return used;
     };
@@ -124,7 +222,6 @@ function Nosfs()
         }
 
         max = HDD_MAX_BLOCKS;
-        max = max.substr(0,1) + max.substr(3,4);
         max = parseInt(max,16);
 
         if (!HDD_USED_BLOCKS)
@@ -133,13 +230,11 @@ function Nosfs()
         }
 
         used = HDD_USED_BLOCKS;
-        used = used.substr(0,1) + used.substr(3,4);
         used = parseInt(used,16);
 
         free = max - used;
 
         free = free.toString(16);
-        free = free.substr(0,1) + "." + free.substr(2,3);
 
         return free;
     };
@@ -147,9 +242,9 @@ function Nosfs()
     //creates a string that can be used in HTML5 storage to represent an empty, formatted block
     this.initEmptyFileBlock = function()
     {
-        var str = this.fileMeta;
+        var str = this.fileMeta + "." + "$$";
 
-        for (var i = 0; i < HDD_BLOCK_SIZE - FS_META_BITS; i++)
+        for (var i = 0; i < HDD_BLOCK_SIZE - FS_META_BITS - 1; i++) //-1 for the eof
         {
             str = str.concat(this.emptyCell + ".");
         }
@@ -157,8 +252,6 @@ function Nosfs()
         str = str.slice(0, - 1);
 
         return str;
-
-
     };
 
     /* Convert a string to block data
@@ -171,35 +264,57 @@ function Nosfs()
     */
     this.makeBlock = function(param)
     {
-        var str = param[0];
-        var retVal = "";
+        var str         = param;
+        var retString   = "";
+        var retOverflow = null;
+        var retVal      = [retString, retOverflow];
 
         //test for null or zero length string
-        if (str || str.length > 0)
-        {   //valid parameter
+        if (str && str.length != 0)
+        {   //valid parameter of length > 0
 
-            //check
+            //check for strings that are too big to fit in a block
+            if (str.length > (HDD_BLOCK_SIZE - FS_META_BITS - 1)) // the -1 is for the eof
+            {   //string was too big to fit, so truncate it for conversion while saving overflow
+                retOverflow = str.slice(str.length - HDD_BLOCK_SIZE - FS_META_BITS - 1, str.length);
+                str = str.slice(0, HDD_BLOCK_SIZE - FS_META_BITS - 1);
+            }
 
+            //loop through the string and insert "." delimiters
             for (var i = 0; i < str.length; i++)
             {
-                retVal = retVal.concat(str[i]);
-                if (i%2 === 0)
+                if (i%2 === 0)  //always generates a leading ".", and a trailing "." when str is even length
                 {
-                    retVal = retVal.concat(".");
+                    retString = retString + ".";
+                    retString = retString + str[i];
+
+                }
+                else
+                {
+                    retString = retString + str[i];
                 }
             }
-            //remove the trailing "."
-            retVal = retVal.slice(0, - 1);
 
+            //remove the leading "."
+            retString = retString.slice(1,retString.length);
+
+            //check to see if the last character is a "."
+            if (retString[retString.length-1] != ".")
+            {   //add the "." if needed
+                retString = retString + ".";
+            }
+            //finally, append the eof char to the string
+            retString = retString + this.eof;
         }
+        //params are null
         else
-        {//invalid parameter, return an empty block
-            retVal = this.fileData;
-
+        { //no string was given
+            retString = this.fileData;
         }
 
+        retVal[0] = retString;
+        retVal[1] = retOverflow;    //null when the string fits in the block
 
+        return retVal;
     };
-
-
 }

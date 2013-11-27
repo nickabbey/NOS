@@ -91,7 +91,19 @@ function krnHddHandler(params)
                 }
             }
 
+            //format complete, write MBR
+            disk.writeBlock([FS_NEXT_FREE_BLOCK, _FS.mbrData]);
+
+            //advance the next free block marker
+            FS_NEXT_FREE_BLOCK = _FS.findNextFreeBlock();
+
+            //update the free block count
+            HDD_USED_BLOCKS = _FS.getFreeBlocks();
+
+            //update the mbr
+            _FS.updateMbrData();
             break;
+
         case "CREATE":
             break;
         case "DELETE":
