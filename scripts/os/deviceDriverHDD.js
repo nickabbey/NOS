@@ -26,6 +26,7 @@ function krnHddDriverEntry()
 }
 
 //Implementation of disk I/O API
+//arguments passed in as params must be guaranteed by sender (null is an ok param)
 function krnHddHandler(params)
 {
     //"unwrap" the parameters
@@ -38,6 +39,7 @@ function krnHddHandler(params)
     switch (command)
     {
         case "FORMAT":
+        {
             var diskID = firstArgument;
             var disk = null;
 
@@ -51,13 +53,13 @@ function krnHddHandler(params)
 
                     //so we look to see if it's out of bounds
                     if(diskID < _HddList.length)
-                    {   //and if that's true then we actually perform the format
+                    {   //if it's a good ID, then we actually perform the format
 
                         //get the disk we're formatting by diskID
                         disk = _HddList[diskID];
 
                         //write the mbr
-                        disk.writeBlock([FS_NEXT_FREE_BLOCK, _FS.mbrData]);
+                        disk.writeBlock([FS_NEXT_FREE_DATA_BLOCK, _FS.mbrData]);
 
                         //and do that actual work of formatting
                         for (var i = 1; i < disk.spindle.length; i++) //start at one to skip past the mbr
@@ -86,7 +88,7 @@ function krnHddHandler(params)
                     disk = _HddList[0];
 
                     //write the mbr
-                    disk.writeBlock([FS_NEXT_FREE_BLOCK, _FS.mbrData]);
+                    disk.writeBlock([FS_NEXT_FREE_DATA_BLOCK, _FS.mbrData]);
 
                     for (var i = 1; i < disk.spindle.length; i++)  //start at 1 to skip over the mbr
                     {
@@ -100,11 +102,17 @@ function krnHddHandler(params)
                 }
             }
 
-            //advance the next free block marker
-            FS_NEXT_FREE_BLOCK = _FS.findNextFreeBlock();
+            //advance the next free data block marker
+            FS_NEXT_FREE_DATA_BLOCK = _FS.firstDataAddy;
 
-            //update the free block count
-            HDD_USED_BLOCKS = _FS.getFreeBlocks();
+            //advance the next free fat block marker
+            FS_NEXT_FREE_FAT_BLOCK = _FS.firstFatAddy;
+
+            //update the free data block count
+            HDD_USED_DATA_BLOCKS = _FS.getFreeDataBlocks();
+
+            //update the free fat block count
+            HDD_USED_FAT_BLOCKS = _FS.getFreeFatBlocks();
 
             //update the mbr
             _FS.updateMbrData();
@@ -112,9 +120,155 @@ function krnHddHandler(params)
             //update the MBR after
             disk.writeBlock([_FS.mbrAddress, _FS.mbrData]);
 
+        }  //case is contained in a block for ide formatting
             break;
 
         case "CREATE":
+        {
+            var filename = firstArgument;
+            var validFilename = true;
+            var file = null;
+            var diskID = nextArgument;
+            var disk = null;
+
+            //was a filename specified?
+            if (filename)
+            {   //if it was then we set the target filename
+
+                //first make sure the filename is a string
+                if (typeof filename === "string")
+                {   //when we have a valid string argument, we need to look for invalid chars
+
+                    //first things first, is the string too long?
+                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS - 1)
+                    {   //filename is too long to fit in the fat table
+
+                        //so it's invalid
+                        validFilename = false;
+                    }
+                    //when the length is ok, we need to check for invalid characters
+                    else
+                    {
+                    //for each character in the filename, check if it is a forbidden character
+                    for (var i = 0; i < filename.length-1; i++)
+                        {   //if this char is forbidden, update validFilename
+                            if (_FS.invalidChars.contains(filename[i]))
+                                {
+                                    validFilename = false;
+                                }
+                            }
+                    }
+                    //by the time we get here, we know for sure if the filename is valid or not
+                }
+                //when the filename isn't a string, notify the user
+                else
+                {   //tell the user that they gave bad input for the filename
+                    hostLog(this + "file creation failed, invalid argument: filename not a string");
+                }
+
+            }
+            else
+            //filename was not given
+            {   //tell the user that they forgot to give a filename argument
+                hostLog(this +"file creation failed, missing argument: filename");
+            }
+
+            //was a disk ID specified?
+            if (diskID)
+            {   //if it was then that's the disk we format
+
+                //first make sure the diskID is a valid number
+                if (typeof diskID === "number")
+                {   //if it is, then we need to make sure it's a valid diskID
+
+                    //so we look to see if it's out of bounds
+                    if(diskID < _HddList.length)
+                    {   //when it is in bounds we actually perform the format
+
+                        //target disk is now set for writing
+                        disk = _HddList[diskID];
+                    }
+                    else
+                    {   //when it's out of bounds, we tell the user
+                        hostLog(this + "file creation failed, invalid argument: diskID out of bounds");
+                    }
+                }
+                else
+                {   //or if the diskID was not a number, the user needs to know
+                    hostLog(this +"file creation failed, invalid argument: diskID not a number");
+                }
+            }
+            //when a disk ID wasn't specified  - alan's test scripts will do this
+            else
+            {   //first we look to see if the default disk exists
+                if(_HddList[0])
+                {   //when the default drive is there, we just set it to the target
+
+                    //target disk is now set for writing
+                    disk = _HddList[0];
+                }
+                //if it doesn't, then the user needs to know
+                else
+                {
+                    hostLog(this + "format failed, disk not present");
+                }
+            }
+
+            //if we got good arguments
+            if (validFilename && disk)
+            {   //then check for free space
+
+                //start by finding the next available block
+                var targetBlock = FS_NEXT_FREE_DATA_BLOCK;
+
+                //so long as we have one, we can write
+                if (targetBlock)
+                {  //prep for write
+
+                    //start buy building the dir block
+                    var blockData = _FS.makeDirBlock(["1." + FS_NEXT_FREE_DATA_BLOCK, filename]);
+
+                    //now write the block to the mbr
+                    disk.writeBlock()
+
+                    //and create the file block
+
+                    //now write the file block
+
+                    //and update the MBR info
+
+                    //advance the next free block marker
+                    FS_NEXT_FREE_DATA_BLOCK = _FS.findNextFreeDataBlock();
+
+                    //update the free block count
+                    HDD_USED_DATA_BLOCKS = _FS.getFreeDataBlocks();
+
+                    //update the mbr
+                    _FS.updateMbrData();
+
+                    //update the MBR after
+                    disk.writeBlock([_FS.mbrAddress, _FS.mbrData]);
+                }
+                //but if we don't, then we're out of space.
+                else
+                {   //so let the user know
+                    krnTrace(this + "Insufficient free space to write this file.");
+                    //TODO - check this, may need a better way to exit this routing
+                    //this break is meant to take us out of the if (validFilename && disk) block
+                    break;
+                }
+            }
+            //when we didn't get a valid filename
+            else if (!validFilename)
+            {
+                krnTrace(this + "File create failed, invalid filename: " + parameters[1].toString());
+            }
+            //when we encounter any kind of disk error
+            else if (!disk)
+            {
+                krnTrace(this + "File creation failed, Disk " + params[2].toString(16) + " not ready");
+            }
+        }
             break;
         case "DELETE":
             break;

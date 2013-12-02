@@ -314,10 +314,12 @@ function Shell()
         sc.command = "step";
         sc.description = "- enable single step operation for a process";
         sc.function = function shellStep() {
+            //TODO needs to be reworked now that the scheduler is implemented
             //simulate the action of checking/unchecking the single step box
-            document.getElementById('chkStep').checked = !(document.getElementById('chkStep').checked);
-            //call the host routine that does the actual work
-            hostChkStep();
+//            document.getElementById('chkStep').checked = !(document.getElementById('chkStep').checked);
+//            //call the host routine that does the actual work
+//            hostChkStep();
+            _StdIn.putLine("Stepping feature disabled.");
         };
 
         this.commandList[this.commandList.length] = sc;
@@ -368,6 +370,31 @@ function Shell()
             else
             {
                 krnFormatDisk([HDD_IRQ_CODES[0], params[0]]);
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // create
+        sc = new ShellCommand();
+        sc.command = "create";
+        sc.description = "<string> (<string>) - creates file named '<string>' (on diskID <string>.)";
+        sc.function = function shellFormat(params) {
+            //was the minimum requirement of a ilename given?
+            if (params.length === 0)
+            {   //when it's not, tell the user
+                _StdIn.putLine("please specify a filename (and optional disk id.)");
+            }
+            //was a filename given without a disk id?
+            else if (params.length ===1)
+            {  //when it was, pad the parameters for the kernel routine with a null at index 2
+                var newParameters = [params[0],params[1], null];
+                krnCreateFile([HDD_IRQ_CODES[1],newParameters]);
+            }
+            //otherwise, a full set of params was given
+            else
+            {   //so just pass them along to the driver
+                krnCreateFile([HDD_IRQ_CODES[1], params[0]]);
             }
         };
 

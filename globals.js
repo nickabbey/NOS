@@ -174,13 +174,18 @@ var HDD_FILE_DEFAULT_DATA   = null;
 
 //file system meta data for mbr - hex values as strings from 00 to (tracks*sectors*block*blocksize === 16384)
 //this requires 2 blocks to store hex values from 0000 to FFFF or "00.00" to "FF.FF"
-var HDD_MAX_BLOCKS      = null;
-var HDD_USED_BLOCKS     = null;
-var HDD_FREE_BLOCKS     = null;
+var HDD_MAX_DATA_BLOCKS     = null;
+var HDD_USED_DATA_BLOCKS    = null;
+var HDD_FREE_DATA_BLOCKS    = null;
+
+var HDD_MAX_FAT_BLOCKS      = null;
+var HDD_USED_FAT_BLOCKS     = null;
+var HDD_FREE_FAT_BLOCKS     = null;
 
 //number of bits reserved for file metadata
 var FS_META_BITS        = null; //number of bits used to store fs metadata
-var FS_NEXT_FREE_BLOCK  = null; //tsb address of the next free block
+var FS_NEXT_FREE_DATA_BLOCK  = null; //tsb address of the next free block for data
+var FS_NEXT_FREE_FAT_BLOCK  = null; //tsb address of the next free block for file information
 
 
 
