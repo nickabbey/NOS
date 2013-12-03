@@ -91,9 +91,9 @@ function hostInit()
 //    // Personal testing
 //    if (typeof _GLaDNOS === "function")
 //    {
-//        _GLaDNOS = new GladNos();
-//        _GLaDNOS.init();
-//        _Testing = true;
+        _GLaDNOS = new GladNos();
+        _GLaDNOS.init();
+        _Testing = true;
 //    }
 
     //stepping options should not be selectable until start is clicked

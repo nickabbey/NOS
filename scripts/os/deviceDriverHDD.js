@@ -59,12 +59,12 @@ function krnHddHandler(params)
                         disk = _HddList[diskID];
 
                         //write the mbr
-                        disk.writeBlock([FS_NEXT_FREE_DATA_BLOCK, _FS.mbrData]);
+                        disk.writeBlock(FS_NEXT_FREE_DATA_BLOCK, _FS.mbrBlockData);
 
                         //and do that actual work of formatting
                         for (var i = 1; i < disk.spindle.length; i++) //start at one to skip past the mbr
                         {
-                            disk.writeBlock([sessionStorage.key(i), _FS.dirData]);
+                            disk.writeBlock(sessionStorage.key(i), _FS.emptyDirData);
                         }
                     }
                     //if the disk id given is not valid, the user needs to know
@@ -88,11 +88,11 @@ function krnHddHandler(params)
                     disk = _HddList[0];
 
                     //write the mbr
-                    disk.writeBlock([FS_NEXT_FREE_DATA_BLOCK, _FS.mbrData]);
+                    disk.writeBlock(FS_NEXT_FREE_DATA_BLOCK, _FS.mbrBlockData);
 
                     for (var i = 1; i < disk.spindle.length; i++)  //start at 1 to skip over the mbr
                     {
-                        disk.writeBlock([sessionStorage.key(i), _FS.dirData]);
+                        disk.writeBlock(sessionStorage.key(i), _FS.emptyDirData);
                     }
                 }
                 //if it doesn't, then the user needs to know
@@ -115,10 +115,10 @@ function krnHddHandler(params)
             HDD_USED_FAT_BLOCKS = _FS.getFreeFatBlocks();
 
             //update the mbr
-            _FS.updateMbrData();
+            _FS.mbrBlockData = _FS.getMbrBlockData();
 
             //update the MBR after
-            disk.writeBlock([_FS.mbrAddress, _FS.mbrData]);
+            disk.writeBlock(_FS.mbrAddress, _FS.mbrBlockData);
 
         }  //case is contained in a block for ide formatting
             break;
@@ -140,7 +140,7 @@ function krnHddHandler(params)
                 {   //when we have a valid string argument, we need to look for invalid chars
 
                     //first things first, is the string too long?
-                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS - 1)
+                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS)
                     {   //filename is too long to fit in the fat table
 
                         //so it's invalid
@@ -226,23 +226,43 @@ function krnHddHandler(params)
                 if (targetDataBlock)
                 {  //prep for write
 
-                    //start by building the dir block
-                    var blockData = _FS.makeDirBlock(["1." + FS_NEXT_FREE_DATA_BLOCK, filename]);
+                    //start by building the fat block metadata
+                    var dirBlockMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FAT_BLOCK);
 
-                    //now write the block to the mbr
-                    disk.writeBlock([FS_NEXT_FREE_FAT_BLOCK, blockData]);
+                    //then the actual fat block data
+                    var dirBlockData = _FS.makeDirBlock(filename);
 
-                    //advance the next free block marker
+                    //now get a fat block
+
+                    //now write the full directory block to the FAT
+                    disk.writeBlock(FS_NEXT_FREE_FAT_BLOCK, dirBlockMeta + "." + dirBlockData);
+
+                    //next build the file meta data
+                    var fileBlockMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_DATA_BLOCK);
+
+                    //then the file data
+                    //TODO - FIX THIS FOR MULTIBLOCK FILES!!!
+                    var blockFileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
+
+                    //and write the data to the next free tsb
+                    disk.writeBlock(FS_NEXT_FREE_DATA_BLOCK, fileBlockMeta + "." + blockFileData);
+
+                    //advance the next free fat block marker
+                    FS_NEXT_FREE_FAT_BLOCK = _FS.findNextFreeFatBlock();
+
+                    //advance the next free data block marker
                     FS_NEXT_FREE_DATA_BLOCK = _FS.findNextFreeDataBlock();
 
                     //update the free block count
                     HDD_USED_DATA_BLOCKS = _FS.getFreeDataBlocks();
 
                     //update the mbr
-                    _FS.updateMbrData();
+                    _FS.mbrBlockData = _FS.getMbrBlockData();
 
                     //update the MBR after
-                    disk.writeBlock([_FS.mbrAddress, _FS.mbrData]);
+                    disk.writeBlock(_FS.mbrAddress, _FS.mbrBlockData);
+
+                    krnTrace(this + "File created");
                 }
                 //but if we don't, then we're out of space.
                 else

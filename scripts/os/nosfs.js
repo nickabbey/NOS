@@ -11,30 +11,33 @@
 
 function Nosfs()
 {
-    //fields
-    this.mbrDescriptor  = "NOS FS V1";                  //A way to identify the file system installed on the disk.
-    this.mbrBlockData   = "";                           //the block data version of the descriptor
-    this.mbrAddress     = "0.0.0";                      //the default location of the mbr
-    this.eof            = "$";                          //The end of file character
-    this.dirData        = "";                           //the data for a blank formatted directory aka "file name"
-    this.fileMeta       = "0.0.0.0";                    //the meta data for a blank files and dirs
-    this.fileData       = "";                           //the data for a blank formatted file aka "file contents"
-    this.emptyCell      = "-";                          //this is what a formatted, empty byte looks like
-    this.invalidChars   = ["$"];                        //these chars are forbidden from appearing in file names
-    this.firstDataAddy  = "";                           //the very first tsb address that can contain data
-    this.firstFatAddy   = "";                           //the very first tsb address that can contain file info
+    //file system metadata constants
+    this.mbrDescriptor  = "NOS FS V1";  //A way to identify the file system installed on the disk.
+    this.mbrAddress     = "0.0.0";      //the default location of the mbr
+    this.emptyCell      = "-";          //this is what a formatted, empty byte looks like
+    this.freeBlock      = "0";          //first bit 0 = free block
+    this.usedBlock      = "1";          //first bit 1 = used block, 1 file in 1 block
+    this.freeBlock      = "0";          //first bit 0 = free block
+    this.chainedBlock   = "2";          //first bit 2 = used block, 1 file in many blocks
+    this.eof            = "$";          //The end of file character
+    this.invalidChars   = [this.eof,    //these chars are forbidden from appearing in file names
+                           ""];
 
-    //MBR data section is reserved for fs info:
-    //                next free t.s.b, max blocks, free blocks, fs descriptor info
-    this.mbrData        = "";
+    //fields
+    this.emptyFileData      = "";       //the data for a blank formatted file aka "file contents"
+    this.emptyDirData       = "";       //the data for a blank formatted directory aka "file name"
+    this.firstDataAddy      = "";       //the very first tsb address that can contain data
+    this.firstFatAddy       = "";       //the very first tsb address that can contain file info
+    this.mbrDescriptorBlock = "";       //the block data version of the descriptor
+    this.mbrBlockData       = "";       //look at this.updateMbrData for info
 
     //methods
     this.init = function()
     {
         //Set the defaults for this file system
-        this.fileData = this.initEmptyFileBlock();
-        this.dirData = this. initEmptyFileBlock();
-        this.mbrBlockData = this.makeDataBlock(this.mbrDescriptor)[0];
+        this.emptyFileData = this.initEmptyFileBlock();
+        this.emptyDirData = this. initEmptyFileBlock();
+        this.mbrDescriptorBlock = this.dotify(this.mbrDescriptor);
         this.firstFatAddy = this.getFirstFatAddress();
         this.firstDataAddy = this.getFirstDataAddress();
 
@@ -50,25 +53,25 @@ function Nosfs()
         HDD_USED_DATA_BLOCKS = 0;                       //doing getUsedDataBlocks() the first time is wasteful
 
         //File sytsem globals
-        FS_META_BITS = 4;                               //number of bits required for fs metadata
+        FS_META_BITS = 5;                               //number of bits required for fs metadata = mask.t.s.b.eof
         FS_NEXT_FREE_FAT_BLOCK = this.mbrAddress;       //next block for a filename
         FS_NEXT_FREE_DATA_BLOCK = this.firstDataAddy;   //next block for file data
 
         //finalize the mbr default state
-        this.updateMbrData();
+        this.mbrBlockData = this.getMbrBlockData();
     };
 
-    //updates the MBR data, uses the cached mbrBlockData so that the mbrBlockData isn't rebuilt every time
-    //NO RETURN - The driver is expected to update this.mbrData() using this routine prior to writing the updated mbr
-    this.updateMbrData = function()
+    //updates the MBR data, uses the cached mbrDescriptorBlock so that the mbrDescriptorBlock isn't rebuilt every time
+    //returns a block suitable for the disk driver to write directly to the mbr.
+    this.getMbrBlockData = function()
     {
         var str =
-            FS_NEXT_FREE_FAT_BLOCK  + "." + HDD_MAX_FAT_BLOCKS  + "." + HDD_FREE_FAT_BLOCKS  + "." +
-                FS_NEXT_FREE_DATA_BLOCK + "." + HDD_MAX_DATA_BLOCKS + "." + HDD_FREE_DATA_BLOCKS + "." +
-                this.mbrBlockData;
+            FS_NEXT_FREE_FAT_BLOCK  + "." + this.dotify(HDD_MAX_FAT_BLOCKS)  + "." + this.dotify(HDD_FREE_FAT_BLOCKS) + "." +
+            FS_NEXT_FREE_DATA_BLOCK + "." + this.dotify(HDD_MAX_DATA_BLOCKS) + "." + this.dotify(HDD_FREE_DATA_BLOCKS) + "." +
+            this.mbrDescriptorBlock + "." + this.eof;
         str = this.padBlock(str);
 
-        this.mbrData = str;
+        return str;
     };
 
     //returns the first usable data address
@@ -481,9 +484,9 @@ function Nosfs()
     //creates a string that can be used in HTML5 storage to represent an empty, formatted block
     this.initEmptyFileBlock = function()
     {
-        var str = this.fileMeta + "." + "$" + ".";
+        var str = this.freeBlock + "." + this.mbrAddress + "." + this.eof;
 
-        for (var i = 0; i < (HDD_BLOCK_SIZE - FS_META_BITS - 1); i++) //-1 for the eof
+        for (var i = 0; i < (HDD_BLOCK_SIZE - FS_META_BITS); i++)
         {
             str = str.concat(this.emptyCell + ".");
         }
@@ -501,78 +504,85 @@ function Nosfs()
     vetVal[1] = null when param[0].length < block length
     vetVal[1] = remainder of truncated param[0]
     */
-    this.makeDataBlock = function(param)
+//    this.makeDataBlock = function(param)
+    this.makeDataBlock = function(source)
     {
-        var str         = param;
-        var retString   = "";
-        var retOverflow = null;
-        var retVal      = [retString, retOverflow];
+        var numBlocks = (source.length -1) % (HDD_BLOCK_SIZE - FS_META_BITS);
+        var blocks = [];
 
-        //test for null or zero length string
-        if (str && str.length != 0)
-        {   //valid parameter of length > 0
-
-            //check for strings that are too big to fit in a block
-            if (str.length > (HDD_BLOCK_SIZE - FS_META_BITS - 1)) // the -1 is for the eof
-            {   //string was too big to fit, so truncate it for conversion while saving overflow
-                retOverflow = str.slice((str.length - HDD_BLOCK_SIZE - FS_META_BITS - 1), str.length);
-                str = str.slice(0, (HDD_BLOCK_SIZE - FS_META_BITS - 1));
-            }
-
-            //loop through the string and insert "." delimiters
-            for (var i = 0; i < str.length; i++)
-            {
-                retString = retString + ".";
-                retString = retString + str[i];
-            }
-
-            //remove the leading "."
-            retString = retString.slice(1,retString.length);
-
-            //check to see if the last character is a "."
-            if (retString[retString.length-1] != ".")
-            {   //add the "." if needed
-                retString = retString + ".";
-            }
-
-            //Append the eof char to the string
-            retString = retString + this.eof;
-        }
-        //params are null
-        else
-        { //no string was given
-            retString = this.fileData;
-        }
-
-        retVal[0] = retString;
-        retVal[1] = retOverflow;    //null when the string fits in the block
-
-        return retVal;
-    };
-
-    this.blocks = [];
-
-    this.blockify = function(str)
-    {
-        if (str.length > maxBlockLength)
+        for (var i = 0; i < numBlocks; i++)
         {
-            this.blocks.push(str.substring(0,4));
-            this.blockify(str.substring(5, str.length-1));
         }
-        else
-        {
-            this.blocks.push(this.pad(str.substring(0,str.length-1)));
-        }
-    };
-
-    this.pad = function(str)
-    {
-        var retVal = str;
-        for (var i = str.length; i < HDD_BLOCK_SIZE - FS_META_BITS; i++)
-        {
-            retVal = retVal + ".-";
-        }
-            return retVal;
+//        var str         = param;
+//        var retString   = "";
+//        var retOverflow = null;
+//        var retVal      = [retString, retOverflow];
+//
+//        //test for null or zero length string
+//        if (str && str.length != 0)
+//        {   //valid parameter of length > 0
+//
+//            //check for strings that are too big to fit in a block
+//            if (str.length > (HDD_BLOCK_SIZE - FS_META_BITS))
+//            {   //string was too big to fit, so truncate it for conversion while saving overflow
+//                retOverflow = str.slice((str.length - HDD_BLOCK_SIZE - FS_META_BITS), str.length);
+//                str = str.slice(0, (HDD_BLOCK_SIZE - FS_META_BITS));
+//            }
+//
+//            //loop through the string and insert "." delimiters
+//            for (var i = 0; i < str.length; i++)
+//            {
+//                retString = retString + ".";
+//                retString = retString + str[i];
+//            }
+//
+//            //remove the leading "."
+//            retString = retString.slice(1,retString.length);
+//
+//            //check to see if the last character is a "."
+//            if (retString[retString.length-1] != ".")
+//            {   //add the "." if needed
+//                retString = retString + ".";
+//            }
+//
+//            //Append the eof char to the string
+//            retString = retString + this.eof;
+//        }
+//        //params are null
+//        else
+//        { //no string was given
+//            retString = this.emptyFileData;
+//        }
+//
+//        retVal[0] = retString;
+//        retVal[1] = retOverflow;    //null when the string fits in the block
+//
+//        return retVal;
+//    };
+//
+//    this.blocks = [];
+//
+//    this.blockify = function(str)
+//    {
+//        if (str.length > maxBlockLength)
+//        {
+//            this.blocks.push(str.substring(0,4));
+//            this.blockify(str.substring(5, str.length-1));
+//        }
+//        else
+//        {
+//            this.blocks.push(this.pad(str.substring(0,str.length-1)));
+//        }
+//    };
+//
+//    this.pad = function(str)
+//    {
+//        var retVal = str;
+//        for (var i = str.length; i < HDD_BLOCK_SIZE - FS_META_BITS; i++)
+//        {
+//            retVal = retVal + ".-";
+//        }
+//            return retVal;
     };
 
     //takes a string, returns a string with periods between each character
@@ -589,15 +599,15 @@ function Nosfs()
      */
     this.makeDirBlock = function(param)
     {
-        var meta        = param[0];
-        var str         = param[1];
-        var retString   = "";
+        var str = param + this.eof;
 
-        str = this.dotify(str);
+        var retString   = null;
+        if (str.length < HDD_BLOCK_SIZE + FS_META_BITS)
+        {
+            str = this.dotify(str);
+            retString = this.padBlock(str);
+        }
 
-        retString = meta + "." + str + "." + "$";
-
-        retString = this.pad(retString);
 
         return retString;
 
@@ -632,29 +642,35 @@ function Nosfs()
 //        return retString;
     };
 
-    //takes block of length < HD_BLOCK_SIZE and pads it with empty space to fill a block
+    //takse a block and pads it to fit inside a block
     this.padBlock = function(param)
     {
-        //split the input on periods
+        //split the input on periods (because blocks are always dotified
         var inVal = param.split(".");
         var retVal = "";
 
         //pad the block
-        for (var i = inVal.length - 1; i < HDD_BLOCK_SIZE -1 ; i++)  //the -1 is to account for the eof char
+        for (var i = inVal.length; i < HDD_BLOCK_SIZE; i++)
         {
             inVal.push("-");
         }
 
         //and turn it back in to a "." delimited string (join doesn't work for some weird reason?)
-
-        for (var j = 0; j < inVal.length; j++)
-        {
-            retVal = retVal + inVal[j] + ".";
-        }
-
-        //trim the trailing "."
-        retVal = retVal.slice(0, retVal.length - 1);
+        //TODO try to make string.join work here
+        retVal = inVal.join(".");
+//        for (var j = 0; j < inVal.length; j++)
+//        {
+//            retVal = retVal + inVal[j] + ".";
+//        }
+//
+//        //trim the trailing "."
+//        retVal = retVal.slice(0, retVal.length - 1);
 
         return retVal;
     }
+
+    this.makeMetaData = function(mask, address)
+    {
+        return mask.toString(16) + "." + address;
+    };
 }

@@ -21,35 +21,56 @@ function GladNos() {
     this.afterStartup = function() {
 
         _UserProgramText.value = _ProgramOne;
-//        _UserProgramText.value = _TestingProg;
 
-         // Execute the 'load' and 'run' commands.
-         _KernelInputQueue.enqueue('l');
-         _KernelInputQueue.enqueue('o');
-         _KernelInputQueue.enqueue('a');
-         _KernelInputQueue.enqueue('d');
-         krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
-
-        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('f');
         _KernelInputQueue.enqueue('o');
-        _KernelInputQueue.enqueue('a');
-        _KernelInputQueue.enqueue('d');
-        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
-
-        _KernelInputQueue.enqueue('l');
-        _KernelInputQueue.enqueue('o');
-        _KernelInputQueue.enqueue('a');
-        _KernelInputQueue.enqueue('d');
-        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
-
-        // Execute the 'load' and 'run' commands.
         _KernelInputQueue.enqueue('r');
-        _KernelInputQueue.enqueue('u');
-        _KernelInputQueue.enqueue('n');
+        _KernelInputQueue.enqueue('m');
         _KernelInputQueue.enqueue('a');
-        _KernelInputQueue.enqueue('l');
-        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('t');
         krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+        _KernelInputQueue.enqueue('c');
+        _KernelInputQueue.enqueue('r');
+        _KernelInputQueue.enqueue('e');
+        _KernelInputQueue.enqueue('a');
+        _KernelInputQueue.enqueue('t');
+        _KernelInputQueue.enqueue('e');
+        _KernelInputQueue.enqueue(' ');
+        _KernelInputQueue.enqueue('n');
+        _KernelInputQueue.enqueue('i');
+        _KernelInputQueue.enqueue('c');
+        _KernelInputQueue.enqueue('k');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
+        _UserProgramText.value = _TestingProg;
+
+//         // Execute the 'load' and 'run' commands.
+//         _KernelInputQueue.enqueue('l');
+//         _KernelInputQueue.enqueue('o');
+//         _KernelInputQueue.enqueue('a');
+//         _KernelInputQueue.enqueue('d');
+//         krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+//
+//        _KernelInputQueue.enqueue('l');
+//        _KernelInputQueue.enqueue('o');
+//        _KernelInputQueue.enqueue('a');
+//        _KernelInputQueue.enqueue('d');
+//        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+//
+//        _KernelInputQueue.enqueue('l');
+//        _KernelInputQueue.enqueue('o');
+//        _KernelInputQueue.enqueue('a');
+//        _KernelInputQueue.enqueue('d');
+//        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+//
+//        // Execute the 'load' and 'run' commands.
+//        _KernelInputQueue.enqueue('r');
+//        _KernelInputQueue.enqueue('u');
+//        _KernelInputQueue.enqueue('n');
+//        _KernelInputQueue.enqueue('a');
+//        _KernelInputQueue.enqueue('l');
+//        _KernelInputQueue.enqueue('l');
+//        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
 
 //        //turn on single step and update the display appropriately
