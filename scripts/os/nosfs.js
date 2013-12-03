@@ -25,22 +25,22 @@ function Nosfs()
                            ""];
 
     //fields
-    this.emptyFileData      = "";       //the data for a blank formatted file aka "file contents"
-    this.emptyDirData       = "";       //the data for a blank formatted directory aka "file name"
-    this.firstDataAddy      = "";       //the very first tsb address that can contain data
-    this.firstFatAddy       = "";       //the very first tsb address that can contain file info
-    this.mbrDescriptorBlock = "";       //the block data version of the descriptor
+    this.emptyFatBlock      = "";       //Formatted, empty block valid for writing to FAT or file
+    //this.emptyFileBlock     = "";       //this.emptyFileBlock === this.emptyFatBlock
+    this.firstFileAddy      = "";       //the very first tsb address that can contain File data
+    this.firstFatAddy       = "";       //the very first tsb address that can contain FAT info
+    this.mbrDescriptorBlock = "";       //the block data version of the mbr descriptor
     this.mbrBlockData       = "";       //look at this.updateMbrData for info
+    this.isFree             = true;     //false when an operation is in progress.
 
     //methods
     this.init = function()
     {
         //Set the defaults for this file system
-        this.emptyFileData = this.initEmptyFileBlock();
-        this.emptyDirData = this. initEmptyFileBlock();
+        this.emptyFatBlock = this. initEmptyFatBlock();
         this.mbrDescriptorBlock = this.dotify(this.mbrDescriptor);
         this.firstFatAddy = this.getFirstFatAddress();
-        this.firstDataAddy = this.getFirstDataAddress();
+        this.firstFileAddy = this.getFirstFileAddress();
 
         //Set up the OS globals for use with this file system
         HDD_MBR_ADDRESS = this.mbrAddress;
@@ -49,14 +49,14 @@ function Nosfs()
         HDD_FREE_FAT_BLOCKS = HDD_MAX_FAT_BLOCKS;       //doing getFreeFatBlocks() the first time is wasteful
         HDD_USED_FAT_BLOCKS = 0;                        //doing getUsedFatBlocks() the first time is wasteful
         //File metadata setup
-        HDD_MAX_DATA_BLOCKS = this.getMaxDataBlocks();
-        HDD_FREE_DATA_BLOCKS = HDD_MAX_DATA_BLOCKS;     //doing getFreeDataBlocks() the first time is wasteful
-        HDD_USED_DATA_BLOCKS = 0;                       //doing getUsedDataBlocks() the first time is wasteful
+        HDD_MAX_FILE_BLOCKS = this.getMaxFileBlocks();
+        HDD_FREE_FILE_BLOCKS = HDD_MAX_FILE_BLOCKS;     //doing getFreeFileBlocks() the first time is wasteful
+        HDD_USED_FILE_BLOCKS = 0;                       //doing getUsedFileBlocks() the first time is wasteful
 
         //File sytsem globals
         FS_META_BITS = 5;                               //number of bits required for fs metadata = mask.t.s.b.eof
         FS_NEXT_FREE_FAT_BLOCK = this.mbrAddress;       //next block for a filename
-        FS_NEXT_FREE_DATA_BLOCK = this.firstDataAddy;   //next block for file data
+        FS_NEXT_FREE_FILE_BLOCK = this.firstFileAddy;   //next block for file data
 
         //finalize the mbr default state
         this.mbrBlockData = this.getMbrBlockData();
@@ -67,7 +67,7 @@ function Nosfs()
     {
         var str =
             FS_NEXT_FREE_FAT_BLOCK  + "." + this.dotify(HDD_MAX_FAT_BLOCKS)  + "." + this.dotify(HDD_FREE_FAT_BLOCKS) + "." +
-            FS_NEXT_FREE_DATA_BLOCK + "." + this.dotify(HDD_MAX_DATA_BLOCKS) + "." + this.dotify(HDD_FREE_DATA_BLOCKS) + "." +
+            FS_NEXT_FREE_FILE_BLOCK + "." + this.dotify(HDD_MAX_FILE_BLOCKS) + "." + this.dotify(HDD_FREE_FILE_BLOCKS) + "." +
             this.mbrDescriptorBlock + "." + this.eof;
         str = this.padBlock(str);
 
@@ -88,7 +88,7 @@ function Nosfs()
 
     //returns the first address available for use as file data
     //with the default hdd tsb, that is tsb === 100
-    this.getFirstDataAddress = function()
+    this.getFirstFileAddress = function()
     {
         //the first usable data address is the first block of the first sector of the second track
         var t = HDD_NUM_TRACKS - HDD_NUM_TRACKS + 1;
@@ -106,7 +106,7 @@ function Nosfs()
 
         var retVal = null;              //initialize a return value
         var nextAddy = "";              //the next address to look at inside the loop
-        var addyArray = [];             //for splitting FS_NEXT_FREE_DATA_BLOCK
+        var addyArray = [];             //for splitting FS_NEXT_FREE_FILE_BLOCK
         var t = 0;                      //Track counter
         var s = 0;                      //Sector counter
         var b = 0;                      //Block counter
@@ -142,7 +142,7 @@ function Nosfs()
         //AND when the next block has wrapped around back to the first one we looked at
         outerWhile:
             while (!nextBlockIsFree)
-            {   //start at the current FS_NEXT_FREE_DATA_BLOCK + 1
+            {   //start at the current FS_NEXT_FREE_FILE_BLOCK + 1
 
                 //loop through the tracks
                 for (t; t < HDD_NUM_TRACKS; t++)
@@ -186,7 +186,7 @@ function Nosfs()
                         }
                     }
                 }
-                // if we've gotten this far, the first pass of the while loop (from the initial state of FS_NEXT_FREE_DATA_BLOCK
+                // if we've gotten this far, the first pass of the while loop (from the initial state of FS_NEXT_FREE_FILE_BLOCK
                 // through the last t.s.b address) failed to find a free block and we need to start at the beginning again
 
                 //so we reset the t.s.b (to the first data address + 1)
@@ -205,12 +205,12 @@ function Nosfs()
     //returns the next available free block for use as file block
     //If next free block is already set, it starts there.  Otherwise, it starts at mbr + 1 block
     //returns a t.s.b index if a free block is found, and  null if not
-    this.getNextFreeDataBlock = function()
+    this.getNextFreeFileBlock = function()
     {   //TODO - fix the nested loop escape ugliness - probably by breaking loops out to functions
 
         var retVal = null;              //initialize a return value
         var nextAddy = "";              //the next address to look at inside the loop
-        var addyArray = [];             //for splitting FS_NEXT_FREE_DATA_BLOCK
+        var addyArray = [];             //for splitting FS_NEXT_FREE_FILE_BLOCK
         var t = 0;                      //Track counter
         var s = 0;                      //Sector counter
         var b = 0;                      //Block counter
@@ -220,10 +220,10 @@ function Nosfs()
         var startAddy = "";             //while loop backup control
 
         //First, we need to know if already had a free block pointer
-        if (FS_NEXT_FREE_DATA_BLOCK)
+        if (FS_NEXT_FREE_FILE_BLOCK)
         {   //if we did, then break it down in to t.s.b for the loop
 
-            addyArray = FS_NEXT_FREE_DATA_BLOCK.split(".");
+            addyArray = FS_NEXT_FREE_FILE_BLOCK.split(".");
             t = addyArray[0];
             s = addyArray[1];
             b = addyArray[2];
@@ -233,7 +233,7 @@ function Nosfs()
         else
         {   //start by looking at the mbr (note that the b is incremented after this block so we don't risk overwriting the mbr)
 
-            FS_NEXT_FREE_DATA_BLOCK = this.firstDataAddy;
+            FS_NEXT_FREE_FILE_BLOCK = this.firstFileAddy;
             addyArray = FS_NEXT_FREE_BLOCK.split(".");
             t = addyArray[0];
             s = addyArray[1];
@@ -243,14 +243,14 @@ function Nosfs()
         //we need to know which t.s.b we started at so we don't waste time in the while loop
         startAddy = t + "." + s + "." + b;
 
-        //increment b to be sure that we don't overwrite the mbr or look at the current address in FS_NEXT_FREE_DATA_BLOCK
+        //increment b to be sure that we don't overwrite the mbr or look at the current address in FS_NEXT_FREE_FILE_BLOCK
         b++;
 
         //passes is incremented when the last block of the last sector of the last track is passed
         //AND when the next block has wrapped around back to the first one we looked at
         outerWhile:
         while (!nextBlockIsFree)
-        {   //start at the current FS_NEXT_FREE_DATA_BLOCK + 1
+        {   //start at the current FS_NEXT_FREE_FILE_BLOCK + 1
 
             //loop through the tracks
             for (t; t < HDD_NUM_TRACKS; t++)
@@ -294,7 +294,7 @@ function Nosfs()
                     }
                 }
             }
-            // if we've gotten this far, the first pass of the while loop (from the initial state of FS_NEXT_FREE_DATA_BLOCK
+            // if we've gotten this far, the first pass of the while loop (from the initial state of FS_NEXT_FREE_FILE_BLOCK
             // through the last t.s.b address) failed to find a free block and we need to start at the beginning again
 
             //so we reset the t.s.b (to the first data address + 1)
@@ -327,7 +327,7 @@ function Nosfs()
     //returns the number of total blocks available to the system for file data
     //this implementation uses 3 tracks for Data, giving a max of 192 blocks
     //so returns from this function should be BF, or 191.
-    this.getMaxDataBlocks = function()
+    this.getMaxFileBlocks = function()
     {
         // 0-191 as integer, first -1 is to account for fat track, second -1 is to adjust for 0 based indexing
         var total = ((HDD_NUM_TRACKS - 1) * HDD_NUM_SECTORS * HDD_NUM_BLOCKS) - 1;
@@ -339,8 +339,7 @@ function Nosfs()
 
     };
 
-    //returns the number of blocks in use for FAT data as a hex value lower than or equal to HDD_MAX_DATA_BLOCKS
-    //TODO - This breaks down when free blocks are under 16, because toString returns 0-f instead of 00-0f
+    //returns the number of blocks in use for FAT data as a hex value lower than or equal to HDD_MAX_FILE_BLOCKS
     this.getUsedFatBlocks = function()
     {
         var used = null;
@@ -379,17 +378,16 @@ function Nosfs()
         //and translate the integer to hex
         used = used.toString(16);
 
-        return used;
+        return formatMemoryAddress(used);
     };
 
-    //returns the number of blocks in use for file data as a hex value lower than or equal to HDD_MAX_DATA_BLOCKS
-    //TODO - This breaks down when free blocks are under 16, because toString returns 0-f instead of 00-0f
-    this.getUsedDataBlocks = function()
+    //returns the number of blocks in use for file data as a hex value lower than or equal to HDD_MAX_FILE_BLOCKS
+    this.getUsedFileBlocks = function()
     {
         var used = null;
 
         //Do we already know our Used blocks?
-        if (!HDD_USED_DATA_BLOCKS)
+        if (!HDD_USED_FILE_BLOCKS)
         {   //if not, we need to count
 
             var testStr = null; //we're going to need to hold the value for a block to see if it's free or not
@@ -415,18 +413,17 @@ function Nosfs()
         else
         {   //so we just translate the hex
 
-            used = HDD_USED_DATA_BLOCKS;
+            used = HDD_USED_FILE_BLOCKS;
             used = parseInt(used, 16);
         }
 
         //and translate the integer to hex
         used = used.toString(16);
 
-        return used;
+        return formatMemoryAddress(used);
     };
 
-    //returns the free Fat blocks as a hex value lower than or equal to HDD_MAX_DATA_BLOCKS
-    //TODO - This breaks down when free blocks are under 16, because toString returns 0-f instead of 00-0f
+    //returns the free Fat blocks as a hex value lower than or equal to HDD_MAX_FILE_BLOCKS
     this.getFreeFatBlocks = function()
     {
         var max = null;
@@ -453,48 +450,44 @@ function Nosfs()
 
         free = free.toString(16);
 
-        return free;
+        return formatMemoryAddress(free);
     };
 
-    //returns the free Data blocks as a hex value lower than or equal to HDD_MAX_DATA_BLOCKS
-    //TODO - This breaks down when free blocks are under 16, because toString returns 0-f instead of 00-0f
-    this.getFreeDataBlocks = function()
+    //returns the free Data blocks as a hex value lower than or equal to HDD_MAX_FILE_BLOCKS
+    this.getFreeFileBlocks = function()
     {
         var max = null;
         var used = null;
         var free = null;
 
-        if (!HDD_MAX_DATA_BLOCKS)
+        if (!HDD_MAX_FILE_BLOCKS)
         {
-            HDD_MAX_DATA_BLOCKS = this.getMaxDataBlocks();
+            HDD_MAX_FILE_BLOCKS = this.getMaxFileBlocks();
         }
 
-        max = HDD_MAX_DATA_BLOCKS;
+        max = HDD_MAX_FILE_BLOCKS;
         max = parseInt(max,16);
 
-        if (!HDD_USED_DATA_BLOCKS)
+        if (!HDD_USED_FILE_BLOCKS)
         {
-             HDD_USED_DATA_BLOCKS = this.getUsedDataBlocks();
+             HDD_USED_FILE_BLOCKS = this.getUsedFileBlocks();
         }
 
-        used = HDD_USED_DATA_BLOCKS;
+        used = HDD_USED_FILE_BLOCKS;
         used = parseInt(used,16);
 
         free = max - used;
 
         free = free.toString(16);
 
-        return free;
+        return formatMemoryAddress(free);
     };
 
     //returns an uninitialized block (mainly used for formatting)
     //NOTE: an empty file block === an empty FAT block
-    this.initEmptyFileBlock = function()
+    this.initEmptyFatBlock = function()
     {
-        var str = this.freeBlock + "." + this.mbrAddress + "." + this.eof;
-        str = this.padBlock(str);
-
-        return str;
+        return this.makeMetaData(this.freeBlock, this.mbrAddress) + "." + this.makeDirBlock("");
     };
 
     //Returns a string that is ready to be be prepended to block data
@@ -505,19 +498,19 @@ function Nosfs()
         return mask.toString(16) + "." + address;
     };
 
-    //Return an array of strings that may be used in a data block
+    //Return an array of strings that may be written to data blocks (aka file blocks)
     //param is a string that may be > HDD_BLOCK_SIZE - FS_META_BITS
     //NOTE: prepend metadata before writing
     //TODO - GET THIS WORKING!!!
-    this.makeDataBlock = function(source)
+    this.makeFileBlock = function(source)
     {
         var numBlocks = (source.length -1) % (HDD_BLOCK_SIZE - FS_META_BITS);
         var blocks = [];
     };
 
-    //Return a single string that may be used in a FAT block
-    //Param is a string
-    //NOTE: prepend metadata before writing
+    //Return directory block data (aka file names)
+    //Param is a string, must be less than HDD_BLOCK_SIZE + FS_META_BITS in length
+    //NOTE: Metadata has no place here, just a file name as a string
     //TODO - HANDLE FILE NAME TOO LONG
     this.makeDirBlock = function(param)
     {
@@ -538,6 +531,13 @@ function Nosfs()
     {
         var source = str.split(""); //split on every character
         return source.join(".");    //join with "." separator
+    };
+
+    //strips the dots from a string
+    this.undotify = function(str)
+    {
+        var source = str.split("."); //split on every "." character
+        return source.join("");    //join with empty string (comma is default)
     };
 
     //returns a dotified, padded block that may be used as either file or FAT data

@@ -174,9 +174,9 @@ var HDD_FILE_DEFAULT_DATA   = null;
 
 //file system meta data for mbr - hex values as strings from 00 to (tracks*sectors*block*blocksize === 16384)
 //this requires 2 blocks to store hex values from 0000 to FFFF or "00.00" to "FF.FF"
-var HDD_MAX_DATA_BLOCKS     = null;
-var HDD_USED_DATA_BLOCKS    = null;
-var HDD_FREE_DATA_BLOCKS    = null;
+var HDD_MAX_FILE_BLOCKS     = null;
+var HDD_USED_FILE_BLOCKS    = null;
+var HDD_FREE_FILE_BLOCKS    = null;
 
 var HDD_MAX_FAT_BLOCKS      = null;
 var HDD_USED_FAT_BLOCKS     = null;
@@ -184,22 +184,11 @@ var HDD_FREE_FAT_BLOCKS     = null;
 
 //number of bits reserved for file metadata
 var FS_META_BITS        = null; //number of bits used to store fs metadata
-var FS_NEXT_FREE_DATA_BLOCK  = null; //tsb address of the next free block for data
+var FS_NEXT_FREE_FILE_BLOCK  = null; //tsb address of the next free block for data
 var FS_NEXT_FREE_FAT_BLOCK  = null; //tsb address of the next free block for file information
 
-
-
-
-// file system defaults
-
-//driver details
-
 //address of mbr "t.s.b"
-var HDD_MBR_ADDRESS     = null;  //TODO SET THIS IN THE DRIVER!!!
+var HDD_MBR_ADDRESS     = null;  //tsb address of the main boot record, specified by file system driver init routine
 
-//driver details
-//key for next free slot, total blocks, used blocks, EOF
-//TODO -
-var HDD_MBR_DEFAULT_DATA     = null;
 
 

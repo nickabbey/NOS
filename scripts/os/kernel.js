@@ -223,7 +223,7 @@ function krnContextSwitch()
     }
     else
     {
-        krnTrace(this + "Moving process " + _CurrentThread.pid + " out of ready queue.")
+        krnTrace(this + "Moving process " + _CurrentThread.pid + " out of ready queue.");
         _CurrentThread.state = "READY";
         _CurrentThread.update();
 
@@ -231,7 +231,7 @@ function krnContextSwitch()
 
         _CurrentThread = _ReadyQueue.dequeue();
 
-        krnTrace(this + "Moving process " + _CurrentThread.pid + " in to ready queue.")
+        krnTrace(this + "Moving process " + _CurrentThread.pid + " in to ready queue.");
         _CurrentThread.state = "RUNNING";
 
         _CPU.update(_CurrentThread);

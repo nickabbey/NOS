@@ -39,7 +39,11 @@ function krnHddHandler(params)
     switch (command)
     {
         case "FORMAT":
+        //LOCKS THE FILE SYSTEM!
         {
+            //lock access to the file system
+            _FS.isFree = false;
+
             var diskID = firstArgument;
             var disk = null;
 
@@ -59,12 +63,12 @@ function krnHddHandler(params)
                         disk = _HddList[diskID];
 
                         //write the mbr
-                        disk.writeBlock(FS_NEXT_FREE_DATA_BLOCK, _FS.mbrBlockData);
+                        disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, _FS.mbrBlockData);
 
                         //and do that actual work of formatting
                         for (var i = 1; i < disk.spindle.length; i++) //start at one to skip past the mbr
                         {
-                            disk.writeBlock(sessionStorage.key(i), _FS.emptyDirData);
+                            disk.writeBlock(sessionStorage.key(i), _FS.emptyFatBlock);
                         }
                     }
                     //if the disk id given is not valid, the user needs to know
@@ -88,11 +92,11 @@ function krnHddHandler(params)
                     disk = _HddList[0];
 
                     //write the mbr
-                    disk.writeBlock(FS_NEXT_FREE_DATA_BLOCK, _FS.mbrBlockData);
+                    disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, _FS.mbrBlockData);
 
                     for (var i = 1; i < disk.spindle.length; i++)  //start at 1 to skip over the mbr
                     {
-                        disk.writeBlock(sessionStorage.key(i), _FS.emptyDirData);
+                        disk.writeBlock(sessionStorage.key(i), _FS.emptyFatBlock);
                     }
                 }
                 //if it doesn't, then the user needs to know
@@ -103,13 +107,13 @@ function krnHddHandler(params)
             }
 
             //advance the next free data block marker
-            FS_NEXT_FREE_DATA_BLOCK = _FS.firstDataAddy;
+            FS_NEXT_FREE_FILE_BLOCK = _FS.firstFileAddy;
 
             //advance the next free fat block marker
             FS_NEXT_FREE_FAT_BLOCK = _FS.firstFatAddy;
 
             //update the free data block count
-            HDD_USED_DATA_BLOCKS = _FS.getFreeDataBlocks();
+            HDD_USED_FILE_BLOCKS = _FS.getFreeFileBlocks();
 
             //update the free fat block count
             HDD_USED_FAT_BLOCKS = _FS.getFreeFatBlocks();
@@ -120,11 +124,18 @@ function krnHddHandler(params)
             //update the MBR after
             disk.writeBlock(_FS.mbrAddress, _FS.mbrBlockData);
 
-        }  //case is contained in a block for ide formatting
+            //release the FS
+            _FS.isFree = true;
+        }
             break;
 
         case "CREATE":
+        //LOCKS THE FILE SYSTEM!
         {
+
+            //lock access to the file system\
+            _FS.isFree = false;
+
             var filename = firstArgument;
             var validFilename = true;
             var file = null;
@@ -219,40 +230,37 @@ function krnHddHandler(params)
             if (validFilename && disk)
             {   //then check for free space
 
-                //start by finding the next available block
-                var targetDataBlock = FS_NEXT_FREE_DATA_BLOCK;
-
-                //so long as we have one, we can write
-                if (targetDataBlock)
-                {  //prep for write
+                //Do we have free space?
+                if (FS_NEXT_FREE_FILE_BLOCK)
+                {  // we have everything we need to write
 
                     //start by building the fat metadata
-                    var dirBlockMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_DATA_BLOCK);
+                    var fatMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FILE_BLOCK);
 
                     //then the actual fat block data
-                    var dirBlockData = _FS.makeDirBlock(filename);
+                    var fatData = _FS.makeDirBlock(filename);
 
-                    //now write the dirBlockData to the next free FAT block
-                    disk.writeBlock(FS_NEXT_FREE_FAT_BLOCK, dirBlockMeta + "." + dirBlockData);
+                    //now write the fatData to the next free FAT block
+                    disk.writeBlock(FS_NEXT_FREE_FAT_BLOCK, fatMeta + "." + fatData);
 
                     //next build the file meta data
-                    var fileBlockMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_DATA_BLOCK);
+                    var fileMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FAT_BLOCK);
 
                     //and build the file block data
-                    var blockFileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
+                    var fileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
 
-                    //now write the blockFileData to the next free data block
-                    disk.writeBlock(FS_NEXT_FREE_DATA_BLOCK, fileBlockMeta + "." + blockFileData);
+                    //now write the fileData to the next free file block
+                    disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, fileMeta + "." + fileData);
 
                     //advance markers
                     FS_NEXT_FREE_FAT_BLOCK = _FS.getNextFreeFatBlock();
-                    FS_NEXT_FREE_DATA_BLOCK = _FS.getNextFreeDataBlock();
+                    FS_NEXT_FREE_FILE_BLOCK = _FS.getNextFreeFileBlock();
 
                     //update file system statistics
-                    HDD_USED_DATA_BLOCKS = _FS.getUsedDataBlocks();
+                    HDD_USED_FILE_BLOCKS = _FS.getUsedFileBlocks();
                     HDD_USED_FAT_BLOCKS  = _FS.getUsedFatBlocks();
-                    HDD_FREE_DATA_BLOCKS = _FS.getFreeDataBlocks()
-                    HDD_FREE_FAT_BLOCKS  = _FS.getFreeFatBlocks()
+                    HDD_FREE_FILE_BLOCKS = _FS.getFreeFileBlocks();
+                    HDD_FREE_FAT_BLOCKS  = _FS.getFreeFatBlocks();
 
                     //TODO - the next 2 lines might belong in the kernel on clock pulses, or outside this case block
                     //update the mbr block data
@@ -282,8 +290,12 @@ function krnHddHandler(params)
             {
                 krnTrace(this + "File creation failed, Disk " + params[2].toString(16) + " not ready");
             }
+
+            //release the FS
+            _FS.isFree = true;
         }
             break;
+
         case "DELETE":
             break;
         case "LIST":
