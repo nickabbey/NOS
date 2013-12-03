@@ -226,40 +226,39 @@ function krnHddHandler(params)
                 if (targetDataBlock)
                 {  //prep for write
 
-                    //start by building the fat block metadata
-                    var dirBlockMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FAT_BLOCK);
+                    //start by building the fat metadata
+                    var dirBlockMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_DATA_BLOCK);
 
                     //then the actual fat block data
                     var dirBlockData = _FS.makeDirBlock(filename);
 
-                    //now get a fat block
-
-                    //now write the full directory block to the FAT
+                    //now write the dirBlockData to the next free FAT block
                     disk.writeBlock(FS_NEXT_FREE_FAT_BLOCK, dirBlockMeta + "." + dirBlockData);
 
                     //next build the file meta data
                     var fileBlockMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_DATA_BLOCK);
 
-                    //then the file data
-                    //TODO - FIX THIS FOR MULTIBLOCK FILES!!!
+                    //and build the file block data
                     var blockFileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
 
-                    //and write the data to the next free tsb
+                    //now write the blockFileData to the next free data block
                     disk.writeBlock(FS_NEXT_FREE_DATA_BLOCK, fileBlockMeta + "." + blockFileData);
 
-                    //advance the next free fat block marker
-                    FS_NEXT_FREE_FAT_BLOCK = _FS.findNextFreeFatBlock();
+                    //advance markers
+                    FS_NEXT_FREE_FAT_BLOCK = _FS.getNextFreeFatBlock();
+                    FS_NEXT_FREE_DATA_BLOCK = _FS.getNextFreeDataBlock();
 
-                    //advance the next free data block marker
-                    FS_NEXT_FREE_DATA_BLOCK = _FS.findNextFreeDataBlock();
+                    //update file system statistics
+                    HDD_USED_DATA_BLOCKS = _FS.getUsedDataBlocks();
+                    HDD_USED_FAT_BLOCKS  = _FS.getUsedFatBlocks();
+                    HDD_FREE_DATA_BLOCKS = _FS.getFreeDataBlocks()
+                    HDD_FREE_FAT_BLOCKS  = _FS.getFreeFatBlocks()
 
-                    //update the free block count
-                    HDD_USED_DATA_BLOCKS = _FS.getFreeDataBlocks();
-
-                    //update the mbr
+                    //TODO - the next 2 lines might belong in the kernel on clock pulses, or outside this case block
+                    //update the mbr block data
                     _FS.mbrBlockData = _FS.getMbrBlockData();
 
-                    //update the MBR after
+                    //write the updated mbr block data
                     disk.writeBlock(_FS.mbrAddress, _FS.mbrBlockData);
 
                     krnTrace(this + "File created");
@@ -268,7 +267,7 @@ function krnHddHandler(params)
                 else
                 {   //so let the user know
                     krnTrace(this + "Insufficient free space to write this file.");
-                    //TODO - check this, may need a better way to exit this routing
+                    //TODO - check this, may need a better way to exit this routine
                     //this break is meant to take us out of the if (validFilename && disk) block
                     break;
                 }
