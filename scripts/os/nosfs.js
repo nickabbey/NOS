@@ -31,22 +31,44 @@ function Nosfs()
     //methods
     this.init = function()
     {
-        //set the fs defaults
+        //Set the defaults for this file system
         this.fileData = this.initEmptyFileBlock();
         this.dirData = this. initEmptyFileBlock();
         this.mbrBlockData = this.makeDataBlock(this.mbrDescriptor)[0];
-        this.updateMbrData();
-        this.firstDataAddy = this.getFirstDataAddress();
         this.firstFatAddy = this.getFirstFatAddress();
+        this.firstDataAddy = this.getFirstDataAddress();
 
-        //set the fs globals
+        //Set up the OS globals for use with this file system
         HDD_MBR_ADDRESS = this.mbrAddress;
+        //Fat metadata setup
+        HDD_MAX_FAT_BLOCKS = this.getMaxFatBlocks();
+        HDD_FREE_FAT_BLOCKS = HDD_MAX_FAT_BLOCKS;       //doing getFreeFatBlocks() the first time is wasteful
+        HDD_USED_FAT_BLOCKS = 0;                        //doing getUsedFatBlocks() the first time is wasteful
+        //File metadata setup
         HDD_MAX_DATA_BLOCKS = this.getMaxDataBlocks();
         HDD_FREE_DATA_BLOCKS = HDD_MAX_DATA_BLOCKS;     //doing getFreeDataBlocks() the first time is wasteful
-        HDD_USED_DATA_BLOCKS = 0;                       //doing getUsedblocks() the first time is wasteful
+        HDD_USED_DATA_BLOCKS = 0;                       //doing getUsedDataBlocks() the first time is wasteful
+
+        //File sytsem globals
         FS_META_BITS = 4;                               //number of bits required for fs metadata
         FS_NEXT_FREE_FAT_BLOCK = this.mbrAddress;       //next block for a filename
         FS_NEXT_FREE_DATA_BLOCK = this.firstDataAddy;   //next block for file data
+
+        //finalize the mbr default state
+        this.updateMbrData();
+    };
+
+    //updates the MBR data, uses the cached mbrBlockData so that the mbrBlockData isn't rebuilt every time
+    //NO RETURN - The driver is expected to update this.mbrData() using this routine prior to writing the updated mbr
+    this.updateMbrData = function()
+    {
+        var str =
+            FS_NEXT_FREE_FAT_BLOCK  + "." + HDD_MAX_FAT_BLOCKS  + "." + HDD_FREE_FAT_BLOCKS  + "." +
+                FS_NEXT_FREE_DATA_BLOCK + "." + HDD_MAX_DATA_BLOCKS + "." + HDD_FREE_DATA_BLOCKS + "." +
+                this.mbrBlockData;
+        str = this.padBlock(str);
+
+        this.mbrData = str;
     };
 
     //returns the first usable data address
@@ -59,7 +81,7 @@ function Nosfs()
         var s = HDD_NUM_SECTORS - HDD_NUM_SECTORS;
         var b = HDD_NUM_BLOCKS - HDD_NUM_BLOCKS;
 
-        return t.toString(16) + "." + s.toString(16) + "." + b.toString(16) + ".";
+        return t.toString(16) + "." + s.toString(16) + "." + b.toString(16);
     };
 
 
@@ -71,19 +93,7 @@ function Nosfs()
         var s = HDD_NUM_SECTORS - HDD_NUM_SECTORS;
         var b = HDD_NUM_BLOCKS - HDD_NUM_BLOCKS + 1;
 
-        return t.toString(16) + "." + s.toString(16) + "." + b.toString(16) + ".";
-    };
-
-    //updates the MBR data, uses the cached mbrBlockData so that the mbrBlockData isn't rebuilt every time
-    this.updateMbrData = function()
-    {
-        var str =
-            FS_NEXT_FREE_FAT_BLOCK  + "." + HDD_MAX_FAT_BLOCKS  + "." + HDD_FREE_FAT_BLOCKS  + "." +
-            FS_NEXT_FREE_DATA_BLOCK + "." + HDD_MAX_DATA_BLOCKS + "." + HDD_FREE_DATA_BLOCKS + "." +
-            this.mbrBlockData;
-        str = this.padBlock(str);
-
-        this.mbrData = str;
+        return t.toString(16) + "." + s.toString(16) + "." + b.toString(16);
     };
 
     //finds the next available free block.  If next free block is already set, it starts there.  Otherwise, it starts
@@ -540,6 +550,38 @@ function Nosfs()
         return retVal;
     };
 
+    this.blocks = [];
+
+    this.blockify = function(str)
+    {
+        if (str.length > maxBlockLength)
+        {
+            this.blocks.push(str.substring(0,4));
+            this.blockify(str.substring(5, str.length-1));
+        }
+        else
+        {
+            this.blocks.push(this.pad(str.substring(0,str.length-1)));
+        }
+    };
+
+    this.pad = function(str)
+    {
+        var retVal = str;
+        for (var i = str.length; i < HDD_BLOCK_SIZE - FS_META_BITS; i++)
+        {
+            retVal = retVal + ".-";
+        }
+            return retVal;
+    };
+
+    //takes a string, returns a string with periods between each character
+    this.dotify = function(str)
+    {
+        var source = str.split(""); //split on every character
+        return source.join(".");    //join with "." separator
+    };
+
     /* Make a directory block
      Param is an array containing a block address at index 0 and a filename at index 1
      sender is responsible for verifying parameters
@@ -551,31 +593,43 @@ function Nosfs()
         var str         = param[1];
         var retString   = "";
 
-        //first concatenate the metadata for the file and the string itself
-        str = meta + str;
+        str = this.dotify(str);
 
-        //loop through the string and insert "." delimiters
-        for (var i = 0; i < str.length; i++)
-        {
-            retString = retString + ".";
-            retString = retString + str[i];
-        }
+        retString = meta + "." + str + "." + "$";
 
-        //remove the leading "."
-        retString = retString.slice(1,retString.length);
-
-        //check to see if the last character is a "."
-        if (retString[retString.length-1] != ".")
-        {   //add the "." if needed
-            retString = retString + ".";
-        }
-        //Append the eof char to the string
-        retString = retString + this.eof;
-
-        //pad the retString so it's the right length
-        retString = this.padBlock(retString);
+        retString = this.pad(retString);
 
         return retString;
+
+//        var meta        = param[0];
+//        var str         = param[1];
+//        var retString   = "";
+//
+//        //first concatenate the metadata for the file and the string itself
+//        str = meta + str;
+//
+//        //loop through the string and insert "." delimiters
+//        for (var i = 0; i < str.length; i++)
+//        {
+//            retString = retString + ".";
+//            retString = retString + str[i];
+//        }
+//
+//        //remove the leading "."
+//        retString = retString.slice(1,retString.length);
+//
+//        //check to see if the last character is a "."
+//        if (retString[retString.length-1] != ".")
+//        {   //add the "." if needed
+//            retString = retString + ".";
+//        }
+//        //Append the eof char to the string
+//        retString = retString + this.eof;
+//
+//        //pad the retString so it's the right length
+//        retString = this.padBlock(retString);
+//
+//        return retString;
     };
 
     //takes block of length < HD_BLOCK_SIZE and pads it with empty space to fill a block

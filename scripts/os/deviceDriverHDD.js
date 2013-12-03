@@ -149,14 +149,15 @@ function krnHddHandler(params)
                     //when the length is ok, we need to check for invalid characters
                     else
                     {
-                    //for each character in the filename, check if it is a forbidden character
-                    for (var i = 0; i < filename.length-1; i++)
-                        {   //if this char is forbidden, update validFilename
-                            if (_FS.invalidChars.contains(filename[i]))
-                                {
-                                    validFilename = false;
-                                }
-                            }
+                        //TODO - MAKE THIS WORK!!
+//                    //for each character in the filename, check if it is a forbidden character
+//                    for (var i = 0; i < filename.length-1; i++)
+//                        {   //if this char is forbidden, update validFilename
+//                            if (_FS.invalidChars.indexOf(filename[i]))
+//                                {
+//                                    validFilename = false;
+//                                }
+//                            }
                     }
                     //by the time we get here, we know for sure if the filename is valid or not
                 }
@@ -219,23 +220,17 @@ function krnHddHandler(params)
             {   //then check for free space
 
                 //start by finding the next available block
-                var targetBlock = FS_NEXT_FREE_DATA_BLOCK;
+                var targetDataBlock = FS_NEXT_FREE_DATA_BLOCK;
 
                 //so long as we have one, we can write
-                if (targetBlock)
+                if (targetDataBlock)
                 {  //prep for write
 
-                    //start buy building the dir block
+                    //start by building the dir block
                     var blockData = _FS.makeDirBlock(["1." + FS_NEXT_FREE_DATA_BLOCK, filename]);
 
                     //now write the block to the mbr
-                    disk.writeBlock()
-
-                    //and create the file block
-
-                    //now write the file block
-
-                    //and update the MBR info
+                    disk.writeBlock([FS_NEXT_FREE_FAT_BLOCK, blockData]);
 
                     //advance the next free block marker
                     FS_NEXT_FREE_DATA_BLOCK = _FS.findNextFreeDataBlock();

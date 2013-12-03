@@ -388,13 +388,12 @@ function Shell()
             //was a filename given without a disk id?
             else if (params.length ===1)
             {  //when it was, pad the parameters for the kernel routine with a null at index 2
-                var newParameters = [params[0],params[1], null];
-                krnCreateFile([HDD_IRQ_CODES[1],newParameters]);
+                krnCreateFile([HDD_IRQ_CODES[1],params[0], null]);
             }
             //otherwise, a full set of params was given
             else
             {   //so just pass them along to the driver
-                krnCreateFile([HDD_IRQ_CODES[1], params[0]]);
+                krnCreateFile([HDD_IRQ_CODES[1], params[0], params[1]]);
             }
         };
 
