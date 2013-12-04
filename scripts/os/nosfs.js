@@ -17,12 +17,10 @@ function Nosfs()
     this.emptyCell      = "-";          //this is what a formatted, empty byte looks like
     this.freeBlock      = "0";          //first bit 0 = free block
     this.usedBlock      = "1";          //first bit 1 = used block, 1 file in 1 block
-    this.freeBlock      = "0";          //first bit 0 = free block
     this.chainedBlock   = "2";          //first bit 2 = used block, 1 file in more than 1 blocks
     this.systemBlock    = "3";          //first bit 3 = used block, 1 system file in 1 or more blocks
     this.eof            = "$";          //The end of file character
-    this.invalidChars   = [this.eof,    //these chars are forbidden from appearing in file names
-                           ""];
+    this.fsMetaBits     = "5";          //the number of bits in a block that are used for meta information
 
     //fields
     this.emptyFatBlock      = "";       //Formatted, empty block valid for writing to FAT or file
@@ -36,6 +34,11 @@ function Nosfs()
     //methods
     this.init = function()
     {
+        //File sytsem globals that we can do now
+        FS_META_BITS = this.fsMetaBits;                               //number of bits required for fs metadata = mask.t.s.b.eof
+        FS_INVALID_CHARS = FS_INVALID_CHARS + this.eof; //add any customizations to the list of invalid characters
+
+
         //Set the defaults for this file system
         this.emptyFatBlock = this. initEmptyFatBlock();
         this.mbrDescriptorBlock = this.dotify(this.mbrDescriptor);
@@ -53,10 +56,10 @@ function Nosfs()
         HDD_FREE_FILE_BLOCKS = HDD_MAX_FILE_BLOCKS;     //doing getFreeFileBlocks() the first time is wasteful
         HDD_USED_FILE_BLOCKS = 0;                       //doing getUsedFileBlocks() the first time is wasteful
 
-        //File sytsem globals
-        FS_META_BITS = 5;                               //number of bits required for fs metadata = mask.t.s.b.eof
+        //File sytsem globals that we need to do now
         FS_NEXT_FREE_FAT_BLOCK = this.mbrAddress;       //next block for a filename
         FS_NEXT_FREE_FILE_BLOCK = this.firstFileAddy;   //next block for file data
+
 
         //finalize the mbr default state
         this.mbrBlockData = this.getMbrBlockData();
@@ -498,29 +501,33 @@ function Nosfs()
         return mask.toString(16) + "." + address;
     };
 
-    //Return an array of strings that may be written to data blocks (aka file blocks)
+    //Return string that may be written to be appended to meta data
     //param is a string that may be > HDD_BLOCK_SIZE - FS_META_BITS
-    //NOTE: prepend metadata before writing
-    //TODO - GET THIS WORKING!!!
-    this.makeFileBlock = function(source)
+    this.makeFileBlock = function(inputString)
     {
-        var numBlocks = (source.length -1) % (HDD_BLOCK_SIZE - FS_META_BITS);
-        var blocks = [];
+        var str = inputString + this.eof;
+        var retString = null;
+        if (str.length <= HDD_BLOCK_SIZE - FS_META_BITS)
+        {
+            retString = this.dotify(str);
+            retString = this.padBlock(retString);
+        }
+        return  retString;
     };
 
     //Return directory block data (aka file names)
     //Param is a string, must be less than HDD_BLOCK_SIZE + FS_META_BITS in length
     //NOTE: Metadata has no place here, just a file name as a string
     //TODO - HANDLE FILE NAME TOO LONG
-    this.makeDirBlock = function(param)
+    this.makeDirBlock = function(inputString)
     {
-        var str = param + this.eof;
+        var str = inputString + this.eof;
 
         var retString   = null;
         if (str.length < HDD_BLOCK_SIZE + FS_META_BITS)
         {
-            str = this.dotify(str);
-            retString = this.padBlock(str);
+            retString = this.dotify(str);
+            retString = this.padBlock(retString);
         }
 
         return retString;
@@ -541,30 +548,22 @@ function Nosfs()
     };
 
     //returns a dotified, padded block that may be used as either file or FAT data
-    //param is a dotified string that is shorter than HDD_BLOCK_SIZE - FS_META_BITS
+    //param is a dotified string that is shorter than HDD_BLOCK_SIZE - FS_META_BITS (aka block data without block meta)
     //TODO - Does this need error checking?
-    this.padBlock = function(param)
+    this.padBlock = function(dotifiedString)
     {
         //split the input on periods (because blocks are always dotified
-        var inVal = param.split(".");
+        var inVal = dotifiedString.split(".");
         var retVal = "";
 
         //pad the block
-        for (var i = inVal.length; i < HDD_BLOCK_SIZE - 1; i++) //-1 to account for zero based indexing
+        for (var i = inVal.length; i < HDD_BLOCK_SIZE - FS_META_BITS; i++)
         {
             inVal.push(this.emptyCell);
         }
 
-        //and turn it back in to a "." delimited string (join doesn't work for some weird reason?)
-        //TODO try to make string.join work here
+        //and turn it back in to a "." delimited string
         retVal = inVal.join(".");
-//        for (var j = 0; j < inVal.length; j++)
-//        {
-//            retVal = retVal + inVal[j] + ".";
-//        }
-//
-//        //trim the trailing "."
-//        retVal = retVal.slice(0, retVal.length - 1);
 
         return retVal;
     }
@@ -578,7 +577,7 @@ function Nosfs()
         if(fullBlock)
         {
             meta = this.undotify(fullBlock);
-            meta = meta.substr(0, FS_META_BITS);
+            meta = meta.substr(0, (FS_META_BITS-1));
             meta = meta.split("");
         }
         else
@@ -614,7 +613,7 @@ function Nosfs()
         return data;
     };
 
-    //returns an array containing the addresses of all fat blocks in use by the system
+    //returns an array containing the addresses of all fat blocks in use by the system and their associated file names
     this.getFatList = function(diskId)
     {
         var retVal = [];            //holds addresses
@@ -650,7 +649,7 @@ function Nosfs()
                     {  //when the mode bit for a block is anything other than free
 
                         //add the address you just found to the array
-                        retVal.push(addy);
+                        retVal.push([addy,this.getBlockData(addy)]);
                     }
                 }
             }
@@ -664,5 +663,201 @@ function Nosfs()
         return retVal;
     };
 
+    //generates an array of tuple containing the address to which a block will be written, and the block itself
+    //param data is a string of any length
+    //param firstAddy is the first address in a chain (null indicates a new file)
+    //returns null if data contains invalid characters
+    //NOTE DOES NOT WRITE TO DISK
+    this.allocateBlocks = function(data, firstAddy)
+    {
+        var blockSize = (HDD_BLOCK_SIZE - FS_META_BITS - 1);
+        var numBlocks = 0;
+        var testString = null;
+        var blocks = [];
+        var start = 0;
+        var end = 0;
+        var blockString;
+        var nextBlockAddy = null;
+        var mode = "";
+        var meta = "";
+        var flag = false;
+        var lastAddy = "";
+        var fatAddy = firstAddy;  //the address of the fat entry for the file === pointer back to directory
+
+        //set testString to input, or leave null and krnTrace
+        if(typeof data === "string")
+        {
+            flag = this.isStringOK(data);
+        }
+        else
+        {
+            krnTrace(this + " Data contains invalid characters");
+        }
+
+        //if test string was set, get number of blocks needed
+        if(flag)
+        {
+            testString = data;
+            //figure out the min number of blocks
+            if(testString.length % blockSize != 0)
+            {  //when the available block size is NOT a factor of the string length
+
+                //divide and round down to whole number
+                numBlocks = Math.floor(testString.length / blockSize);
+                //and add one because we had a remainder
+                numBlocks ++;
+            }
+            else
+            {   //when the available block size IS a factor of the string length
+
+                //then division is good enough
+                numBlocks = testString.length / blockSize;
+            }
+        }
+
+        //if we figured out our number of blocks, get ready to allocate
+        if (numBlocks)
+        {   //when you were able to figure out the blocks
+
+            //first, determine the mode bit (used or chained)
+            if (numBlocks === 1)
+            {
+                mode = 1;
+            }
+            else
+            {
+                mode = 2;
+            }
+
+            //then, build the blocks
+            for (var j = 1; j < numBlocks+1; j++)
+            {   //slice up the testString in to an array of strings
+
+                //figure out your slice index
+                start = blockSize * (j-1);
+                end = blockSize * j;
+
+                //slice out your string
+                blockString = testString.substring(start, end);
+
+                //figure out your metadata
+                if (!nextBlockAddy)
+                {  ///only true for the first block of a file
+                    nextBlockAddy = FS_NEXT_FREE_FILE_BLOCK;
+                    lastAddy = this.getAddressFromBlock(fatAddy);
+                }
+                else
+                {  //runs when building a multiblock file
+                    lastAddy = nextBlockAddy;
+                    FS_NEXT_FREE_FILE_BLOCK = this.getNextFreeFileBlock();
+                    nextBlockAddy = FS_NEXT_FREE_FILE_BLOCK;
+                }
+
+
+                //build your metadata
+                if (j === numBlocks)
+                {   //when you're on the last block, point back to the fat entry
+                    meta = this.makeMetaData(mode, fatAddy);
+                }
+                else
+                {   //when you're in a chain, point to the next address in the chain
+                    meta = this.makeMetaData(mode, nextBlockAddy);
+                }
+
+                //make your block
+                blocks[blocks.length] = [lastAddy, meta + "." + this.makeFileBlock(blockString)];
+            }
+            //by now, we have blocks === [address,block]
+
+        }
+        //or generate a krnTrace
+        else
+        {
+            krnTrace(this + "Write failed, block allocation error.");
+        }
+
+        return blocks;
+    };
+
+    //sends a files blocks to the driver for writing
+    //param blocks is an array of file data blocks (without metadata)
+    //add a check for sufficient free space
+    this.writeFile = function(blocks, disk)
+    {
+        var meta = "";  //the metadata for the blocks to be written
+        var files = null;
+
+        //verify that a disk was passed
+        if (disk)
+        {   //when we did get a disk
+
+            //check if blocks were passed in
+            if (blocks)
+            {   //when we got blocks we can write them
+
+                //loop through the data blocks append meta data, change array contents to [address, meta + block]
+                for (var i = 0; i < blocks.length; i++)
+                {
+                    if (i===0)
+                    {
+                        meta = this.makeMetaData((this.usedBlock, FS_NEXT_FREE_FILE_BLOCK));
+                    }
+                    else
+                    {
+                        meta = this.makeMetaData(this.chainedBlock, FS_NEXT_FREE_FILE_BLOCK);
+                    }
+                    files[i] = [FS_NEXT_FREE_FILE_BLOCK, meta + this.makeFileBlock(blocks[i])];
+                    FS_NEXT_FREE_FILE_BLOCK = this.getNextFreeFileBlock();
+                }
+
+                for (i = 0; i< files.length; i++)
+                {
+
+                }
+            }
+            else
+            {
+                krnTrace(this + "Write failed, invalid or missing block data");
+            }
+
+        }
+        //when we didn't get a disk
+        else
+        {
+            krnTrace(this + "Write operation error, FAT lookup failed: Disk not found");
+        }
+    };
+
+    this.deleteFile = function(filename)
+    {
+
+    };
+
+    //returns false if any characters in a string are invalid
+    //data is a string of any length
+    this.isStringOK = function(data)
+    {
+        var retVal = true;
+
+        for(var i = 0; i < data.length; i++)
+        {
+            if (FS_INVALID_CHARS.indexOf(data[i]) > -1)
+            {
+                retVal = false
+            }
+        }
+
+        return retVal;
+    };
+
+    this.getAddressFromBlock = function(blockAddy)
+    {
+        var meta = ""
+        meta = this.getBlockMeta(blockAddy);
+        meta = meta.slice(1);
+        meta = meta.join(".");
+
+        return meta;
+    };
 
 }

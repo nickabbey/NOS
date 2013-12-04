@@ -277,3 +277,10 @@ function krnListFiles(params)
     _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
 
 }
+
+function krnWriteFile(params)
+{
+    //put a disk I/O interrupt on the queue
+    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+
+}

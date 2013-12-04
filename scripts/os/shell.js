@@ -455,6 +455,41 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
+        // write
+        sc = new ShellCommand();
+        sc.command = "write";
+        sc.description = "- overwrite <string1> file (on <string2> disk) with contents of user input.";
+        sc.function = function shellWrite(params) {
+
+            //is the file system free?
+            if (_FS.isFree)
+            {   //when it is, we take a look at the command
+
+                //was the minimum requirement of a filename given?
+                if (params.length === 0)
+                {   //when it's not, tell the user
+                    _StdIn.putLine("please specify a filename (and optional disk id.)");
+                }
+                //was a filename given without a disk id?
+                else if (params.length ===1)
+                {  //when it was, pad the parameters for the kernel routine with a null at index 2
+                    krnWriteFile([HDD_IRQ_CODES[5],params[0], null]);
+                }
+                //otherwise, a full set of params was given
+                else
+                {   //so just pass them along to the driver
+                    krnWriteFile([HDD_IRQ_CODES[5], params[0], params[1]]);
+                }
+            }
+            //when the file system is busy
+            else
+            {
+                _StdIn.putLine("The file system is locked, try again later");
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
         // List
         sc = new ShellCommand();
         sc.command = "ls";

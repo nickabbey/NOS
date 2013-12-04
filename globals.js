@@ -13,6 +13,7 @@
 //
 var APP_NAME = "NOS";  // NickOS, AKA NOS AKA Nitrous.  Fast?  Laughing gas?  Both?  You decide.
 var APP_VERSION = "0.42";   // "The Answer to the Ultimate Question of Life, the Universe, and Everything."  Duh!
+var FS_INVALID_CHARS    = "\\\'\"\n\b\r\f\t"; //the base list of characters that aren't allowed in out file system
 
 var CPU_CLOCK_INTERVAL = 100;   // This is in ms, or milliseconds, so 1000 = 1 second.
 
@@ -167,11 +168,6 @@ var HDD_NUM_SECTORS = 8;
 var HDD_NUM_BLOCKS  = 8;
 var HDD_BLOCK_SIZE  = 64;
 
-//this is what an empty uninitialized block looks like - the file system will set this (not the driver)
-var HDD_FILE_DEFAULT_DATA   = null;
-
-
-
 //file system meta data for mbr - hex values as strings from 00 to (tracks*sectors*block*blocksize === 16384)
 //this requires 2 blocks to store hex values from 0000 to FFFF or "00.00" to "FF.FF"
 var HDD_MAX_FILE_BLOCKS     = null;
@@ -189,6 +185,5 @@ var FS_NEXT_FREE_FAT_BLOCK  = null; //tsb address of the next free block for fil
 
 //address of mbr "t.s.b"
 var HDD_MBR_ADDRESS     = null;  //tsb address of the main boot record, specified by file system driver init routine
-
 
 
