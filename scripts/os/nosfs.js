@@ -569,5 +569,100 @@ function Nosfs()
         return retVal;
     }
 
+    //returns an array containing [mode, t, s, b]
+    //parameter is the address whose meta data you are reading
+    this.getBlockMeta = function(address)
+    {
+        var fullBlock = getBlock(address);
+        var meta = null;
+        if(fullBlock)
+        {
+            meta = this.undotify(fullBlock);
+            meta = meta.substr(0, FS_META_BITS);
+            meta = meta.split("");
+        }
+        else
+        {
+            krnTrace(this + "Block metadata retrieval failed at:" + address.toString());
+        }
+
+        return meta;
+    };
+
+    //returns a string containing the data from a block (with eof stripped)
+    //parameter is the address whose data you are reading in "t.s.b" format
+    this.getBlockData = function(address)
+    {
+        var fullBlock = getBlock(address);
+        var data = null;
+
+        if(fullBlock)
+        {
+            data = this.undotify(fullBlock);  //strip out the "."'s
+            var idx = data.indexOf(this.eof);  //-1 if no eof
+            //find the first instance of an eof (technically should only ever be one, and always < 64 > 5)
+            if (idx > -1 )
+            {
+                data = data.slice(FS_META_BITS-1, idx);
+            }
+        }
+        else
+        {
+            krnTrace(this + "Block data retrieval failed at:" + address.toString());
+        }
+
+        return data;
+    };
+
+    //returns an array containing the addresses of all fat blocks in use by the system
+    this.getFatList = function(diskId)
+    {
+        var retVal = [];            //holds addresses
+        var disk = null;            //the disk to be queried
+        var t = this.mbrAddress[0]; //first index of mbr address contains the FAT track
+        var addy = "";              //for addresses built inside the for loop
+
+        //check if we got a diskId
+        if (diskId)
+        {   //if so attempt to operate on that disk
+            disk = _HddList[diskId];
+        }
+        //when we didn't get a disk id
+        else
+        {   //try to use the default
+            disk = _HddList[0];
+        }
+
+        //verify that we got a good disk ID
+        if (disk)
+        {   //either a good disk id was given, or the default was used
+
+            //loop through the sectors in the mbr for our disk
+            for (var s = 0; s < HDD_NUM_SECTORS; s++)
+            {
+                //loop through the blocks in the mbr for our disk
+                for (var b = 1; b < HDD_NUM_BLOCKS; b++) //start at one so the mbr is skipped
+                {
+                    //figure out where to look
+                    addy = this.dotify(t.toString(16) + s.toString(16) + b.toString(16));
+                    //and check if that location is used
+                    if (this.getBlockMeta(addy)[0] != _FS.freeBlock)  //compare mode bit for metadata at this address
+                    {  //when the mode bit for a block is anything other than free
+
+                        //add the address you just found to the array
+                        retVal.push(addy);
+                    }
+                }
+            }
+        }
+        //when we didn't get a disk
+        else
+        {
+            krnTrace(this + "Disk operation error, FAT lookup failed: Disk not found");
+        }
+        //an array of length o..n where n is the number of files whose mode bit indicates a block in use
+        return retVal;
+    };
+
 
 }

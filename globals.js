@@ -32,12 +32,12 @@ var SOFT_IRQ_CODES = [  "OP_INV"    ,   // 0 = invalid opcode
                         "CTX_SWP"   ];   // 3 = context switch
 
 //Hard Drive ISR codes.  Use their indices when parsing disk operations
-var HDD_IRQ_CODES = [   "FORMAT"    ,
-                        "CREATE"    ,
-                        "DELETE"    ,
-                        "LIST"      ,
-                        "READ"      ,
-                        "WRITE"     ];
+var HDD_IRQ_CODES = [   "FORMAT"    ,   //0
+                        "CREATE"    ,   //1
+                        "DELETE"    ,   //2
+                        "LIST"      ,   //3
+                        "READ"      ,   //4
+                        "WRITE"     ];  //5
 
 //
 // Global Variables

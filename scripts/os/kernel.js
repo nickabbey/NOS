@@ -255,10 +255,23 @@ function krnFormatDisk(params)
 {
     //put a disk I/O interrupt on the queue
     _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
 }
 
 function krnCreateFile(params)
+{
+    //put a disk I/O interrupt on the queue
+    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+
+}
+
+function krnDeleteFile(params)
+{
+    //put a disk I/O interrupt on the queue
+    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+
+}
+
+function krnListFiles(params)
 {
     //put a disk I/O interrupt on the queue
     _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );

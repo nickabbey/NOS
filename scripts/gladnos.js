@@ -42,6 +42,10 @@ function GladNos() {
         _KernelInputQueue.enqueue('k');
         krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
+        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('s');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
 //        _UserProgramText.value = _TestingProg;
 
 //         // Execute the 'load' and 'run' commands.

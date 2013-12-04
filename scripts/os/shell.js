@@ -363,13 +363,23 @@ function Shell()
         sc.command = "format";
         sc.description = "- format a hard drive";
         sc.function = function shellFormat(params) {
-            if (params.length === 0)
-            {
-                krnFormatDisk([HDD_IRQ_CODES[0], 0]);
+
+            //is the file system free?
+            if (_FS.isFree)
+            {  //when the file system is free, we check the command
+                if (params.length === 0)
+                {
+                    krnFormatDisk([HDD_IRQ_CODES[0], 0]);
+                }
+                else
+                {
+                    krnFormatDisk([HDD_IRQ_CODES[0], params[0]]);
+                }
             }
+            //when the file system is busy
             else
             {
-                krnFormatDisk([HDD_IRQ_CODES[0], params[0]]);
+                _StdOut.putLine("File operation aborted, file system in use.");
             }
         };
 
@@ -379,21 +389,97 @@ function Shell()
         sc = new ShellCommand();
         sc.command = "create";
         sc.description = "<string> (<string>) - creates file named '<string>' (on diskID <string>.)";
-        sc.function = function shellFormat(params) {
-            //was the minimum requirement of a ilename given?
-            if (params.length === 0)
-            {   //when it's not, tell the user
-                _StdIn.putLine("please specify a filename (and optional disk id.)");
+        sc.function = function shellCreate(params) {
+
+            //is the file system free?
+            if (_FS.isFree)
+            {   //when it is, we take a look at the command
+
+                //was the minimum requirement of a filename given?
+                if (params.length === 0)
+                {   //when it's not, tell the user
+                    _StdIn.putLine("please specify a filename (and optional disk id.)");
+                }
+                //was a filename given without a disk id?
+                else if (params.length ===1)
+                {  //when it was, pad the parameters for the kernel routine with a null at index 2
+                    krnCreateFile([HDD_IRQ_CODES[1],params[0], null]);
+                }
+                //otherwise, a full set of params was given
+                else
+                {   //so just pass them along to the driver
+                    krnCreateFile([HDD_IRQ_CODES[1], params[0], params[1]]);
+                }
             }
-            //was a filename given without a disk id?
-            else if (params.length ===1)
-            {  //when it was, pad the parameters for the kernel routine with a null at index 2
-                krnCreateFile([HDD_IRQ_CODES[1],params[0], null]);
-            }
-            //otherwise, a full set of params was given
+            //when the file system is busy
             else
-            {   //so just pass them along to the driver
-                krnCreateFile([HDD_IRQ_CODES[1], params[0], params[1]]);
+            {
+                _StdIn.putLine("The file system is locked, try again later");
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // delete
+        sc = new ShellCommand();
+        sc.command = "delete";
+        sc.description = "<string> (<string>) - deletes file named '<string>' (on diskID <string>.)";
+        sc.function = function shellDelete(params) {
+
+            //is the file system free?
+            if (_FS.isFree)
+            {   //when it is, we take a look at the command
+
+                //was the minimum requirement of a filename given?
+                if (params.length === 0)
+                {   //when it's not, tell the user
+                    _StdIn.putLine("please specify a filename (and optional disk id.)");
+                }
+                //was a filename given without a disk id?
+                else if (params.length ===1)
+                {  //when it was, pad the parameters for the kernel routine with a null at index 2
+                    krnDeleteFile([HDD_IRQ_CODES[2],params[0], null]);
+                }
+                //otherwise, a full set of params was given
+                else
+                {   //so just pass them along to the driver
+                    krnDeleteFile([HDD_IRQ_CODES[2], params[0], params[1]]);
+                }
+            }
+            //when the file system is busy
+            else
+            {
+                _StdIn.putLine("The file system is locked, try again later");
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // List
+        sc = new ShellCommand();
+        sc.command = "ls";
+        sc.description = "ls (<string>) - where <string> is an optional diskID";
+        sc.function = function shellList(params) {
+
+            //is the file system free?
+            if (_FS.isFree)
+            {   //when it is, we take a look at the command
+
+                //was an argument supplied?
+                if (params.length === 0)
+                {   //when it's not, send the request without a disk id
+                    krnListFiles([HDD_IRQ_CODES[3],null]);
+                }
+                //was a filename given without a disk id?
+                else if (params.length ===1)
+                {  //when it was, send the request with a disk id
+                    krnListFiles([HDD_IRQ_CODES[3],params[0]]);
+                }
+            }
+            //when the file system is busy
+            else
+            {
+                _StdIn.putLine("The file system is locked, try again later");
             }
         };
 

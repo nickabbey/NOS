@@ -89,9 +89,15 @@ function Hdd()
     //Write out a block of data to the spindle
     //param[0] = spindle key ("t.s.b"), param[1] = data at key
     //NOTE - NO error checking here because the hardware needs to be FAST.  Let the driver handle error checking
-    this.writeBlock = function(address, block)
+    this.writeBlock = function(address, data)
     {   //"overwrite" blocks
 
-        this.spindle.setItem(address, block);
+        this.spindle.setItem(address, data);
+    };
+
+    //returns the entire block at the address specified
+    this.readBlock = function(address)
+    {
+        return this.spindle.getItem(address);
     };
 }
