@@ -560,7 +560,7 @@ function krnHddHandler(params)
                     _StdOut.putLine("Active files for hard disk " + diskID);
                     for (i = 0; i < filesInUse.length; i++)
                     {
-                        _StdOut.putLine(_FS.getBlockData(filesInUse[i][1]));
+                        _StdOut.putLine(filesInUse[i][1]);
                     }
                     _OsShell.putPrompt();
                 }
