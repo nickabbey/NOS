@@ -282,7 +282,7 @@ function Shell()
         // Kill
         sc = new ShellCommand();
         sc.command = "kill";
-        sc.description = "- kill a program with the given pid";
+        sc.description = "- Kill a program with the given pid";
         sc.function = function shellKillProgram(param) {
 
             if (param.length === 0)
@@ -312,7 +312,7 @@ function Shell()
         //TODO - later revisions of run will require a PID parameter
         sc = new ShellCommand();
         sc.command = "step";
-        sc.description = "- enable single step operation for a process";
+        sc.description = "- Enable single step operation for a process";
         sc.function = function shellStep() {
             //TODO needs to be reworked now that the scheduler is implemented
             //simulate the action of checking/unchecking the single step box
@@ -327,7 +327,7 @@ function Shell()
         // ps
         sc = new ShellCommand();
         sc.command = "ps";
-        sc.description = "- list processes loaded in memory";
+        sc.description = "- List processes loaded in memory";
         sc.function = function shellPs() {
             for (var i = 0; i < _ThreadList.length; i++)
             {
@@ -341,7 +341,7 @@ function Shell()
         // quantum
         sc = new ShellCommand();
         sc.command = "quantum";
-        sc.description = "- sets or changes the round robin quantum";
+        sc.description = "- Sets or changes the round robin quantum";
         sc.function = function shellQuantum(param) {
 
             if (param.length === 0)
@@ -361,7 +361,7 @@ function Shell()
         // format
         sc = new ShellCommand();
         sc.command = "format";
-        sc.description = "- format a hard drive";
+        sc.description = "- Format a hard drive (on diskID '<string>')";
         sc.function = function shellFormat(params) {
 
             //is the file system free?
@@ -388,7 +388,7 @@ function Shell()
         // create
         sc = new ShellCommand();
         sc.command = "create";
-        sc.description = "<string> (<string>) - creates file named '<string>' (on diskID <string>.)";
+        sc.description = "- Create file named '<string1>' (on disk '<string2>')";
         sc.function = function shellCreate(params) {
 
             //is the file system free?
@@ -423,7 +423,7 @@ function Shell()
         // delete
         sc = new ShellCommand();
         sc.command = "delete";
-        sc.description = "<string> (<string>) - deletes file named '<string>' (on diskID <string>.)";
+        sc.description = "- Delete file named '<string1>' (on disk '<string2>')";
         sc.function = function shellDelete(params) {
 
             //is the file system free?
@@ -458,7 +458,7 @@ function Shell()
         // List
         sc = new ShellCommand();
         sc.command = "ls";
-        sc.description = "ls (<string>) - where <string> is an optional diskID";
+        sc.description = "- List files (on disk ID '<string>')";
         sc.function = function shellList(params) {
 
             //is the file system free?

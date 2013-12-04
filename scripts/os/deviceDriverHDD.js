@@ -35,17 +35,57 @@ function krnHddHandler(params)
     var firstArgument   = parameters[1];    //first argument is usually the filename, exceptions listed below
     var nextArgument    = parameters[2];    //second argument is usually the data, exceptions listed below
 
+    //reusable switch variables - MUST be initialized in each case before they are used
+    var diskID = null;
+    var disk = null;
+    var filename = null;
+    var validFilename = true;
+    var file = null;
+    var fileExists = null;
+    var filesInUse = null;
+    var fatMeta = null;
+    var fatData = null;
+    var fileMeta = null;
+    var fileData = null;
+    var i = 0;
+    var t = 0;
+    var s = 0;
+    var b = 0;
+
+    //reset all the case variables to their defaults
+    function resetState()
+    {
+        diskID = null;
+        disk = null;
+        filename = null;
+        validFilename = true;
+        file = null;
+        fileExists = null;
+        filesInUse = null;
+        fatMeta = null;
+        fatData = null;
+        fileMeta = null;
+        fileData = null;
+        i = 0;
+        t = 0;
+        s = 0;
+        b = 0;
+    }
+
     //for reference HDD_IRQ_CODES = 0="FORMAT", 1="CREATE", 2="DELETE", 3="LIST", 4="READ", 5="WRITE"
     switch (command)
     {
         case "FORMAT":
-        //LOCKS THE FILE SYSTEM!
+        //LOCKS THE FILE SYSTEM WHILE RUNNING
         {
+            //clean slate
+            resetState();
+
+            //needed in this case
+            diskID = firstArgument;
+
             //lock access to the file system
             _FS.isFree = false;
-
-            var diskID = firstArgument;
-            var disk = null;
 
             //was a diskID specified?
             if (diskID)
@@ -66,7 +106,7 @@ function krnHddHandler(params)
                         disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, _FS.mbrBlockData);
 
                         //and do that actual work of formatting
-                        for (var i = 1; i < disk.spindle.length; i++) //start at one to skip past the mbr
+                        for (i = 1; i < disk.spindle.length; i++) //start at one to skip past the mbr
                         {
                             disk.writeBlock(sessionStorage.key(i), _FS.emptyFatBlock);
                         }
@@ -94,7 +134,7 @@ function krnHddHandler(params)
                     //write the mbr
                     disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, _FS.mbrBlockData);
 
-                    for (var i = 1; i < disk.spindle.length; i++)  //start at 1 to skip over the mbr
+                    for (i = 1; i < disk.spindle.length; i++)  //start at 1 to skip over the mbr
                     {
                         disk.writeBlock(sessionStorage.key(i), _FS.emptyFatBlock);
                     }
@@ -132,11 +172,12 @@ function krnHddHandler(params)
         case "CREATE":
         //FILE SYSTEM STAYS UNLOCKED
         {
-            var filename = firstArgument;
-            var validFilename = true;
-            var file = null;
-            var diskID = nextArgument;
-            var disk = null;
+            //reset defaults used in this case
+            resetState();
+
+            //variables needed by this case
+            filename = firstArgument;
+            diskID = nextArgument;
 
             //was a filename specified?
             if (filename)
@@ -231,19 +272,19 @@ function krnHddHandler(params)
                 {  // we have everything we need to write
 
                     //start by building the fat metadata
-                    var fatMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FILE_BLOCK);
+                    fatMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FILE_BLOCK);
 
                     //then the actual fat block data
-                    var fatData = _FS.makeDirBlock(filename);
+                    fatData = _FS.makeDirBlock(filename);
 
                     //now write the fatData to the next free FAT block
                     disk.writeBlock(FS_NEXT_FREE_FAT_BLOCK, fatMeta + "." + fatData);
 
                     //next build the file meta data
-                    var fileMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FAT_BLOCK);
+                    fileMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FAT_BLOCK);
 
                     //and build the file block data
-                    var fileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
+                    fileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
 
                     //now write the fileData to the next free file block
                     disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, fileMeta + "." + fileData);
@@ -292,11 +333,12 @@ function krnHddHandler(params)
         case "DELETE":
         //FILE SYSTEM STAYS UNLOCKED
         {
-            var filename = firstArgument;
-            var validFilename = true;
-            var file = null;
-            var diskID = nextArgument;
-            var disk = null;
+            //reset the case variables to defaults
+            resetState();
+
+            //set the ones that matter right now
+            filename = firstArgument;
+            diskID = nextArgument;
 
             //was a filename specified?
             if (filename)
@@ -386,21 +428,35 @@ function krnHddHandler(params)
             if (validFilename && disk)
             {   //then check if the file exists
 
+                filesInUse = _FS.getFatList();
+
+                if (filesInUse.length > 0)
+                {
+                    for (i = 0; i < filesInUse.length; i++)
+                    {
+                        if (filesInUse[i] === filename)
+                        {
+
+                        }
+                    }
+
+                }
+
 
                 //start by building the fat metadata
-                var fatMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FILE_BLOCK);
+                fatMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FILE_BLOCK);
 
                 //then the actual fat block data
-                var fatData = _FS.makeDirBlock(filename);
+                fatData = _FS.makeDirBlock(filename);
 
                 //now write the fatData to the next free FAT block
                 disk.writeBlock(FS_NEXT_FREE_FAT_BLOCK, fatMeta + "." + fatData);
 
                 //next build the file meta data
-                var fileMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FAT_BLOCK);
+                fileMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FAT_BLOCK);
 
                 //and build the file block data
-                var fileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
+                fileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
 
                 //now write the fileData to the next free file block
                 disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, fileMeta + "." + fileData);
@@ -439,9 +495,11 @@ function krnHddHandler(params)
             break;
         case "LIST":
         {
-            var diskID = firstArgument;
-            var disk = null;
-            var fileExists = false;
+            //reset the case variables to defaults
+            resetState();
+
+            //set the ones that matter right now
+            diskID = firstArgument;
 
             //was a diskID specified?
             if (diskID)
@@ -477,6 +535,7 @@ function krnHddHandler(params)
                 if(_HddList[0])
                 {   //when the default drive is there, we just format it
                     disk = _HddList[0];
+                    diskID = 0;
                 }
             }
 
@@ -484,14 +543,16 @@ function krnHddHandler(params)
             if (disk)
             {   //when we have a disk, we can list its contents
 
-                var filesInUse = _FS.getFatList();
+                filesInUse = _FS.getFatList();
 
                 if (filesInUse.length > 0)
                 {
-                    for (var i = 0; i < filesInUse.length; i++)
+                    _StdOut.putLine("Active files for hard disk " + diskID);
+                    for (i = 0; i < filesInUse.length; i++)
                     {
                         _StdOut.putLine(_FS.getBlockData(filesInUse[i]));
                     }
+                    _OsShell.putPrompt();
                 }
             }
             //if we weren't tell the user
