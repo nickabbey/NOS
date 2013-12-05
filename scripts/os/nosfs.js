@@ -779,57 +779,20 @@ function Nosfs()
         return blocks;
     };
 
-    //sends a files blocks to the driver for writing
-    //param blocks is an array of file data blocks (without metadata)
-    //add a check for sufficient free space
-    this.writeFile = function(blocks, disk)
+    //returns an array of blocks allocated to a file
+    //param firstAddy is the FAT address of the file you want to look up
+    this.getAllocatedBlocks = function(firstAddy)
     {
-        var meta = "";  //the metadata for the blocks to be written
-        var files = null;
+        var nextAddy = this.getAddressFromBlock(firstAddy);
+        var blocks = [];
 
-        //verify that a disk was passed
-        if (disk)
-        {   //when we did get a disk
-
-            //check if blocks were passed in
-            if (blocks)
-            {   //when we got blocks we can write them
-
-                //loop through the data blocks append meta data, change array contents to [address, meta + block]
-                for (var i = 0; i < blocks.length; i++)
-                {
-                    if (i===0)
-                    {
-                        meta = this.makeMetaData((this.usedBlock, FS_NEXT_FREE_FILE_BLOCK));
-                    }
-                    else
-                    {
-                        meta = this.makeMetaData(this.chainedBlock, FS_NEXT_FREE_FILE_BLOCK);
-                    }
-                    files[i] = [FS_NEXT_FREE_FILE_BLOCK, meta + this.makeFileBlock(blocks[i])];
-                    FS_NEXT_FREE_FILE_BLOCK = this.getNextFreeFileBlock();
-                }
-
-                for (i = 0; i< files.length; i++)
-                {
-
-                }
-            }
-            else
-            {
-                krnTrace(this + "Write failed, invalid or missing block data");
-            }
-
-        }
-        //when we didn't get a disk
-        else
+        while (nextAddy != firstAddy)
         {
-            krnTrace(this + "Write operation error, FAT lookup failed: Disk not found");
-        }
-    };
+            blocks[blocks.length] = this.getBlockData(nextAddy);
+            nextAddy = this.getAddressFromBlock(nextAddy);
+    }
 
-    this.deleteFile = function(filename)
-    {
+        return blocks;
 
     };
 

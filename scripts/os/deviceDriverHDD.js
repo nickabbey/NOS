@@ -47,6 +47,8 @@ function krnHddHandler(params)
     var fatData = null;
     var fileMeta = null;
     var fileData = null;
+    var firstAdddy = null;
+    var blocks = [];
     var i = 0;
     var t = 0;
     var s = 0;
@@ -66,6 +68,8 @@ function krnHddHandler(params)
         fatData = null;
         fileMeta = null;
         fileData = null;
+        firstAdddy = null;
+        blocks = [];
         i = 0;
         t = 0;
         s = 0;
@@ -170,7 +174,6 @@ function krnHddHandler(params)
             break;
 
         case "CREATE":
-        //FILE SYSTEM STAYS UNLOCKED
         {
             //reset defaults used in this case
             resetState();
@@ -333,7 +336,6 @@ function krnHddHandler(params)
             break;
 
         case "DELETE":
-        //FILE SYSTEM STAYS UNLOCKED
         {
             //reset the case variables to defaults
             resetState();
@@ -574,9 +576,6 @@ function krnHddHandler(params)
         }
             break;
         case "READ":
-            break;
-        case "WRITE":
-        //FILE SYSTEM STAYS UNLOCKED
         {
             //reset the case variables to defaults
             resetState();
@@ -586,7 +585,163 @@ function krnHddHandler(params)
             diskID = nextArgument;
             fileExists = false;
             file = null;
-            var firstAdddy = null;  //the fat table address for the file entry
+            firstAdddy = null;  //the fat table address for the file entry
+            blocks = [];
+
+            //was a filename specified?
+            if (filename)
+            {   //if it was then we set the target filename
+
+                //first make sure the filename is a string
+                if (typeof filename === "string")
+                {   //when we have a valid string argument, we need to look for invalid chars
+
+                    //first things first, is the string too long?
+                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS)
+                    {   //filename is too long to fit in the fat table
+
+                        //so it's invalid
+                        validFilename = false;
+
+                        //tell the user
+                        krnTrace(this + "File read failed, invalid argument: filename too long")
+                    }
+                    //when the length is ok, we need to check for invalid characters
+                    else
+                    {
+                        if(!_FS.isStringOK(filename))
+                        {
+                            validFilename = false;
+
+                            krnTrace(this + "File read failed: Invalid characters in file name")
+                        }
+                    }
+                    //by the time we get here, we know for sure if the filename is valid or not
+                }
+                //when the filename isn't a string, notify the user
+                else
+                {   //tell the user that they gave bad input for the filename
+                    krnTrace(this + "file read failed, invalid argument: filename not a string");
+                }
+
+            }
+            else
+            //filename was not given
+            {   //tell the user that they forgot to give a filename argument
+                krnTrace(this +"file read failed, missing argument: filename");
+            }
+
+            //was a disk ID specified?
+            if (diskID)
+            {   //if it was then that's the disk we format
+
+                //first make sure the diskID is a valid number
+                if (typeof diskID === "number")
+                {   //if it is, then we need to make sure it's a valid diskID
+
+                    //so we look to see if it's out of bounds
+                    if(diskID < _HddList.length)
+                    {   //when it is in bounds we actually perform the format
+
+                        //target disk is now set for writing
+                        disk = _HddList[diskID];
+                    }
+                    else
+                    {   //when it's out of bounds, we tell the user
+                        krnTrace(this + "file read failed, invalid argument: diskID out of bounds");
+                    }
+                }
+                else
+                {   //or if the diskID was not a number, the user needs to know
+                    krnTrace(this +"file read failed, invalid argument: diskID not a number");
+                }
+            }
+            //when a disk ID wasn't specified  - alan's test scripts will do this
+            else
+            {   //first we look to see if the default disk exists
+                if(_HddList[0])
+                {   //when the default drive is there, we just set it to the target
+
+                    //target disk is now set for writing
+                    disk = _HddList[0];
+                }
+                //if it doesn't, then the user needs to know
+                else
+                {
+                    krnTrace(this + "File read failed, invalid argument: diskID not found");
+                }
+            }
+
+            //if we got good arguments
+            if (validFilename && disk)
+            {   //then check if the file exists
+
+                filesInUse = _FS.getFatList();
+
+                if (filesInUse.length > 0)
+                {
+                    for (i = 0; i < filesInUse.length; i++)
+                    {
+                        if (filesInUse[i][1] === filename)
+                        {
+                            firstAdddy = filesInUse[i][0];  //fat address of the file we found
+                            file = filesInUse[i][1];  //the filename (kind of redundant...)
+                        }
+                    }
+
+                }
+            }
+            //when we didn't get a valid filename
+            else if (!validFilename)
+            {
+                krnTrace(this + "File read failed, invalid filename: " + parameters[1].toString());
+            }
+            //when we encounter any kind of disk error
+            else if (!disk)
+            {
+                krnTrace(this + "File read failed, Disk " + params[2].toString(16) + " not ready");
+            }
+
+            //Check if we found the file
+            if(file)
+            {   //when we were able to find the file we care about
+
+                //get get the blocks allocated to that file
+                blocks = _FS.getAllocatedBlocks(firstAdddy);
+
+                //print out the blocks to the screen
+                if (blocks)
+                {
+                    for(i =0; i<blocks.length; i++)
+                    {
+                        _StdOut.putLine(blocks[i]);
+                    }
+                }
+                else
+                {
+                    krnTrace(this + "Write failed, getting allocated blocks failed");
+                }
+
+
+            }
+            else
+            //we didn't find the file we wanted
+            {
+                krnTrace(this + "Read failed, file not found");
+            }
+        }
+            break;
+        case "WRITE":
+        {
+            //reset the case variables to defaults
+            resetState();
+
+            //set the ones that matter right now
+            filename = firstArgument;
+            diskID = nextArgument;
+            fileExists = false;
+            file = null;
+            firstAdddy = null;  //the fat table address for the file entry
 
             //was a filename specified?
             if (filename)
@@ -707,7 +862,7 @@ function krnHddHandler(params)
             {   //when we were able to find the file we care about
 
                 //allocate your blocks firstAddy is a FAT address
-                var blocks = _FS.allocateBlocks(_UserProgramText.value.toString(), firstAdddy);
+                blocks = _FS.allocateBlocks(_UserProgramText.value.toString(), firstAdddy);
 
                 if (blocks)
                 {
@@ -729,7 +884,6 @@ function krnHddHandler(params)
                 krnTrace(this + "Write failed, file not found");
             }
         }
-
             break;
 
         default:

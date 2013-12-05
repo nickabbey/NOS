@@ -58,6 +58,17 @@ function GladNos() {
         _KernelInputQueue.enqueue('k');
         krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
+        _KernelInputQueue.enqueue('r');
+        _KernelInputQueue.enqueue('e');
+        _KernelInputQueue.enqueue('a');
+        _KernelInputQueue.enqueue('d');
+        _KernelInputQueue.enqueue(' ');
+        _KernelInputQueue.enqueue('n');
+        _KernelInputQueue.enqueue('i');
+        _KernelInputQueue.enqueue('c');
+        _KernelInputQueue.enqueue('k');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
 //        _UserProgramText.value = _TestingProg;
 
 //         // Execute the 'load' and 'run' commands.
