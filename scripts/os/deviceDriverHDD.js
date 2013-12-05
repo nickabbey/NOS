@@ -7,6 +7,9 @@
  Makes the disk available to the OS.
  Provides the disk access API.
  Requires a file system (nosfs, by default).
+
+ //TODO move the case variables to the file system, and implement a state machine for the file system
+
  ---------------------------------- */
 
 DeviceDriverHDD.prototype = new DeviceDriver;  // "Inherit" from prototype DeviceDriver in deviceDriver.js.
@@ -37,7 +40,7 @@ function krnHddHandler(params)
 
     //reusable switch variables - MUST be initialized in each case before they are used
     var diskID = null;
-    var disk = null;
+    var disk = FS_ACTIVE_HDD;
     var filename = null;
     var validFilename = true;
     var file = null;
@@ -58,7 +61,7 @@ function krnHddHandler(params)
     function resetState()
     {
         diskID = null;
-        disk = null;
+        var disk = FS_ACTIVE_HDD;
         filename = null;
         validFilename = true;
         file = null;
@@ -744,7 +747,7 @@ function krnHddHandler(params)
 
             //set the ones that matter right now
             filename = firstArgument;
-            diskID = nextArgument;
+            fileData = nextArgument;
             fileExists = false;
             file = null;
             firstAdddy = null;  //the fat table address for the file entry
@@ -792,49 +795,8 @@ function krnHddHandler(params)
                 krnTrace(this +"file write failed, missing argument: filename");
             }
 
-            //was a disk ID specified?
-            if (diskID)
-            {   //if it was then that's the disk we format
-
-                //first make sure the diskID is a valid number
-                if (typeof diskID === "number")
-                {   //if it is, then we need to make sure it's a valid diskID
-
-                    //so we look to see if it's out of bounds
-                    if(diskID < _HddList.length)
-                    {   //when it is in bounds we actually perform the format
-
-                        //target disk is now set for writing
-                        disk = _HddList[diskID];
-                    }
-                    else
-                    {   //when it's out of bounds, we tell the user
-                        krnTrace(this + "file write failed, invalid argument: diskID out of bounds");
-                    }
-                }
-                else
-                {   //or if the diskID was not a number, the user needs to know
-                    krnTrace(this +"file write failed, invalid argument: diskID not a number");
-                }
-            }
-            //when a disk ID wasn't specified  - alan's test scripts will do this
-            else
-            {   //first we look to see if the default disk exists
-                if(_HddList[0])
-                {   //when the default drive is there, we just set it to the target
-
-                    //target disk is now set for writing
-                    disk = _HddList[0];
-                }
-                //if it doesn't, then the user needs to know
-                else
-                {
-                    krnTrace(this + "File write failed, invalid argument: diskID not found");
-                }
-            }
-
             //if we got good arguments
-            if (validFilename && disk)
+            if (validFilename)
             {   //then check if the file exists
 
                 filesInUse = _FS.getFatList();
@@ -857,18 +819,13 @@ function krnHddHandler(params)
             {
                 krnTrace(this + "File write failed, invalid filename: " + parameters[1].toString());
             }
-            //when we encounter any kind of disk error
-            else if (!disk)
-            {
-                krnTrace(this + "File write failed, Disk " + params[2].toString(16) + " not ready");
-            }
 
             //Check if we found the file
             if(file)
             {   //when we were able to find the file we care about
 
                 //allocate your blocks firstAddy is a FAT address
-                blocks = _FS.allocateBlocks(_UserProgramText.value.toString(), firstAdddy);
+                blocks = _FS.allocateBlocks(fileData, firstAdddy);
 
                 if (blocks)
                 {

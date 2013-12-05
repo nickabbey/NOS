@@ -186,4 +186,6 @@ var FS_NEXT_FREE_FAT_BLOCK  = null; //tsb address of the next free block for fil
 //address of mbr "t.s.b"
 var HDD_MBR_ADDRESS     = null;  //tsb address of the main boot record, specified by file system driver init routine
 
+var FS_ACTIVE_HDD = null;
+
 

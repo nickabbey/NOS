@@ -458,34 +458,71 @@ function Shell()
         // write
         sc = new ShellCommand();
         sc.command = "write";
-        sc.description = "- overwrite <string1> file (on <string2> disk) with contents of user input.";
+        sc.description = '- overwrite <string1> file with "<string2>" (quotes required)';
         sc.function = function shellWrite(params) {
+            if (params.length > 0)
+            {
+                //accounting for spaces and quotes takes a bunch of work
+                var data = "";
 
-            //is the file system free?
-            if (_FS.isFree)
-            {   //when it is, we take a look at the command
+                //first we need to break up the data parameter (to handle spaces)
+                for (var i = 1; i < params.length; i++)
+                {
+                    if (i > 1) {
+                        data += " " + params[i];
+                    } else {
+                        data += params[i];
+                    }
+                }
 
-                //was the minimum requirement of a filename given?
-                if (params.length === 0)
-                {   //when it's not, tell the user
-                    _StdIn.putLine("please specify a filename (and optional disk id.)");
+                //check the parameter
+
+                //pull it apart to work with the indices
+                data = data.split("");
+
+                //there are 4 positions that we need to look at, and they can have many values for "
+                var d1 = data[0];               //first
+                var d2 = data[1];               //second
+                var dz = data[data.length-1];   //last
+                var dy = data[data.length-2];   //next to last
+
+                //this goes a little haywire, quotes passed in from glados are different from those typed
+                //and for some reason the typed ones are double quoted on both sides?!  weird.  this catches all cases, though.
+                if (    (d1 === "\"" || d1 === "\u0010" || d1 === '"' && dz === "\"" || dz === "\u0010" || dz === '"')
+                    ||  (d2 === "\"" || d2 === "\u0010" || d2 === '"' && dy === "\"" || dy === "\u0010" || dy === '"'))
+                {
+                    //put it back together for string replace operation
+                    data = data.join("");
+
+                    //strip out all the different incarnations of "
+                    while (data.indexOf("\u0010") >= 0)
+                    {
+                        data = data.replace("\u0010","");
+                    }
+                    while (data.indexOf("\"") >= 0)
+                    {
+                        data = data.replace("\"","");
+                    }
+
+                    while (data.indexOf('"') >= 0)
+                    {
+                        data = data.replace('"',"")
+                    }
+
+                    //and go ahead and send the write operation to the kernel
+                    krnWriteFile( [HDD_IRQ_CODES[5], params[0], data] );
                 }
-                //was a filename given without a disk id?
-                else if (params.length ===1)
-                {  //when it was, pad the parameters for the kernel routine with a null at index 2
-                    krnWriteFile([HDD_IRQ_CODES[5],params[0], null]);
-                }
-                //otherwise, a full set of params was given
                 else
-                {   //so just pass them along to the driver
-                    krnWriteFile([HDD_IRQ_CODES[5], params[0], params[1]]);
+                {
+                    _StdIn.putLine('Incorrect arguments.  try: write <file> "<data>" - the quotes matter!');
                 }
             }
-            //when the file system is busy
             else
             {
-                _StdIn.putLine("The file system is locked, try again later");
+                _StdIn.putLine('Incorrect arguments.  try: write <file> "<data>" - the quotes matter!');
             }
+
+
         };
 
         this.commandList[this.commandList.length] = sc;

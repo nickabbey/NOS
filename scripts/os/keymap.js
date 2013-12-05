@@ -55,6 +55,7 @@ function Keymap() {
         this.scanCodes[127] = 46;  //delete
 
         // These are the ones that generated using the shift key
+        this.shiftedCodes.push(new KeyPair(222, 34));
         this.shiftedCodes.push(new KeyPair(49, 33));
         this.shiftedCodes.push(new KeyPair(39, 34));
         this.shiftedCodes.push(new KeyPair(51, 35));
@@ -119,7 +120,8 @@ function Keymap() {
         var retVal = false;
         if((scanCode >= 44 && scanCode <= 57)  ||   //digits punctuation and math symbols
            (scanCode >= 91 && scanCode <= 93)  ||   // [ \ ]
-           (scanCode ===39 || scanCode === 96)  )   // ' and `
+           (scanCode ===39 || scanCode === 96) ||   // ' and `
+            (scanCode ===222)                    )   // "
         {
             retVal = true;
         }

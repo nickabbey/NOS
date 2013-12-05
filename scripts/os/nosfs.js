@@ -60,6 +60,9 @@ function Nosfs()
         FS_NEXT_FREE_FAT_BLOCK = this.mbrAddress;       //next block for a filename
         FS_NEXT_FREE_FILE_BLOCK = this.firstFileAddy;   //next block for file data
 
+        //for now, this is ok but it needs to change when we add more hard drives and the "cd" commands
+        FS_ACTIVE_HDD = _HddList[0];
+
 
         //finalize the mbr default state
         this.mbrBlockData = this.getMbrBlockData();
