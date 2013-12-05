@@ -39,7 +39,6 @@ function krnHddHandler(params)
     var nextArgument    = parameters[2];    //second argument is usually the data, exceptions listed below
 
     //reusable switch variables - MUST be initialized in each case before they are used
-    var diskID = null;
     var disk = FS_ACTIVE_HDD;
     var filename = null;
     var validFilename = true;
@@ -60,8 +59,7 @@ function krnHddHandler(params)
     //reset all the case variables to their defaults
     function resetState()
     {
-        diskID = null;
-        var disk = FS_ACTIVE_HDD;
+        disk = FS_ACTIVE_HDD;
         filename = null;
         validFilename = true;
         file = null;
@@ -88,69 +86,15 @@ function krnHddHandler(params)
             //clean slate
             resetState();
 
-            //needed in this case
-            diskID = firstArgument;
-
             //lock access to the file system
             _FS.isFree = false;
 
-            //was a diskID specified?
-            if (diskID)
-            {   //if it was then that's the disk we format
+            //write the mbr
+            disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, _FS.mbrBlockData);
 
-                //first make sure the diskID is a valid number
-                if (typeof diskID === "number")
-                {   //if it is, then we need to make sure it's a valid diskID
-
-                    //so we look to see if it's out of bounds
-                    if(diskID < _HddList.length)
-                    {   //if it's a good ID, then we actually perform the format
-
-                        //get the disk we're formatting by diskID
-                        disk = _HddList[diskID];
-
-                        //write the mbr
-                        disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, _FS.mbrBlockData);
-
-                        //and do that actual work of formatting
-                        for (i = 1; i < disk.spindle.length; i++) //start at one to skip past the mbr
-                        {
-                            disk.writeBlock(sessionStorage.key(i), _FS.emptyFatBlock);
-                        }
-                    }
-                    //if the disk id given is not valid, the user needs to know
-                    else
-                    {
-                        hostLog(this + "format failed, invalid argument: diskID out of bounds");
-                    }
-                }
-                //if the diskID was not a number, the user needs to know
-                else
-                {
-                    hostLog(this +"format failed, invalid argument: diskID not a number");
-                }
-            }
-            //when a disk ID wasn't specified  - alan's test scripts will do this
-            else
-            {   //first we look to see if the default disk exists
-                if(_HddList[0])
-                {   //when the default drive is there, we just format it
-
-                    disk = _HddList[0];
-
-                    //write the mbr
-                    disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, _FS.mbrBlockData);
-
-                    for (i = 1; i < disk.spindle.length; i++)  //start at 1 to skip over the mbr
-                    {
-                        disk.writeBlock(sessionStorage.key(i), _FS.emptyFatBlock);
-                    }
-                }
-                //if it doesn't, then the user needs to know
-                else
-                {
-                    hostLog(this + "format failed, invalid argument, DiskID not found");
-                }
+            for (i = 1; i < disk.spindle.length; i++)  //start at 1 to skip over the mbr
+            {
+                disk.writeBlock(sessionStorage.key(i), _FS.emptyFatBlock);
             }
 
             //advance the next free data block marker
@@ -173,6 +117,8 @@ function krnHddHandler(params)
 
             //release the FS
             _FS.isFree = true;
+
+            _StdOut.putLine("Format operation complete");
         }
             break;
 
@@ -183,49 +129,7 @@ function krnHddHandler(params)
 
             //variables needed by this case
             filename = firstArgument;
-            diskID = nextArgument;
             filesInUse = _FS.getFatList();
-
-            //was a disk ID specified?
-            if (diskID)
-            {   //if it was then that's the disk we format
-
-                //first make sure the diskID is a valid number
-                if (typeof diskID === "number")
-                {   //if it is, then we need to make sure it's a valid diskID
-
-                    //so we look to see if it's out of bounds
-                    if(diskID < _HddList.length)
-                    {   //when it is in bounds we actually perform the format
-
-                        //target disk is now set for writing
-                        disk = _HddList[diskID];
-                    }
-                    else
-                    {   //when it's out of bounds, we tell the user
-                        krnTrace(this + "file creation failed, invalid argument: diskID out of bounds");
-                    }
-                }
-                else
-                {   //or if the diskID was not a number, the user needs to know
-                    krnTrace(this +"file creation failed, invalid argument: diskID not a number");
-                }
-            }
-            //when a disk ID wasn't specified  - alan's test scripts will do this
-            else
-            {   //first we look to see if the default disk exists
-                if(_HddList[0])
-                {   //when the default drive is there, we just set it to the target
-
-                    //target disk is now set for writing
-                    disk = _HddList[0];
-                }
-                //if it doesn't, then the user needs to know
-                else
-                {
-                    hostLog(this + "file creation failed, invalid argument: DiskID not found");
-                }
-            }
 
             //was a filename specified?
             if (filename)
@@ -325,7 +229,7 @@ function krnHddHandler(params)
                     //write the updated mbr block data
                     disk.writeBlock(_FS.mbrAddress, _FS.mbrBlockData);
 
-                    krnTrace(this + "File created");
+                    _StdOut.putLine("File created");
                 }
                 //but if we don't, then we're out of space.
                 else
@@ -356,7 +260,6 @@ function krnHddHandler(params)
 
             //set the ones that matter right now
             filename = firstArgument;
-            diskID = nextArgument;
             fileExists = false;
             file = null;
             firstAdddy = null;  //the fat table address for the file entry
@@ -405,47 +308,6 @@ function krnHddHandler(params)
                 krnTrace(this +"file read failed, missing argument: filename");
             }
 
-            //was a disk ID specified?
-            if (diskID)
-            {   //if it was then that's the disk we format
-
-                //first make sure the diskID is a valid number
-                if (typeof diskID === "number")
-                {   //if it is, then we need to make sure it's a valid diskID
-
-                    //so we look to see if it's out of bounds
-                    if(diskID < _HddList.length)
-                    {   //when it is in bounds we actually perform the format
-
-                        //target disk is now set for writing
-                        disk = _HddList[diskID];
-                    }
-                    else
-                    {   //when it's out of bounds, we tell the user
-                        krnTrace(this + "file read failed, invalid argument: diskID out of bounds");
-                    }
-                }
-                else
-                {   //or if the diskID was not a number, the user needs to know
-                    krnTrace(this +"file read failed, invalid argument: diskID not a number");
-                }
-            }
-            //when a disk ID wasn't specified  - alan's test scripts will do this
-            else
-            {   //first we look to see if the default disk exists
-                if(_HddList[0])
-                {   //when the default drive is there, we just set it to the target
-
-                    //target disk is now set for writing
-                    disk = _HddList[0];
-                }
-                //if it doesn't, then the user needs to know
-                else
-                {
-                    krnTrace(this + "File read failed, invalid argument: diskID not found");
-                }
-            }
-
             //if we got good arguments
             if (validFilename && disk)
             {   //then check if the file exists
@@ -469,11 +331,6 @@ function krnHddHandler(params)
             else if (!validFilename)
             {
                 krnTrace(this + "File read failed, invalid filename: " + parameters[1].toString());
-            }
-            //when we encounter any kind of disk error
-            else if (!disk)
-            {
-                krnTrace(this + "File read failed, Disk " + params[2].toString(16) + " not ready");
             }
 
             //Check if we found the file
@@ -496,6 +353,8 @@ function krnHddHandler(params)
 
                     FS_NEXT_FREE_FAT_BLOCK = firstAdddy;
                     FS_NEXT_FREE_FILE_BLOCK = blocks[0];
+
+                    _StdOut.putLine("Delete completed");
                 }
                 else
                 {
@@ -517,67 +376,16 @@ function krnHddHandler(params)
             //reset the case variables to defaults
             resetState();
 
-            //set the ones that matter right now
-            diskID = firstArgument;
+            filesInUse = _FS.getFatList();
 
-            //was a diskID specified?
-            if (diskID)
-            {   //if it was then that's the disk we list
-
-                //first make sure the diskID is a valid number
-                if (typeof diskID === "number")
-                {   //if it is, then we need to make sure it's a valid diskID
-
-                    //so we look to see if it's out of bounds
-                    if(diskID < _HddList.length)
-                    {   //if it's a good ID, then we actually perform the list
-
-                        //get the disk we're formatting by diskID
-                        disk = _HddList[diskID];
-
-                    }
-                    //if the disk id given is not valid, the user needs to know
-                    else
-                    {
-                        krnTrace(this + "list failed, invalid argument: diskID out of bounds");
-                    }
-                }
-                //if the diskID was not a number, the user needs to know
-                else
-                {
-                    krnTrace(this +"list failed, invalid argument: diskID not a number");
-                }
-            }
-            //when a disk ID wasn't specified  - alan's test scripts will do this
-            else
-            {   //first we look to see if the default disk exists
-                if(_HddList[0])
-                {   //when the default drive is there, we just format it
-                    disk = _HddList[0];
-                    diskID = 0;
-                }
-            }
-
-            //now check if we were able to identify a disk
-            if (disk)
-            {   //when we have a disk, we can list its contents
-
-                filesInUse = _FS.getFatList();
-
-                if (filesInUse.length > 0)
-                {
-                    _StdOut.putLine("Active files for hard disk " + diskID);
-                    for (i = 0; i < filesInUse.length; i++)
-                    {
-                        _StdOut.putLine(filesInUse[i][1]);
-                    }
-                    _OsShell.putPrompt();
-                }
-            }
-            //if we weren't tell the user
-            else
+            if (filesInUse.length > 0)
             {
-                krnTrace(this + "list failed, invalid argument, DiskID not found");
+                _StdOut.putLine("Found these files: ");
+                for (i = 0; i < filesInUse.length; i++)
+                {
+                    _StdOut.putLine(filesInUse[i][1]);
+                }
+                _OsShell.putPrompt();
             }
 
         }
@@ -590,7 +398,6 @@ function krnHddHandler(params)
 
             //set the ones that matter right now
             filename = firstArgument;
-            diskID = nextArgument;
             fileExists = false;
             file = null;
             firstAdddy = null;  //the fat table address for the file entry
@@ -639,47 +446,6 @@ function krnHddHandler(params)
                 krnTrace(this +"file read failed, missing argument: filename");
             }
 
-            //was a disk ID specified?
-            if (diskID)
-            {   //if it was then that's the disk we format
-
-                //first make sure the diskID is a valid number
-                if (typeof diskID === "number")
-                {   //if it is, then we need to make sure it's a valid diskID
-
-                    //so we look to see if it's out of bounds
-                    if(diskID < _HddList.length)
-                    {   //when it is in bounds we actually perform the format
-
-                        //target disk is now set for writing
-                        disk = _HddList[diskID];
-                    }
-                    else
-                    {   //when it's out of bounds, we tell the user
-                        krnTrace(this + "file read failed, invalid argument: diskID out of bounds");
-                    }
-                }
-                else
-                {   //or if the diskID was not a number, the user needs to know
-                    krnTrace(this +"file read failed, invalid argument: diskID not a number");
-                }
-            }
-            //when a disk ID wasn't specified  - alan's test scripts will do this
-            else
-            {   //first we look to see if the default disk exists
-                if(_HddList[0])
-                {   //when the default drive is there, we just set it to the target
-
-                    //target disk is now set for writing
-                    disk = _HddList[0];
-                }
-                //if it doesn't, then the user needs to know
-                else
-                {
-                    krnTrace(this + "File read failed, invalid argument: diskID not found");
-                }
-            }
-
             //if we got good arguments
             if (validFilename && disk)
             {   //then check if the file exists
@@ -722,12 +488,14 @@ function krnHddHandler(params)
                 {
                     for(i =0; i<blocks.length; i++)
                     {
+                        _StdOut.putLine("Contents of file " + _FS.getBlockData(firstAdddy) + ": ");
                         _StdOut.putLine(_FS.getBlockData(blocks[i]));
                     }
+
                 }
                 else
                 {
-                    krnTrace(this + "Write failed, getting allocated blocks failed");
+                    krnTrace(this + "Read failed, getting allocated blocks failed");
                 }
 
 
@@ -833,6 +601,8 @@ function krnHddHandler(params)
                     {
                         disk.writeBlock(blocks[i][0],blocks[i][1]);
                     }
+
+                    _StdOut.putLine("Write complete");
                 }
                 else
                 {
