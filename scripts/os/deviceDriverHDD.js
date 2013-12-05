@@ -181,51 +181,7 @@ function krnHddHandler(params)
             //variables needed by this case
             filename = firstArgument;
             diskID = nextArgument;
-
-            //was a filename specified?
-            if (filename)
-            {   //if it was then we set the target filename
-
-                //first make sure the filename is a string
-                if (typeof filename === "string")
-                {   //when we have a valid string argument, we need to look for invalid chars
-
-                    //first things first, is the string too long?
-                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS)
-                    {   //filename is too long to fit in the fat table
-
-                        //so it's invalid
-                        validFilename = false;
-
-                        //tell the user
-                        krnTrace(this + "File create failed, invalid argument: filename too long")
-                    }
-                    //when the length is ok, we need to check for invalid characters
-                    else
-                    {
-                        if(!_FS.isStringOK(filename))
-                        {
-                            validFilename = false;
-
-                            krnTrace(this + "File create failed: Invalid characters in file name")
-                        }
-                    }
-                    //by the time we get here, we know for sure if the filename is valid or not
-                }
-                //when the filename isn't a string, notify the user
-                else
-                {   //tell the user that they gave bad input for the filename
-                    krnTrace(this + "file creation failed, invalid argument: filename not a string");
-                }
-
-            }
-            else
-            //filename was not given
-            {   //tell the user that they forgot to give a filename argument
-                krnTrace(this +"file creation failed, missing argument: filename");
-            }
-
-            //TODO Check if the filename is already in use
+            filesInUse = _FS.getFatList();
 
             //was a disk ID specified?
             if (diskID)
@@ -266,6 +222,61 @@ function krnHddHandler(params)
                 {
                     hostLog(this + "file creation failed, invalid argument: DiskID not found");
                 }
+            }
+
+            //was a filename specified?
+            if (filename)
+            {   //if it was then we set the target filename
+
+                //first make sure the filename is a string
+                if (typeof filename === "string")
+                {   //when we have a valid string argument, we need to look for invalid chars
+
+                    //first things first, is the string too long?
+                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS)
+                    {   //filename is too long to fit in the fat table
+
+                        //so it's invalid
+                        validFilename = false;
+
+                        //tell the user
+                        krnTrace(this + "File create failed, invalid argument: filename too long")
+                    }
+                    //when the length is ok, we need to check for invalid characters
+                    else
+                    {
+                        if(!_FS.isStringOK(filename))
+                        {
+                            validFilename = false;
+
+                            krnTrace(this + "File create failed: Invalid characters in file name")
+                        }
+                    }
+
+                    //last, check for duplicate file name
+                    for (i = 0; i < filesInUse.length; i++)
+                    {
+                        if (filename === filesInUse[i][1])
+                        {
+                            validFilename = false;
+
+                            krnTrace(this + "File create failed: duplicate file name");
+                            _StdOut.putLine("File name already exists");
+                        }
+                    }
+                    //by the time we get here, we know for sure if the filename is valid or not
+                }
+                //when the filename isn't a string, notify the user
+                else
+                {   //tell the user that they gave bad input for the filename
+                    krnTrace(this + "file creation failed, invalid argument: filename not a string");
+                }
+
+            }
+            else
+            //filename was not given
+            {   //tell the user that they forgot to give a filename argument
+                krnTrace(this +"file creation failed, missing argument: filename");
             }
 
             //if we got good arguments
