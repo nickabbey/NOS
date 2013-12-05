@@ -345,6 +345,8 @@ function krnHddHandler(params)
             diskID = nextArgument;
             fileExists = false;
             file = null;
+            firstAdddy = null;  //the fat table address for the file entry
+            blocks = [];
 
             //was a filename specified?
             if (filename)
@@ -360,33 +362,33 @@ function krnHddHandler(params)
 
                         //so it's invalid
                         validFilename = false;
+
+                        //tell the user
+                        krnTrace(this + "File read failed, invalid argument: filename too long")
                     }
                     //when the length is ok, we need to check for invalid characters
                     else
                     {
-                        //TODO - MAKE THIS WORK!!
-//                    //for each character in the filename, check if it is a forbidden character
-//                    for (var i = 0; i < filename.length-1; i++)
-//                        {   //if this char is forbidden, update validFilename
-//                            if (_FS.invalidChars.indexOf(filename[i]))
-//                                {
-//                                    validFilename = false;
-//                                }
-//                            }
+                        if(!_FS.isStringOK(filename))
+                        {
+                            validFilename = false;
+
+                            krnTrace(this + "File read failed: Invalid characters in file name")
+                        }
                     }
                     //by the time we get here, we know for sure if the filename is valid or not
                 }
                 //when the filename isn't a string, notify the user
                 else
                 {   //tell the user that they gave bad input for the filename
-                    krnTrace(this + "file deletion failed, invalid argument: filename not a string");
+                    krnTrace(this + "file read failed, invalid argument: filename not a string");
                 }
 
             }
             else
             //filename was not given
             {   //tell the user that they forgot to give a filename argument
-                krnTrace(this +"file deletion failed, missing argument: filename");
+                krnTrace(this +"file read failed, missing argument: filename");
             }
 
             //was a disk ID specified?
@@ -406,12 +408,12 @@ function krnHddHandler(params)
                     }
                     else
                     {   //when it's out of bounds, we tell the user
-                        krnTrace(this + "file deletion failed, invalid argument: diskID out of bounds");
+                        krnTrace(this + "file read failed, invalid argument: diskID out of bounds");
                     }
                 }
                 else
                 {   //or if the diskID was not a number, the user needs to know
-                    krnTrace(this +"file deletion failed, invalid argument: diskID not a number");
+                    krnTrace(this +"file read failed, invalid argument: diskID not a number");
                 }
             }
             //when a disk ID wasn't specified  - alan's test scripts will do this
@@ -426,7 +428,7 @@ function krnHddHandler(params)
                 //if it doesn't, then the user needs to know
                 else
                 {
-                    krnTrace(this + "File deletion failed, invalid argument: diskID not found");
+                    krnTrace(this + "File read failed, invalid argument: diskID not found");
                 }
             }
 
@@ -442,69 +444,60 @@ function krnHddHandler(params)
                     {
                         if (filesInUse[i][1] === filename)
                         {
-                            file = filesInUse[i];
+                            firstAdddy = filesInUse[i][0];  //fat address of the file we found
+                            file = filesInUse[i][1];  //the filename (kind of redundant...)
                         }
                     }
 
                 }
-
-                if(file)
-                {
-                    //we have a file and need to overwrite all it's blocks
-
-                }
-
-
-                //start by building the fat metadata
-                fatMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FILE_BLOCK);
-
-                //then the actual fat block data
-                fatData = _FS.makeDirBlock(filename);
-
-                //now write the fatData to the next free FAT block
-                disk.writeBlock(FS_NEXT_FREE_FAT_BLOCK, fatMeta + "." + fatData);
-
-                //next build the file meta data
-                fileMeta = _FS.makeMetaData(_FS.usedBlock, FS_NEXT_FREE_FAT_BLOCK);
-
-                //and build the file block data
-                fileData = _FS.makeDirBlock("");  //this generates a "blank" file with "$" in the first bit
-
-                //now write the fileData to the next free file block
-                disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, fileMeta + "." + fileData);
-
-                //advance markers
-                FS_NEXT_FREE_FAT_BLOCK = _FS.getNextFreeFatBlock();
-                FS_NEXT_FREE_FILE_BLOCK = _FS.getNextFreeFileBlock();
-
-                //update file system statistics
-                HDD_USED_FILE_BLOCKS = _FS.getUsedFileBlocks();
-                HDD_USED_FAT_BLOCKS  = _FS.getUsedFatBlocks();
-                HDD_FREE_FILE_BLOCKS = _FS.getFreeFileBlocks();
-                HDD_FREE_FAT_BLOCKS  = _FS.getFreeFatBlocks();
-
-                //TODO - the next 2 lines might belong in the kernel on clock pulses, or outside this case block
-                //update the mbr block data
-                _FS.mbrBlockData = _FS.getMbrBlockData();
-
-                //write the updated mbr block data
-                disk.writeBlock(_FS.mbrAddress, _FS.mbrBlockData);
-
-                krnTrace(this + "File created");
-
             }
             //when we didn't get a valid filename
             else if (!validFilename)
             {
-                krnTrace(this + "File create failed, invalid filename: " + parameters[1].toString());
+                krnTrace(this + "File read failed, invalid filename: " + parameters[1].toString());
             }
             //when we encounter any kind of disk error
             else if (!disk)
             {
-                krnTrace(this + "File creation failed, Disk " + params[2].toString(16) + " not ready");
+                krnTrace(this + "File read failed, Disk " + params[2].toString(16) + " not ready");
+            }
+
+            //Check if we found the file
+            if(file)
+            {   //when we were able to find the file we care about
+
+                //get get the blocks allocated to that file
+                blocks = _FS.getAllocatedBlocks(firstAdddy);
+
+                //print out the blocks to the screen
+                if (blocks)
+                {
+
+                    for(i =0; i<blocks.length; i++)
+                    {
+                        disk.writeBlock(blocks[i], _FS.emptyFatBlock);
+                    }
+
+                    disk.writeBlock(firstAdddy, _FS.emptyFatBlock);
+
+                    FS_NEXT_FREE_FAT_BLOCK = firstAdddy;
+                    FS_NEXT_FREE_FILE_BLOCK = blocks[0];
+                }
+                else
+                {
+                    krnTrace(this + "Write failed, getting allocated blocks failed");
+                }
+
+
+            }
+            else
+            //we didn't find the file we wanted
+            {
+                krnTrace(this + "Read failed, file not found");
             }
         }
             break;
+
         case "LIST":
         {
             //reset the case variables to defaults
@@ -575,6 +568,7 @@ function krnHddHandler(params)
 
         }
             break;
+
         case "READ":
         {
             //reset the case variables to defaults
@@ -714,7 +708,7 @@ function krnHddHandler(params)
                 {
                     for(i =0; i<blocks.length; i++)
                     {
-                        _StdOut.putLine(blocks[i]);
+                        _StdOut.putLine(_FS.getBlockData(blocks[i]));
                     }
                 }
                 else
@@ -731,6 +725,7 @@ function krnHddHandler(params)
             }
         }
             break;
+
         case "WRITE":
         {
             //reset the case variables to defaults

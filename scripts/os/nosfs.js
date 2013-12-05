@@ -788,7 +788,7 @@ function Nosfs()
 
         while (nextAddy != firstAddy)
         {
-            blocks[blocks.length] = this.getBlockData(nextAddy);
+            blocks[blocks.length] = (nextAddy);
             nextAddy = this.getAddressFromBlock(nextAddy);
     }
 

@@ -525,6 +525,41 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
+        // delete
+        sc = new ShellCommand();
+        sc.command = "delete";
+        sc.description = "- Delete file <string1> file (from <string2> disk)";
+        sc.function = function shellDelete(params) {
+
+            //is the file system free?
+            if (_FS.isFree)
+            {   //when it is, we take a look at the command
+
+                //was the minimum requirement of a filename given?
+                if (params.length === 0)
+                {   //when it's not, tell the user
+                    _StdIn.putLine("please specify a filename (and optional disk id.)");
+                }
+                //was a filename given without a disk id?
+                else if (params.length ===1)
+                {  //when it was, pad the parameters for the kernel routine with a null at index 2
+                    krnDeleteFile([HDD_IRQ_CODES[2],params[0], null]);
+                }
+                //otherwise, a full set of params was given
+                else
+                {   //so just pass them along to the driver
+                    krnDeleteFile([HDD_IRQ_CODES[2], params[0], params[1]]);
+                }
+            }
+            //when the file system is busy
+            else
+            {
+                _StdIn.putLine("The file system is locked, try again later");
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
         // List
         sc = new ShellCommand();
         sc.command = "ls";
