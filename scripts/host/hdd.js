@@ -1,7 +1,5 @@
 /**
  * User: nick
- * Date: 11/15/13
- * Time: 1:47 PM
  *
  *  Requires:  global.js
  *
@@ -13,7 +11,6 @@
  *      The driver provides an API to these low level routines.
  *      The file system describes how the data is represented on the disk.
  *      The kernel makes API calls based on commands received via the shell.
- *
  */
 
 

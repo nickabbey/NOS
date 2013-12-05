@@ -40,6 +40,11 @@ var HDD_IRQ_CODES = [   "FORMAT"    ,   //0
                         "READ"      ,   //4
                         "WRITE"     ];  //5
 
+var SCHEDULER_ALGORITHMS = [    "rr",       //0 - default
+                                "fcfs",     //1 - RR with high quantum
+                                "priority"];//2 - priority non-preemptive
+
+var CURRENT_SCHEDULER_ALGORITHM = SCHEDULER_ALGORITHMS[0];  //RR is the default
 //
 // Global Variables
 //
@@ -187,5 +192,8 @@ var FS_NEXT_FREE_FAT_BLOCK  = null; //tsb address of the next free block for fil
 var HDD_MBR_ADDRESS     = null;  //tsb address of the main boot record, specified by file system driver init routine
 
 var FS_ACTIVE_HDD = null;
+
+
+
 
 

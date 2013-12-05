@@ -627,6 +627,61 @@ function Shell()
 
         this.commandList[this.commandList.length] = sc;
 
+        // setSchedule
+        sc = new ShellCommand();
+        sc.command = "setschedule";
+        sc.description = "- Sets the schedule to the specified string";
+        sc.function = function shellSetSchedule(params) {
+            if (params.length === 1)
+            {
+                if (SCHEDULER_ALGORITHMS.indexOf(params[0]) >= 0)
+                {
+                    switch (params[0])
+                    {
+                        case "fcfs":
+                        {
+                            _Quantum = Number.MAX_VALUE;
+                        }
+                            break;
+
+                        case "rr":
+                        {
+                            _Quantum = 6;
+                        }
+                            break;
+
+                        case "priority":
+                        {
+                            _Quantum = Number.MAX_VALUE;
+                        }
+                            break;
+
+                        default:
+                    }
+
+                    CURRENT_SCHEDULER_ALGORITHM = SCHEDULER_ALGORITHMS[SCHEDULER_ALGORITHMS.indexOf(params[0])];
+                    _StdOut.putLine("Changed schedule to : "+ CURRENT_SCHEDULER_ALGORITHM);
+                }
+                else
+                {
+                    _StdOut.putLine("Invalid scheduler type.  try 'fcfs', 'rr', or 'priority'");
+                }
+            }
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+        // geSchedule
+        sc = new ShellCommand();
+        sc.command = "getschedule";
+        sc.description = "- Displays the currently selected scheduling algorithm";
+        sc.function = function shellGetSchedule() {
+            _StdOut.putLine(CURRENT_SCHEDULER_ALGORITHM);
+        };
+
+        this.commandList[this.commandList.length] = sc;
+
+
         // Display the welcome message and initial prompt.
         _StdIn.putLine("Welcome to NOS - The turbocharged operating system!");
         this.putPrompt();
