@@ -816,6 +816,7 @@ function Nosfs()
         return retVal;
     };
 
+    //reads the block at a given address and returns the t.s.b string stored in it's metadata (aka block pointers)
     this.getAddressFromBlock = function(blockAddy)
     {
         var meta = ""
@@ -824,6 +825,17 @@ function Nosfs()
         meta = meta.join(".");
 
         return meta;
+    };
+
+    //write a file named "filename"
+    this.swapWrite = function(data)
+    {
+
+    };
+
+    this.swapRead = function(filename)
+    {
+
     };
 
 }

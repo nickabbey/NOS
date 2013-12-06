@@ -158,4 +158,45 @@ function Mmu()
             krnTrace(this + "failed to flush partition " + parseInt(p));
         }
     };
+
+    this.rollOut = function(pcb, data)
+    {
+        _StdOut.putLine("Too many processed loaded");
+    };
+
+    this.rollIn = function(pcb, data)
+    {
+        //ask the mmu where it should go
+        var partition = _MMU.getFreePartition();
+        if(partition === -1)
+        {   //no free memory slots
+            krnTrace(this + "Attempted to load process while memory was full");
+            _StdIn.putLine("Memory is full, rolling process out to disk");
+            _MMU.rollOut(pcb, data);
+
+        }
+        else
+        {   //We got free memory, so we can load the thread
+
+            //Start by getting pointers to main memory
+            var start = _MMU.getPartitionBegin(partition);
+            var end = _MMU.getPartitionEnd(partition);
+
+            //Then update the PCB and put it in the _ThreadList
+            pcb.setLocation(start, end);
+
+            _ThreadList[_ThreadList.length] = pcb;
+
+            //update the free partition table
+            _MMU.logical.freeParts[partition] = false;
+
+            //load opcodes to the appropriate partition
+            _MMU.load(data, partition);
+
+            krnTrace(this + "Rolled in PID: " + pcb.pid);
+            _StdIn.putLine("Rolled in PID: " + pcb.pid);
+        }
+    };
+
+
 }

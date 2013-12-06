@@ -13,8 +13,8 @@ function Pcb (state, pid, base, limit)
     this.pid		= pid;  	// Process id
     this.state      = state;    // Process state
     this.pc         = 0;        // Program counters always start at 0
-    this.base       = base;     // Address of pcb start (as an integer representing an index for _MainMemory)
-    this.limit      = limit;    // Address of pcb end (as an integer representing an index for _MainMemory)
+    this.base       = base;     // Address of pcb start (integer index for _MainMemory, -1 indicates process on disk)
+    this.limit      = limit;    // Address of pcb end (integer index for _MainMemory, -1 indicates process on disk)
 
     // Registers are members too
     this.acc = 0;
@@ -30,5 +30,11 @@ function Pcb (state, pid, base, limit)
         this.y = _CPU.Yreg;
         this.z = _CPU.Zflag;
         this.pc = _CPU.PC;
+    };
+
+    this.setLocation = function(base, limit)
+    {
+        this.base = base;
+        this.limit = limit;
     };
 }

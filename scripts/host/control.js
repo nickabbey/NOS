@@ -75,10 +75,7 @@ function hostInit()
     _StatusBar = document.getElementById("taStatusBar");
     _StatusBar.value = new Date().toString();
 
-   // Check for our testing and enrichment core.
-//   if (typeof _GLaDOS === "function")
-//   {
-       //Interpreter will see this as an unresolved type if alan's test script isn't enabled in index.html
+    //Alan's test script for grading
 //      _GLaDOS = new Glados();
 //       alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
 //           "The script executes, but this disables keyboard input! " +
@@ -86,15 +83,11 @@ function hostInit()
 //            "Just click the 'Purge' button when you want to regain control");
 //      _GLaDOS.init();
 //      _Testing = true;
-//   }
 
-//    // Personal testing
-//    if (typeof _GLaDNOS === "function")
-//    {
-        _GLaDNOS = new GladNos();
-        _GLaDNOS.init();
-        _Testing = true;
-//    }
+    //My customized GlasOs for internal testing
+//        _GLaDNOS = new GladNos();
+//        _GLaDNOS.init();
+//        _Testing = true;
 
     //stepping options should not be selectable until start is clicked
     document.getElementById("chkStep").disabled = true;

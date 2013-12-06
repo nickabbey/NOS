@@ -145,49 +145,15 @@ function Shell()
             //verify it
             if (shellProgramValidation(program))
             {   //opcodes verified
-                _StdOut.putLine("Program is valid, loading...");
-                //ask the mmu where it should go
-                var partition = _MMU.getFreePartition();
-                if(partition === -1)
-                {   //no free memory slots
-                    krnTrace(this + "failed to load user program");
-                    _StdIn.putLine("Memory is full.  Kill or run a process and try again");
-                }
-                else
-                {   //We got free memory, so we can load the thread
 
-                    //Start by getting pointers to main memory
-                    var start = _MMU.getPartitionBegin(partition);
-                    var end = _MMU.getPartitionEnd(partition);
+                var opCodes = program.split(" ");
 
-                    //verify good start and end addresses
-                    if(typeof start === 'number'  && typeof end === 'number')
-                    {
-                        //Then construct the PCB and put it in the _ThreadList
-                        var myPCB = new Pcb("LOADED", _NextPID, start, end);
-                        _ThreadList[_ThreadList.length] = myPCB;
+                var newPcb = new Pcb("NEW", _NextPID, -1, -1);
+                _StdOut.putLine("Program is valid, created process with PID: " + _NextPID);
+                _NextPID++;
 
-                        //update the free partition table
-                        _MMU.logical.freeParts[partition] = false;
+                _MMU.rollIn(newPcb, opCodes);
 
-                        //tokenize program input
-                        var opCodes = program.split(" ");
-
-                        //load opcodes to the appropriate partition
-                        _MMU.load(opCodes, partition);
-
-                        _StdOut.putLine("Program loaded with PID: " + _NextPID);
-
-                        //update PID counter
-                        _NextPID++;
-
-                    }
-                    else
-                    {
-                        //feedback if that failed for some reason
-                        krnTrace(this + "MMU returned bad PCB start or end address")
-                    }
-                }
             }
             else
             {   //opCodes were invalid
