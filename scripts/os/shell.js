@@ -357,31 +357,60 @@ function Shell()
         sc.description = "- Create file named '<string1>' (on disk '<string2>')";
         sc.function = function shellCreate(params) {
 
-            //is the file system free?
-            if (_FS.isFree)
-            {   //when it is, we take a look at the command
+            //first part of creation parameter array is the code for file creation
+            var createParameters = [HDD_IRQ_CODES[1],params[0], FS_ACTIVE_HDD];
 
-                //was the minimum requirement of a filename given?
-                if (params.length === 0)
-                {   //when it's not, tell the user
-                    _StdIn.putLine("please specify a filename (and optional disk id.)");
-                }
-                //was a filename given without a disk id?
-                else if (params.length ===1)
-                {  //when it was, pad the parameters for the kernel routine with a null at index 2
-                    krnCreateFile([HDD_IRQ_CODES[1],params[0], null]);
-                }
-                //otherwise, a full set of params was given
-                else
-                {   //so just pass them along to the driver
-                    krnCreateFile([HDD_IRQ_CODES[1], params[0], params[1]]);
-                }
-            }
-            //when the file system is busy
-            else
+            if (params[1])
             {
-                _StdIn.putLine("The file system is locked, try again later");
+                createParameters[2] = params[1];
             }
+
+            //if we got a valid filename, add it to the parameters
+            if(params[0] && shellVerifyFileName(params[0]))
+            {   //we got a good filename
+
+                //but did we get a disk ID?
+                krnCreateFile(createParameters);
+            }
+            else
+            {   //we didn't
+
+                //so let the user know
+                _StdOut.putLine("Unable to create file")
+            }
+//
+//
+//
+//            //is the file system free?
+//            if (_FS.isFree)
+//            {   //when it is, we take a look at the command
+//
+//                //was the minimum requirement of a filename given?
+//                if (params.length === 0)
+//                {   //when it's not, tell the user
+//                    _StdIn.putLine("please specify a filename (and optional disk id.)");
+//                }
+//                else
+//                {
+//                    //was a filename given without a disk id?
+//                    if (params.length ===1)
+//                    {  //when it was, pad the parameters for the kernel routine with a null at index 2
+//                        krnCreateFile([HDD_IRQ_CODES[1],params[0], null]);
+//                    }
+//                    //otherwise, a full set of params was given
+//                    else
+//                    {   //so just pass them along to the driver
+//                        krnCreateFile([HDD_IRQ_CODES[1], params[0], params[1]]);
+//                    }
+//
+//
+//                }
+//            }
+//            //when the file system is busy
+//            else
+//            {
+//                _StdIn.putLine("The file system is locked, try again later");
+//            }
         };
 
         this.commandList[this.commandList.length] = sc;
@@ -944,5 +973,74 @@ function shellGetPidIndex(args)
             retVal = i;
         }
     }
+    return retVal;
+}
+
+function shellVerifyFileName(filename)
+{
+
+    krnTrace(this + "Requested file operation, verifying file name");
+
+    var retVal = true;
+
+    //was a filename specified?
+    if (filename)
+    {   //if it was then we set the target filename
+
+        //first make sure the filename is a string
+        if (typeof filename === "string")
+        {   //when we have a valid string argument, we need to look for invalid chars
+
+            //first things first, is the string too long?
+            if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS)
+            {   //filename is too long to fit in the fat table
+
+                //so it's invalid
+                retVal = false;
+
+                //tell the user
+                krnTrace(this + "Invalid file name: too long");
+                _StdOut.putLine("File name is too long");
+            }
+            //when the length is ok, we need to check for invalid characters
+            else
+            {
+                if(!_FS.isStringOK(filename))
+                {
+                    retVal = false;
+
+                    krnTrace(this + "Invalid file name: Invalid characters")
+                    _StdOut.putLine("File name contains invalid characters");
+                }
+            }
+
+            //last, check for duplicate file name
+            for (var i = 0; i < FS_FILENAMES.length; i++)
+            {
+                if (filename === FS_FILENAMES[i][1])
+                {
+                    retVal = false;
+
+                    krnTrace(this + "Invalid file name: duplicate file name");
+                    _StdOut.putLine("File name already exists");
+                }
+            }
+            //by the time we get here, we know for sure if the filename is valid or not
+        }
+        //when the filename isn't a string, notify the user
+        else
+        {   //tell the user that they gave bad input for the filename
+            krnTrace(this + "file creation failed, invalid argument: filename not a string");
+            _StdOut.putLine("File name is not a string");
+        }
+
+    }
+    else
+    //filename was not given
+    {   //tell the user that they forgot to give a filename argument
+        krnTrace(this +"file creation failed, missing argument: filename");
+        _StdOut.putLine("File name missing");
+    }
+
     return retVal;
 }

@@ -161,6 +161,9 @@ function Mmu()
 
     this.rollOut = function(pcb, data)
     {
+        pcb.state = "ON DISK";
+
+        krnCreateFile([HDD_IRQ_CODES[1],"@PID" + pcb.pid, null]);
         _StdOut.putLine("Too many processed loaded");
     };
 
@@ -184,6 +187,7 @@ function Mmu()
 
             //Then update the PCB and put it in the _ThreadList
             pcb.setLocation(start, end);
+            pcb.state = "READY";
 
             _ThreadList[_ThreadList.length] = pcb;
 

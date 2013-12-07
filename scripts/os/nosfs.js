@@ -63,6 +63,10 @@ function Nosfs()
         //for now, this is ok but it needs to change when we add more hard drives and the "cd" commands
         FS_ACTIVE_HDD = _HddList[0];
 
+        //update the filenames in use by the system
+        FS_FILENAMES = this.getFatList();
+
+
 
         //finalize the mbr default state
         this.mbrBlockData = this.getMbrBlockData();
@@ -827,13 +831,8 @@ function Nosfs()
         return meta;
     };
 
-    //write a file named "filename"
-    this.swapWrite = function(data)
-    {
-
-    };
-
-    this.swapRead = function(filename)
+    //creates an empty swap file arge enough to hold a memory partition on disk
+    this.makeSwap = function()
     {
 
     };
