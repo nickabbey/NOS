@@ -392,6 +392,7 @@ function krnHddHandler(params)
             krnTrapError(this + "Invalid disk operation");
     }
 
+    //keey the filename cache up to date
     FS_FILENAMES = _FS.getFatList();
 }
 

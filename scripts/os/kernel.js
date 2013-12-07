@@ -200,16 +200,34 @@ function krnKillProgram(param)
    //the thread that we will kill
     var thread = _ThreadList[param];
 
-    //first, clean up memory for the partition holding this thread
-    _MMU.flushPartition(thread.base / _MemorySegmentSize );
-
-    //next, set CPU.isExecuting false
+    //first, set CPU.isExecuting false
     _CPU.isExecuting = false;
 
-    //finally, remove the PCB from the _ThreadList
+    //then, clean up memory for the partition holding this thread
+    _MMU.flushPartition(thread.base / _MemorySegmentSize );
+
+    //next, clean up any swap files for this thread
+    for (var i = 0; i < FS_FILENAMES.length; i++)
+    {   //start by looping through the list for filenames in the FAT
+
+        //look for a match of the current pid swap file name to a file on disk
+        if(FS_FILENAMES[i][1] === _MMU.makeSwapId(thread.pid))
+        {
+            //make note of it
+            var filename = FS_FILENAMES[i][1];
+        }
+    }
+
+    //when there was a swap file found, delete it
+    if (filename)
+    {
+        krnDeleteFile([HDD_IRQ_CODES[2],filename,null]);
+    }
+
+    //now, remove the PCB from the _ThreadList
     _ThreadList.splice(_ThreadList.indexOf(thread), 1);
 
-    //so the krnOnClockPulse
+    //and set the current thread to null so the CPU scheduler will know that it can assign a new thread
     _CurrentThread = null;
 }
 
