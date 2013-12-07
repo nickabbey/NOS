@@ -131,7 +131,7 @@ function krnHddHandler(params)
             filename = firstArgument;
 
             //if we got good arguments
-            if (validFilename && disk)
+            if (filename)
             {   //then check for free space
 
                 //Do we have free space?
@@ -179,20 +179,7 @@ function krnHddHandler(params)
                 else
                 {   //so let the user know
                     krnTrace(this + "Insufficient free space to write this file.");
-                    //TODO - check this, may need a better way to exit this routine
-                    //this break is meant to take us out of the if (validFilename && disk) block
-                    break;
                 }
-            }
-            //when we didn't get a valid filename
-            else if (!validFilename)
-            {
-                krnTrace(this + "File create failed, invalid filename: " + parameters[1].toString());
-            }
-            //when we encounter any kind of disk error
-            else if (!disk)
-            {
-                krnTrace(this + "File creation failed, Disk " + params[2].toString(16) + " not ready");
             }
         }
             break;
@@ -209,51 +196,8 @@ function krnHddHandler(params)
             firstAdddy = null;  //the fat table address for the file entry
             blocks = [];
 
-            //was a filename specified?
-            if (filename)
-            {   //if it was then we set the target filename
-
-                //first make sure the filename is a string
-                if (typeof filename === "string")
-                {   //when we have a valid string argument, we need to look for invalid chars
-
-                    //first things first, is the string too long?
-                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS)
-                    {   //filename is too long to fit in the fat table
-
-                        //so it's invalid
-                        validFilename = false;
-
-                        //tell the user
-                        krnTrace(this + "File read failed, invalid argument: filename too long")
-                    }
-                    //when the length is ok, we need to check for invalid characters
-                    else
-                    {
-                        if(!_FS.isStringOK(filename))
-                        {
-                            validFilename = false;
-
-                            krnTrace(this + "File read failed: Invalid characters in file name")
-                        }
-                    }
-                    //by the time we get here, we know for sure if the filename is valid or not
-                }
-                //when the filename isn't a string, notify the user
-                else
-                {   //tell the user that they gave bad input for the filename
-                    krnTrace(this + "file read failed, invalid argument: filename not a string");
-                }
-
-            }
-            else
-            //filename was not given
-            {   //tell the user that they forgot to give a filename argument
-                krnTrace(this +"file read failed, missing argument: filename");
-            }
-
             //if we got good arguments
-            if (validFilename && disk)
+            if (filename)
             {   //then check if the file exists
 
                 if (filesInUse.length > 0)
@@ -268,11 +212,6 @@ function krnHddHandler(params)
                     }
 
                 }
-            }
-            //when we didn't get a valid filename
-            else if (!validFilename)
-            {
-                krnTrace(this + "File read failed, invalid filename: " + parameters[1].toString());
             }
 
             //Check if we found the file
@@ -300,7 +239,7 @@ function krnHddHandler(params)
                 }
                 else
                 {
-                    krnTrace(this + "Write failed, getting allocated blocks failed");
+                    krnTrace(this + "Delete failed, getting allocated blocks failed");
                 }
 
 
@@ -308,7 +247,7 @@ function krnHddHandler(params)
             else
             //we didn't find the file we wanted
             {
-                krnTrace(this + "Read failed, file not found");
+                krnTrace(this + "Delete failed, file not found");
             }
         }
             break;
@@ -343,51 +282,8 @@ function krnHddHandler(params)
             firstAdddy = null;  //the fat table address for the file entry
             blocks = [];
 
-            //was a filename specified?
-            if (filename)
-            {   //if it was then we set the target filename
-
-                //first make sure the filename is a string
-                if (typeof filename === "string")
-                {   //when we have a valid string argument, we need to look for invalid chars
-
-                    //first things first, is the string too long?
-                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS)
-                    {   //filename is too long to fit in the fat table
-
-                        //so it's invalid
-                        validFilename = false;
-
-                        //tell the user
-                        krnTrace(this + "File read failed, invalid argument: filename too long")
-                    }
-                    //when the length is ok, we need to check for invalid characters
-                    else
-                    {
-                        if(!_FS.isStringOK(filename))
-                        {
-                            validFilename = false;
-
-                            krnTrace(this + "File read failed: Invalid characters in file name")
-                        }
-                    }
-                    //by the time we get here, we know for sure if the filename is valid or not
-                }
-                //when the filename isn't a string, notify the user
-                else
-                {   //tell the user that they gave bad input for the filename
-                    krnTrace(this + "file read failed, invalid argument: filename not a string");
-                }
-
-            }
-            else
-            //filename was not given
-            {   //tell the user that they forgot to give a filename argument
-                krnTrace(this +"file read failed, missing argument: filename");
-            }
-
             //if we got good arguments
-            if (validFilename && disk)
+            if (filename)
             {   //then check if the file exists
 
                 if (filesInUse.length > 0)
@@ -402,16 +298,6 @@ function krnHddHandler(params)
                     }
 
                 }
-            }
-            //when we didn't get a valid filename
-            else if (!validFilename)
-            {
-                krnTrace(this + "File read failed, invalid filename: " + parameters[1].toString());
-            }
-            //when we encounter any kind of disk error
-            else if (!disk)
-            {
-                krnTrace(this + "File read failed, Disk " + params[2].toString(16) + " not ready");
             }
 
             //Check if we found the file
