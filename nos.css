@@ -38,53 +38,53 @@ h3 {
 
 #divMemoryTable {
     border: 2px groove black;
-    height: 280px;
+    height: 310px;
     width: 250px;
     overflow: auto;
 }
 
 #taMemory
 {
-    height: 280px;
+    height: 310px;
     width: 250px;
 }
 
 #divFileSystemTable {
     border: 2px groove black;
-    height: 525px;
-    width: 1000px;
+    height: 560px;
+    width: 800px;
     overflow: auto;
 }
 
 #taFileSystem
 {
-    height: 280px;
-    width: 1000px;
+    height: 560px;
+    width: 800px;
 }
 
 #divCPUTable {
     border: 2px groove black;
-    height: 100px;
+    height: 50px;
     width: 250px;
     text-align: center;
 }
 
 #taCPU
 {
-    height: 100px;
+    height: 50px;
     width: 250px;
 }
 
 #divPCBTable {
     border: 2px groove black;
-    height: 100px;
+    height: 150px;
     width: 250px;
-    text-align: center;
+    overflow: auto;
 }
 
 #taPCB
 {
-    height: 100px;
+    height: 150px;
     width: 250px;
 }
 

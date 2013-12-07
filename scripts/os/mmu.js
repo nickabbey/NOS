@@ -176,6 +176,12 @@ function Mmu()
 
     this.rollIn = function(pcb, data)
     {
+        //first things first, add the thread to the list of loaded threads
+        if(_ThreadList.indexOf(pcb) === -1)
+        {
+            _ThreadList[_ThreadList.length] = pcb;
+        }
+
         //ask the mmu where it should go
         var partition = _MMU.getFreePartition();
         if(partition === -1)
@@ -195,8 +201,6 @@ function Mmu()
             //Then update the PCB and put it in the _ThreadList
             pcb.setLocation(start, end);
             pcb.state = "READY";
-
-            _ThreadList[_ThreadList.length] = pcb;
 
             //update the free partition table
             _MMU.logical.freeParts[partition] = false;

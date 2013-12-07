@@ -281,7 +281,7 @@ function readyQueueToTable()
 
     //build out the rest of the table
 
-    for (var i = 0; i <= _InstalledMemory / _MemorySegmentSize; i++)
+    for (var i = 0; i <= _ThreadList.length; i++)
     {
         //reset the table elements
         row = document.createElement("tr");
