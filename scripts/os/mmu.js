@@ -161,10 +161,17 @@ function Mmu()
 
     this.rollOut = function(pcb, data)
     {
-        pcb.state = "ON DISK";
+        krnTrace(this + "Begin rolling out PID: " + pcb.pid);
 
-        krnCreateFile([HDD_IRQ_CODES[1],"@PID" + pcb.pid, null]);
-        _StdOut.putLine("Too many processed loaded");
+
+        pcb.state = "ON DISK";
+        var swapFileName = this.makeSwapId(pcb.pid);
+        krnCreateFile([HDD_IRQ_CODES[1],swapFileName, FS_ACTIVE_HDD]);
+        krnWriteFile([HDD_IRQ_CODES[5], swapFileName, data.join(" ")]);
+
+        krnTrace(this + "Done rolling out PID: " + pcb.pid);
+        _StdOut.putLine("PID " + pcb.pid + " Rolled out");
+
     };
 
     this.rollIn = function(pcb, data)
@@ -201,6 +208,11 @@ function Mmu()
             _StdIn.putLine("Rolled in PID: " + pcb.pid);
         }
     };
+
+    this.makeSwapId = function(pid)
+    {
+        return _FS.sysFileMarker + pid.toString(16);
+    }
 
 
 }

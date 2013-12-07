@@ -458,70 +458,17 @@ function krnHddHandler(params)
             file = null;
             firstAdddy = null;  //the fat table address for the file entry
 
-            //was a filename specified?
-            if (filename)
-            {   //if it was then we set the target filename
-
-                //first make sure the filename is a string
-                if (typeof filename === "string")
-                {   //when we have a valid string argument, we need to look for invalid chars
-
-                    //first things first, is the string too long?
-                    if (filename.length > HDD_BLOCK_SIZE - FS_META_BITS)
-                    {   //filename is too long to fit in the fat table
-
-                        //so it's invalid
-                        validFilename = false;
-
-                        //tell the user
-                        krnTrace(this + "File write failed, invalid argument: filename too long")
-                    }
-                    //when the length is ok, we need to check for invalid characters
-                    else
-                    {
-                        if(!_FS.isStringOK(filename))
-                        {
-                            validFilename = false;
-
-                            krnTrace(this + "File write failed: Invalid characters in file name")
-                        }
-                    }
-                    //by the time we get here, we know for sure if the filename is valid or not
-                }
-                //when the filename isn't a string, notify the user
-                else
-                {   //tell the user that they gave bad input for the filename
-                    krnTrace(this + "file write failed, invalid argument: filename not a string");
-                }
-
-            }
-            else
-            //filename was not given
-            {   //tell the user that they forgot to give a filename argument
-                krnTrace(this +"file write failed, missing argument: filename");
-            }
-
-            //if we got good arguments
-            if (validFilename)
-            {   //then check if the file exists
-
-                if (filesInUse.length > 0)
-                {
-                    for (i = 0; i < filesInUse.length; i++)
-                    {
-                        if (filesInUse[i][1] === filename)
-                        {
-                            firstAdddy = filesInUse[i][0];  //fat address of the file we found
-                            file = filesInUse[i][1];  //the filename (kind of redundant...)
-                        }
-                    }
-
-                }
-            }
-            //when we didn't get a valid filename
-            else if (!validFilename)
+            if (filesInUse.length > 0)
             {
-                krnTrace(this + "File write failed, invalid filename: " + parameters[1].toString());
+                for (i = 0; i < filesInUse.length; i++)
+                {
+                    if (filesInUse[i][1] === filename)
+                    {
+                        firstAdddy = filesInUse[i][0];  //fat address of the file we found
+                        file = filesInUse[i][1];  //the filename (kind of redundant...)
+                    }
+                }
+
             }
 
             //Check if we found the file

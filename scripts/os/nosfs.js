@@ -20,7 +20,12 @@ function Nosfs()
     this.chainedBlock   = "2";          //first bit 2 = used block, 1 file in more than 1 blocks
     this.systemBlock    = "3";          //first bit 3 = used block, 1 system file in 1 or more blocks
     this.eof            = "$";          //The end of file character
+    this.sysFileMarker  = "@";          //The lead character for system reserved file names
     this.fsMetaBits     = "5";          //the number of bits in a block that are used for meta information
+
+
+    //the list of characters that may not be used in a file name
+    this.invalidChars   = this.eof + this.sysFileMarker;
 
     //fields
     this.emptyFatBlock      = "";       //Formatted, empty block valid for writing to FAT or file
@@ -34,18 +39,17 @@ function Nosfs()
     //methods
     this.init = function()
     {
-        //File sytsem globals that we can do now
-        FS_META_BITS = this.fsMetaBits;                               //number of bits required for fs metadata = mask.t.s.b.eof
-        FS_INVALID_CHARS = FS_INVALID_CHARS + this.eof; //add any customizations to the list of invalid characters
+        //File sytsem globals that are needed to set up the defaults below
+        FS_META_BITS = this.fsMetaBits;                             //number of bits required for fs metadata = mask.t.s.b.eof
+        FS_INVALID_CHARS = FS_INVALID_CHARS + this.invalidChars;    //add any customizations to the list of invalid characters
 
-
-        //Set the defaults for this file system
+        //Defaults for this file system that rely on globals
         this.emptyFatBlock = this. initEmptyFatBlock();
         this.mbrDescriptorBlock = this.dotify(this.mbrDescriptor);
         this.firstFatAddy = this.getFirstFatAddress();
         this.firstFileAddy = this.getFirstFileAddress();
 
-        //Set up the OS globals for use with this file system
+        //File system globals that rely on this file systems defaults
         HDD_MBR_ADDRESS = this.mbrAddress;
         //Fat metadata setup
         HDD_MAX_FAT_BLOCKS = this.getMaxFatBlocks();
@@ -55,18 +59,12 @@ function Nosfs()
         HDD_MAX_FILE_BLOCKS = this.getMaxFileBlocks();
         HDD_FREE_FILE_BLOCKS = HDD_MAX_FILE_BLOCKS;     //doing getFreeFileBlocks() the first time is wasteful
         HDD_USED_FILE_BLOCKS = 0;                       //doing getUsedFileBlocks() the first time is wasteful
-
-        //File sytsem globals that we need to do now
         FS_NEXT_FREE_FAT_BLOCK = this.mbrAddress;       //next block for a filename
         FS_NEXT_FREE_FILE_BLOCK = this.firstFileAddy;   //next block for file data
+        FS_FILENAMES = this.getFatList();
 
         //for now, this is ok but it needs to change when we add more hard drives and the "cd" commands
         FS_ACTIVE_HDD = _HddList[0];
-
-        //update the filenames in use by the system
-        FS_FILENAMES = this.getFatList();
-
-
 
         //finalize the mbr default state
         this.mbrBlockData = this.getMbrBlockData();
@@ -831,8 +829,8 @@ function Nosfs()
         return meta;
     };
 
-    //creates an empty swap file arge enough to hold a memory partition on disk
-    this.makeSwap = function()
+
+    this.makeSwap = function(pcb, data)
     {
 
     };
