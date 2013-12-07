@@ -13,7 +13,6 @@
 //
 var APP_NAME = "NOS";  // NickOS, AKA NOS AKA Nitrous.  Fast?  Laughing gas?  Both?  You decide.
 var APP_VERSION = "0.42";   // "The Answer to the Ultimate Question of Life, the Universe, and Everything."  Duh!
-var FS_INVALID_CHARS    = "\\\'\"\n\b\r\f\t"; //the base list of characters that aren't allowed in out file system
 
 var CPU_CLOCK_INTERVAL = 100;   // This is in ms, or milliseconds, so 1000 = 1 second.
 
@@ -24,6 +23,8 @@ var KEYBOARD_IRQ = 1;
 var SOFTWARE_IRQ = 2;  //  Software IRQ (for things like invlaid opcodes, memory access violations, etc)
 
 var HDD_IRQ = 3;    // irq for disk I/O
+
+var MAX_TRHEADS = 4;  //the maximum number of threads allowed in the ready queue at any given time
 
 //software IRQ code. Use their indices when raising opcodes
 // IE) _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[0]) );
@@ -166,6 +167,8 @@ var _HddList = [];
 
 //a reference to the file system in use
 var _FS = null;
+
+var _FS_INVALID_CHARS    = "\\\'\"\n\b\r\f\t"; //The initial list of characters forbidden in file names
 
 //virtual hdd "physical" specs
 var HDD_NUM_TRACKS  = 4;

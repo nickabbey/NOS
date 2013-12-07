@@ -28,12 +28,14 @@ function Scheduler()
                 _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[3]) );
             }
         }
+        //TODO - if there is space in the ready queue, something from the thread list
         //if there were no threads in execution, check if there's anything on the ready queue
         else if (_ReadyQueue.getSize() > 0 )
         {
             //get the head of the rq
             var index = _ReadyQueue.dequeue();
             //figure out where in the list of loaded threads this pcb is
+            //TODO the scheduler shouldn't be interacting with the shell, fix this in the future
             index = shellGetPidIndex(index.pid.toString());
             //make the popped pcs the current thread of execution
             _CurrentThread = _ThreadList[index];
@@ -41,6 +43,11 @@ function Scheduler()
             _CPU.update(_CurrentThread);
             _CPU.isExecuting = true;
         }
+//        //keep the ready queue full
+//        else if (_ThreadList.getSize() > 0 && _ReadyQueue.getSize() < MAX_TRHEADS)
+//        {
+//
+//        }
     };
 
     //for resetting the cycles, called on context switches

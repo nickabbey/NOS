@@ -280,38 +280,40 @@ function readyQueueToTable()
     tblBody.appendChild(row);
 
     //build out the rest of the table
-
-    for (var i = 0; i <= _ThreadList.length; i++)
+    if (_ReadyQueue)
     {
-        //reset the table elements
-        row = document.createElement("tr");
-        cell = document.createElement("td");
-        cellText = null;
-
-        //update if there's a thread in the ready queue at index i
-        if (_ThreadList[i])
-        {   //There is, so populate the row with the info for that PCB
-            cellText = document.createTextNode((_ThreadList[i].pid).toString());
-            cell.appendChild(cellText);
-            row.appendChild(cell);
-
+        for (var i = 0; i <= _ReadyQueue.getSize(); i++)
+        {
+            //reset the table elements
+            row = document.createElement("tr");
             cell = document.createElement("td");
-            cellText = document.createTextNode((_ThreadList[i].state).toString());
-            cell.appendChild(cellText);
-            row.appendChild(cell);
+            cellText = null;
 
-            cell = document.createElement("td");
-            cellText = document.createTextNode((_ThreadList[i].base).toString());
-            cell.appendChild(cellText);
-            row.appendChild(cell);
+            //update if there's a thread in the ready queue at index i
+            if (_ReadyQueue.q[i])
+            {   //There is, so populate the row with the info for that PCB
+                cellText = document.createTextNode((_ReadyQueue.q[i].pid).toString());
+                cell.appendChild(cellText);
+                row.appendChild(cell);
 
-            cell = document.createElement("td");
-            cellText = document.createTextNode((_ThreadList[i].limit).toString());
-            cell.appendChild(cellText);
-            row.appendChild(cell);
+                cell = document.createElement("td");
+                cellText = document.createTextNode((_ReadyQueue.q[i].state).toString());
+                cell.appendChild(cellText);
+                row.appendChild(cell);
 
-            //append the row to the table
-            tblBody.appendChild(row);
+                cell = document.createElement("td");
+                cellText = document.createTextNode((_ReadyQueue.q[i].base).toString());
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+
+                cell = document.createElement("td");
+                cellText = document.createTextNode((_ReadyQueue.q[i].limit).toString());
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+
+                //append the row to the table
+                tblBody.appendChild(row);
+            }
         }
     }
 

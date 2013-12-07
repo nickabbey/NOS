@@ -41,7 +41,7 @@ function Nosfs()
     {
         //File sytsem globals that are needed to set up the defaults below
         FS_META_BITS = this.fsMetaBits;                             //number of bits required for fs metadata = mask.t.s.b.eof
-        FS_INVALID_CHARS = FS_INVALID_CHARS + this.invalidChars;    //add any customizations to the list of invalid characters
+        _FS_INVALID_CHARS = _FS_INVALID_CHARS + this.invalidChars;    //add any customizations to the list of invalid characters
 
         //Defaults for this file system that rely on globals
         this.emptyFatBlock = this. initEmptyFatBlock();
@@ -809,7 +809,7 @@ function Nosfs()
 
         for(var i = 0; i < data.length; i++)
         {
-            if (FS_INVALID_CHARS.indexOf(data[i]) > -1)
+            if (_FS_INVALID_CHARS.indexOf(data[i]) > -1)
             {
                 retVal = false
             }

@@ -225,7 +225,7 @@ function Shell()
         sc = new ShellCommand();
         sc.command = "runall";
         sc.description = "- Run all loaded user programs";
-        sc.function = function shellRunProgram() {
+        sc.function = function shellRunAll() {
 
             //update for loaded threads
             if (_ThreadList.length > 0)

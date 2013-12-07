@@ -15,6 +15,7 @@ function Pcb (state, pid, base, limit)
     this.pc         = 0;        // Program counters always start at 0
     this.base       = base;     // Address of pcb start (integer index for _MainMemory, -1 indicates process on disk)
     this.limit      = limit;    // Address of pcb end (integer index for _MainMemory, -1 indicates process on disk)
+    this.location   = -1;     // -1 for on disk or 0-2 for a memory partition
 
     // Registers are members too
     this.acc = 0;
@@ -32,9 +33,10 @@ function Pcb (state, pid, base, limit)
         this.pc = _CPU.PC;
     };
 
-    this.setLocation = function(base, limit)
+    this.setLocation = function(base, limit, partition)
     {
         this.base = base;
         this.limit = limit;
+        this.location = partition;
     };
 }

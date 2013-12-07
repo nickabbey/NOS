@@ -259,12 +259,12 @@ function krnContextSwitch()
 }
 
 function krnRunAll() {
-    for (var i = 0; i < _ThreadList.length; i++)
+    for (var i = 0; i < MAX_TRHEADS; i++)
     {
         if (_ThreadList[i])
         {
-        _ReadyQueue.enqueue(_ThreadList[i]);
             _ThreadList[i].state = "READY";
+            _ReadyQueue.enqueue(_ThreadList[i]);
         }
     }
 }
