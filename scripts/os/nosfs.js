@@ -835,4 +835,67 @@ function Nosfs()
 
     };
 
+    //this is a pretty dirty hack that bypasses the entire IRQ/ISR routine and provides the file contents
+    //Required to make the context switching work with swap files without having to break the context
+    //switch over a few cycles
+    this.readFile = function(filename)
+    {
+
+        //set the ones that matter right now
+        var file = null;
+        var firstAdddy = null;  //the fat table address for the file entry
+        var blocks = [];
+        var fileContents = "";
+
+        //if we got good arguments
+        if (filename)
+        {   //then check if the file exists
+
+            if (FS_FILENAMES.length > 0)
+            {
+                for (var i = 0; i < FS_FILENAMES.length; i++)
+                {
+                    if (FS_FILENAMES[i][1] === filename)
+                    {
+                        firstAdddy = FS_FILENAMES[i][0];  //fat address of the file we found
+                        file = FS_FILENAMES[i][1];  //the filename (kind of redundant...)
+                    }
+                }
+
+            }
+        }
+
+        //Check if we found the file
+        if(file)
+        {   //when we were able to find the file we care about
+
+            //get get the blocks allocated to that file
+            blocks = _FS.getAllocatedBlocks(firstAdddy);
+
+            //print out the blocks to the screen
+            if (blocks)
+            {
+                for (var j = 0; j < blocks.length; j++)
+                {
+                    fileContents = fileContents + _FS.getBlockData(blocks[i]);
+                }
+
+            }
+            else
+            {
+                krnTrace(this + "Read failed, getting allocated blocks failed");
+            }
+
+
+        }
+        else
+        //we didn't find the file we wanted
+        {
+            krnTrace(this + "Read failed, file not found");
+        }
+
+        return fileContents;
+
+    };
+
 }

@@ -82,12 +82,9 @@ function Mmu()
     this.load = function(opCodes, partition)
     {
         //make sure there are opcodes to load
-        if (opCodes === null || opCodes.size === 0)
-        {
-            _StdOut.putLine("MMU load operation failed");
-        }
-        else  //opcodes were passed in, move them to memory
-        {
+        if (opCodes)
+        {   //opcodes were passed in, move them to memory
+
             for(var i = 0; i < (opCodes.length); i++)
             {
                 this.physical[this.logical.partitionMap[partition][i]] = opCodes[i];
@@ -95,6 +92,10 @@ function Mmu()
 
             //refresh the displays
             updateDisplayTables();
+        }
+        else
+        {   //no opcodes, let the user know
+            _StdOut.putLine("MMU load operation failed");
         }
 
     };
@@ -165,9 +166,9 @@ function Mmu()
 
         //make the swap file name - note this bypasses the shellCreate which allows usage of invalid char "@" in name
         var swapFileName = this.makeSwapId(pcb.pid);
-        var swapFileData = "";
+        var swapFileData = [];
 
-        //data is supplied when rollin called us with a data parameter of its' own
+        //data is supplied when rollin calls this for a new process
         if (data)
         {
             swapFileData = data;
@@ -177,7 +178,7 @@ function Mmu()
         {
             for(var i = 0; i < _MemorySegmentSize; i++)
             {
-                swapFileData = swapFileData + this.physical[this.logical.partitionMap[pcb.location][i]];
+                swapFileData[swapFileData.length] = this.physical[this.logical.partitionMap[pcb.location][i]];
             }
         }
 
@@ -186,9 +187,11 @@ function Mmu()
         krnCreateFile([HDD_IRQ_CODES[1],swapFileName, FS_ACTIVE_HDD]);
         krnWriteFile([HDD_IRQ_CODES[5], swapFileName, swapFileData]);
 
+        //tehnically, this should always be true, but having this guard is somehow reassuring
         if(pcb.location != -1)
         {
             _MMU.logical.freeParts[pcb.location] = true;
+            _MMU.flushPartition(pcb.location);
         }
 
         pcb.state = "ON DISK";
@@ -201,7 +204,7 @@ function Mmu()
 
     this.rollIn = function(pcb, data)
     {
-        //first things first, add the thread to the list of loaded threads as needed
+        //threads rolled in via shell load will use this, but not context switches
         if(_ThreadList.indexOf(pcb) === -1)
         {
             _ThreadList[_ThreadList.length] = pcb;
@@ -209,56 +212,73 @@ function Mmu()
 
         //ask the mmu where it should go
         var partition = _MMU.getFreePartition();
+
+        //if the mmu doesn't have a free partition, the free one up
         if(partition === -1)
         {   //no free memory slots
+
             krnTrace(this + "Attempted to load process while memory was full");
-            _StdIn.putLine("Memory is full, rolling process out to disk");
-            _MMU.rollOut(pcb, data);
 
-        }
-        else
-        {   //We got free memory, so we can load the thread
-
-            //Start by getting pointers to main memory
-            var start = _MMU.getPartitionBegin(partition);
-            var end = _MMU.getPartitionEnd(partition);
-
-            //data is passed in when loaded from the command line
-            if(data)
+            //when called from a context switch, there is a current thread
+            if(_CurrentThread)
             {
-                //load opcodes to the appropriate partition
-                _MMU.load(data, partition);
+                _StdIn.putLine("Memory is full, rolling process " + _CurrentThread.pid + " out to swap");
+                _MMU.rollOut(_CurrentThread);
+                partition = _MMU.getFreePartition();
             }
-            //data is loaded from swap when called by context switch
+            //when called from shellLoad, there isn't a current thread, but there is data
             else
             {
-                //then get the swap file name
-                var swapFileName = this.makeSwapId(pcb.pid);
-
-                //then get the data to be loaded
-                var swapFileData = krnReadFile([HDD_IRQ_CODES[4],swapFileName, FS_ACTIVE_HDD]);
-
-                //load opcodes to the appropriate partition
-                _MMU.load(swapFileData, partition);
+                _StdIn.putLine("Memory is full, process data out to swap.");
+                _MMU.rollOut(pcb, data);
+                //when we were called from shellLoad, there's nothing left to do
+                return;
             }
-
-            //Then update the PCB
-            pcb.setLocation(start, end, partition);
-            pcb.state = "READY";
-
-            //update the free partition table
-            _MMU.logical.freeParts[partition] = false;
-
-            //and give some feedback
-            krnTrace(this + "Rolled in PID: " + pcb.pid);
-            _StdIn.putLine("Rolled in PID: " + pcb.pid);
         }
+
+        //we only get here when we were called by a context switch and have memory in to which we may roll a thread
+
+        //Start by getting pointers to main memory
+        var start = _MMU.getPartitionBegin(partition);
+        var end = _MMU.getPartitionEnd(partition);
+
+        //data is passed in from load
+        if(data)
+        {
+            //load opcodes to the appropriate partition
+            _MMU.load(data, partition);
+        }
+        //data is loaded from swap when called by context switch
+        else
+        {
+            //then get the swap file name
+            var swapFileName = this.makeSwapId(pcb.pid);
+
+
+            //then get the data to be loaded
+            var swapFileData = _FS.readFile(swapFileName).split(" ");
+
+            //load opcodes to the appropriate partition
+            _MMU.load(swapFileData, partition);
+        }
+
+        //Then update the PCB
+        pcb.setLocation(start, end, partition);
+        pcb.state = "READY";
+
+        //update the free partition table
+        _MMU.logical.freeParts[partition] = false;
+
+        //and give some feedback
+        krnTrace(this + "Rolled in PID: " + pcb.pid);
+        _StdIn.putLine("Rolled in PID: " + pcb.pid);
+
     };
 
     this.makeSwapId = function(pid)
     {
         return _FS.sysFileMarker + pid.toString(16);
-    }
+    };
 
 
 }

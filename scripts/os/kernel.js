@@ -227,6 +227,9 @@ function krnKillProgram(param)
     //now, remove the PCB from the _ThreadList
     _ThreadList.splice(_ThreadList.indexOf(thread), 1);
 
+    //and the ready queue
+    _ReadyQueue.dequeue();
+
     //and set the current thread to null so the CPU scheduler will know that it can assign a new thread
     _CurrentThread = null;
 }
@@ -241,16 +244,29 @@ function krnContextSwitch()
     }
     else
     {
-        krnTrace(this + "Moving process " + _CurrentThread.pid + " out of ready queue.");
+        krnTrace(this + "Context switch set process " + _CurrentThread.pid + " to state 'READY'.");
         _CurrentThread.state = "READY";
         _CurrentThread.update();
 
-        _ReadyQueue.enqueue(_CurrentThread);
+        //move the current thread to the back of the ready queue
+        var nextThread = _ReadyQueue.dequeue();
+        _ReadyQueue.enqueue(nextThread);
 
-        _CurrentThread = _ReadyQueue.dequeue();
+        //and roll in the new head of the ready queue
+        nextThread = _ReadyQueue.peek();
 
-        krnTrace(this + "Moving process " + _CurrentThread.pid + " in to ready queue.");
+        //when the next thread is on disk, it needs to be rolled in from memory
+        if (nextThread.location === -1)
+        {
+            _MMU.rollIn(nextThread);
+        }
+
+        //update the current thread to the one at the front of the ready queue
+        _CurrentThread = nextThread;
+
+
         _CurrentThread.state = "RUNNING";
+        krnTrace(this + "Context switch set process " + _CurrentThread.pid + " to state 'running'.");
 
         _CPU.update(_CurrentThread);
 
