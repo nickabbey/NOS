@@ -314,7 +314,7 @@ function krnCreateFile(params)
     }
     else
     {
-        _StdOut.putLine("ERROR: The disk is not formatted");
+        _StdOut.putLine("ERROR: Attempted file creation on an unformatted disk");
     }
 
     return retVal;
@@ -331,7 +331,7 @@ function krnDeleteFile(params)
     }
     else
     {
-        _StdOut.putLine("ERROR: The disk is not formatted");
+        _StdOut.putLine("ERROR: Attempted file delete on an unformatted disk");
     }
     return retVal;
 }
@@ -347,7 +347,7 @@ function krnListFiles(params)
     }
     else
     {
-        _StdOut.putLine("ERROR: The disk is not formatted");
+        _StdOut.putLine("ERROR: Attempted list files on an unformatted disk");
     }
     return retVal;
 }
@@ -363,7 +363,7 @@ function krnWriteFile(params)
     }
     else
     {
-        _StdOut.putLine("ERROR: The disk is not formatted");
+        _StdOut.putLine("ERROR: Attempted file write on an unformatted disk");
     }
     return retVal;
 }
@@ -379,7 +379,7 @@ function krnReadFile(params)
     }
     else
     {
-        _StdOut.putLine("ERROR: The disk is not formatted");
+        _StdOut.putLine("ERROR: Attempted file read on an unformatted disk");
     }
     return retVal;
 }

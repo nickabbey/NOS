@@ -39,6 +39,7 @@ function Scheduler()
                 _CPU.isExecuting = true;
             }
         }
+        //TODO add logic to keep the ready queue full if new processes are added while others are running
     };
 
     //for resetting the cycles, called on context switches

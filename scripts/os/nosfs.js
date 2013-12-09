@@ -612,7 +612,7 @@ function Nosfs()
         }
         else
         {
-            krnTrace(this + "Block data retrieval failed at:" + address.toString());
+            krnTrace(this + "Block data retrieval failed at:" + address);
         }
 
         return data;

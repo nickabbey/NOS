@@ -237,6 +237,10 @@ function Mmu()
                 _StdIn.putLine("Memory is full, process data out to swap.");
                 retVal = _MMU.rollOut(pcb, data);
                 //when we were called from shellLoad, there's nothing left to do
+                if(_ThreadList.indexOf(pcb) === -1)
+                {
+                    _ThreadList[_ThreadList.length] = pcb;
+                }
                 return retVal;
             }
 
