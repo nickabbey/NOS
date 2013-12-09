@@ -55,6 +55,7 @@ function krnHddHandler(params)
     var t = 0;
     var s = 0;
     var b = 0;
+    var retVal = false;
 
     //reset all the case variables to their defaults
     function resetState()
@@ -75,6 +76,7 @@ function krnHddHandler(params)
         t = 0;
         s = 0;
         b = 0;
+        retVal = false;
     }
 
     //for reference HDD_IRQ_CODES = 0="FORMAT", 1="CREATE", 2="DELETE", 3="LIST", 4="READ", 5="WRITE"
@@ -85,9 +87,6 @@ function krnHddHandler(params)
         {
             //clean slate
             resetState();
-
-            //lock access to the file system
-            _FS.isFree = false;
 
             //write the mbr
             disk.writeBlock(FS_NEXT_FREE_FILE_BLOCK, _FS.mbrBlockData);
@@ -119,6 +118,7 @@ function krnHddHandler(params)
             _FS.isFree = true;
 
             _StdOut.putLine("Format operation complete");
+            retVal = true;
         }
             break;
 
@@ -174,6 +174,7 @@ function krnHddHandler(params)
                     disk.writeBlock(_FS.mbrAddress, _FS.mbrBlockData);
 
                     _StdOut.putLine("File created");
+                    retVal = true;
                 }
                 //but if we don't, then we're out of space.
                 else
@@ -236,6 +237,7 @@ function krnHddHandler(params)
                     FS_NEXT_FREE_FILE_BLOCK = blocks[0];
 
                     _StdOut.putLine("Delete completed");
+                    retVal = true;
                 }
                 else
                 {
@@ -264,6 +266,7 @@ function krnHddHandler(params)
                 {
                     _StdOut.putLine(filesInUse[i][1]);
                 }
+                retVal = true;
                 _OsShell.putPrompt();
             }
 
@@ -315,6 +318,8 @@ function krnHddHandler(params)
                         _StdOut.putLine("Contents of file " + _FS.getBlockData(firstAdddy) + ": ");
                         _StdOut.putLine(_FS.getBlockData(blocks[i]));
                     }
+
+                    retVal = true;
 
                 }
                 else
@@ -372,6 +377,7 @@ function krnHddHandler(params)
                     }
 
                     _StdOut.putLine("Write complete");
+                    retVal = true;
                 }
                 else
                 {
@@ -392,8 +398,9 @@ function krnHddHandler(params)
             krnTrapError(this + "Invalid disk operation");
     }
 
-    //keey the filename cache up to date
+    //keep the filename cache up to date
     FS_FILENAMES = _FS.getFatList();
+    return retVal;
 }
 
 //returns the entire block for the address and disk specified

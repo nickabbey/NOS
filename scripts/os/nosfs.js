@@ -34,7 +34,7 @@ function Nosfs()
     this.firstFatAddy       = "";       //the very first tsb address that can contain FAT info
     this.mbrDescriptorBlock = "";       //the block data version of the mbr descriptor
     this.mbrBlockData       = "";       //look at this.updateMbrData for info
-    this.isFree             = true;     //false when an operation is in progress.
+    this.isFree             = false;    //false until a format occurs
 
     //methods
     this.init = function()
@@ -829,15 +829,8 @@ function Nosfs()
         return meta;
     };
 
-
-    this.makeSwap = function(pcb, data)
-    {
-
-    };
-
     //this is a pretty dirty hack that bypasses the entire IRQ/ISR routine and provides the file contents
-    //Required to make the context switching work with swap files without having to break the context
-    //switch over a few cycles
+    //Required to make swap files work without having to interrupt and resume context switches for disk reads
     this.readFile = function(filename)
     {
 
@@ -892,6 +885,7 @@ function Nosfs()
         //we didn't find the file we wanted
         {
             krnTrace(this + "Read failed, file not found");
+            fileContents = null;
         }
 
         return fileContents;

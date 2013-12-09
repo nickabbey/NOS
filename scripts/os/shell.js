@@ -136,29 +136,46 @@ function Shell()
         sc.command = "load";
         sc.description = "- Load a user program";
         sc.function = function shellLoadProgram() {
-            //get the user code
-            var program = document.getElementById("taProgramInput").value;
-            //format it
-            program = trim(program.toUpperCase());
-            //display it
-            _StdIn.putLine(program);
-            //verify it
-            if (shellProgramValidation(program))
-            {   //opcodes verified
+            //TODO improve this so that more threads can be loaded out to disk
+            if (_ThreadList.length < MAX_TRHEADS)
+            {
+                //get the user code
+                var program = document.getElementById("taProgramInput").value;
+                //format it
+                program = trim(program.toUpperCase());
+                //display it
+                _StdIn.putLine(program);
+                //verify it
+                if (shellProgramValidation(program))
+                {   //opcodes verified
 
-                var opCodes = program.split(" ");
+                    var opCodes = program.split(" ");
 
-                var newPcb = new Pcb("NEW", _NextPID, -1, -1);
-                _StdOut.putLine("Program is valid, created process with PID: " + _NextPID);
-                _NextPID++;
+                    var newPcb = new Pcb("NEW", _NextPID, -1, -1);
+                    _StdOut.putLine("Program is valid, created process with PID: " + _NextPID);
+                    _NextPID++;
 
-                _MMU.rollIn(newPcb, opCodes);
+                    var didLoad = _MMU.rollIn(newPcb, opCodes);
+                    if(didLoad)
+                    {
+                        _StdOut.putLine("Loaded Process with PID: " + newPcb.pid);
+                    }
+                    else
+                    {
+                        _StdOut.putLine("Failed to load Process with PID: " + newPcb.pid + ". Did you format?");
+                    }
 
+                }
+                else
+                {   //opCodes were invalid
+                    _StdOut.putLine("Program is invalid");
+                }
             }
             else
-            {   //opCodes were invalid
-                _StdOut.putLine("Program is invalid");
+            {
+                _StdOut.putLine("Too many programs loaded, run or kill a process.");
             }
+
         };
 
         this.commandList[this.commandList.length] = sc;
@@ -329,23 +346,13 @@ function Shell()
         sc.command = "format";
         sc.description = "- Format a hard drive (on diskID '<string>')";
         sc.function = function shellFormat(params) {
-
-            //is the file system free?
-            if (_FS.isFree)
-            {  //when the file system is free, we check the command
-                if (params.length === 0)
-                {
-                    krnFormatDisk([HDD_IRQ_CODES[0], 0]);
-                }
-                else
-                {
-                    krnFormatDisk([HDD_IRQ_CODES[0], params[0]]);
-                }
+            if (params.length === 0)
+            {
+                krnFormatDisk([HDD_IRQ_CODES[0], 0]);
             }
-            //when the file system is busy
             else
             {
-                _StdOut.putLine("File operation aborted, file system in use.");
+                krnFormatDisk([HDD_IRQ_CODES[0], params[0]]);
             }
         };
 

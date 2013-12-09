@@ -162,6 +162,7 @@ function Mmu()
 
     this.rollOut = function(pcb, data)
     {
+        var retVal = false;
         krnTrace(this + "Begin rolling out PID: " + pcb.pid);
 
         //make the swap file name - note this bypasses the shellCreate which allows usage of invalid char "@" in name
@@ -176,6 +177,7 @@ function Mmu()
         //data is not supplied when rollin was reading from a swap file
         else
         {
+            //write the memory partition to disk
             for(var i = 0; i < _MemorySegmentSize; i++)
             {
                 swapFileData[swapFileData.length] = this.physical[this.logical.partitionMap[pcb.location][i]];
@@ -184,31 +186,31 @@ function Mmu()
 
         swapFileData = swapFileData.join(" ");
 
-        krnCreateFile([HDD_IRQ_CODES[1],swapFileName, FS_ACTIVE_HDD]);
-        krnWriteFile([HDD_IRQ_CODES[5], swapFileName, swapFileData]);
+        var goodName = krnCreateFile([HDD_IRQ_CODES[1],swapFileName, FS_ACTIVE_HDD]);
+        var goodContent = krnWriteFile([HDD_IRQ_CODES[5], swapFileName, swapFileData]);
 
-        //tehnically, this should always be true, but having this guard is somehow reassuring
-        if(pcb.location != -1)
+        if (goodName && goodContent)
         {
-            _MMU.logical.freeParts[pcb.location] = true;
-            _MMU.flushPartition(pcb.location);
+            //technically, this should always be true, but having this guard is somehow reassuring
+            if(pcb.location != -1)
+            {
+                _MMU.logical.freeParts[pcb.location] = true;
+                _MMU.flushPartition(pcb.location);
+            }
+
+            pcb.state = "ON DISK";
+            pcb.setLocation(-1,-1,-1);
+
+            krnTrace(this + "Done rolling out PID: " + pcb.pid);
+            _StdOut.putLine("PID " + pcb.pid + " Rolled out");
+            retVal = true;
         }
-
-        pcb.state = "ON DISK";
-        pcb.setLocation(-1,-1,-1);
-
-        krnTrace(this + "Done rolling out PID: " + pcb.pid);
-        _StdOut.putLine("PID " + pcb.pid + " Rolled out");
-
+        return retVal;
     };
 
     this.rollIn = function(pcb, data)
     {
-        //threads rolled in via shell load will use this, but not context switches
-        if(_ThreadList.indexOf(pcb) === -1)
-        {
-            _ThreadList[_ThreadList.length] = pcb;
-        }
+        var retVal = true;
 
         //ask the mmu where it should go
         var partition = _MMU.getFreePartition();
@@ -223,20 +225,30 @@ function Mmu()
             if(_CurrentThread)
             {
                 _StdIn.putLine("Memory is full, rolling process " + _CurrentThread.pid + " out to swap");
-                _MMU.rollOut(_CurrentThread);
-                partition = _MMU.getFreePartition();
+                retVal = _MMU.rollOut(_CurrentThread);
+                if (!retVal)
+                {
+                    return retVal;
+                }
             }
             //when called from shellLoad, there isn't a current thread, but there is data
             else
             {
                 _StdIn.putLine("Memory is full, process data out to swap.");
-                _MMU.rollOut(pcb, data);
+                retVal = _MMU.rollOut(pcb, data);
                 //when we were called from shellLoad, there's nothing left to do
-                return;
+                return retVal;
             }
+
         }
 
         //we only get here when we were called by a context switch and have memory in to which we may roll a thread
+
+        //threads rolled in via shell load will use this, but not context switches
+        if(_ThreadList.indexOf(pcb) === -1)
+        {
+            _ThreadList[_ThreadList.length] = pcb;
+        }
 
         //Start by getting pointers to main memory
         var start = _MMU.getPartitionBegin(partition);
@@ -273,11 +285,12 @@ function Mmu()
         krnTrace(this + "Rolled in PID: " + pcb.pid);
         _StdIn.putLine("Rolled in PID: " + pcb.pid);
 
+        return retVal;
     };
 
     this.makeSwapId = function(pid)
     {
-        return _FS.sysFileMarker + pid.toString(16);
+        return _FS.sysFileMarker + pid;
     };
 
 

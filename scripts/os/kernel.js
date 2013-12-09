@@ -237,6 +237,8 @@ function krnKillProgram(param)
 //does the actual work of switching contexts when the SWI for context switch is encountered
 function krnContextSwitch()
 {
+    var didRollIn = true;
+
     if (!_CurrentThread)
     {
         krnTrace(this + "Context switch failed: no active thread!");
@@ -258,19 +260,29 @@ function krnContextSwitch()
         //when the next thread is on disk, it needs to be rolled in from memory
         if (nextThread.location === -1)
         {
-            _MMU.rollIn(nextThread);
+            didRollIn = _MMU.rollIn(nextThread);
         }
 
-        //update the current thread to the one at the front of the ready queue
-        _CurrentThread = nextThread;
+        if (didRollIn)
+        {
+            //update the current thread to the one at the front of the ready queue
+            _CurrentThread = nextThread;
 
 
-        _CurrentThread.state = "RUNNING";
-        krnTrace(this + "Context switch set process " + _CurrentThread.pid + " to state 'running'.");
+            _CurrentThread.state = "RUNNING";
+            krnTrace(this + "Context switch set process " + _CurrentThread.pid + " to state 'running'.");
 
-        _CPU.update(_CurrentThread);
+            _CPU.update(_CurrentThread);
 
-        _Scheduler.resetCycles();
+            _Scheduler.resetCycles();
+        }
+        else
+        {
+            _CurrentThread = _ReadyQueue.dequeue();
+            krnTrace(this + "Context switch failed to roll in " + _CurrentThread.pid);
+            _StdOut.putLine("Failed to roll in process " + _CurrentThread.pid + ". Killing and cleaning up.");
+            krnKillProgram(_CurrentThread.pid);
+        }
     }
 }
 
@@ -293,36 +305,82 @@ function krnFormatDisk(params)
 
 function krnCreateFile(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: The disk is not formatted");
+    }
 
+    return retVal;
 }
 
 function krnDeleteFile(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: The disk is not formatted");
+    }
+    return retVal;
 }
 
 function krnListFiles(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: The disk is not formatted");
+    }
+    return retVal;
 }
 
 function krnWriteFile(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: The disk is not formatted");
+    }
+    return retVal;
 }
 
 function krnReadFile(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: The disk is not formatted");
+    }
+    return retVal;
 }
 

@@ -39,11 +39,6 @@ function Scheduler()
                 _CPU.isExecuting = true;
             }
         }
-//        //keep the ready queue full
-//        else if (_ThreadList.getSize() > 0 && _ReadyQueue.getSize() < MAX_TRHEADS)
-//        {
-//
-//        }
     };
 
     //for resetting the cycles, called on context switches
