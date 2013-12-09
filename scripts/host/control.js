@@ -76,13 +76,13 @@ function hostInit()
     _StatusBar.value = new Date().toString();
 
     //Alan's test script for grading
-//      _GLaDOS = new Glados();
-//       alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
-//           "The script executes, but this disables keyboard input! " +
-//            "Luckily, you can purge the Neurotoxins after the script has run. " +
-//            "Just click the 'Purge' button when you want to regain control");
-//      _GLaDOS.init();
-//      _Testing = true;
+      _GLaDOS = new Glados();
+       alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
+           "The script executes, but this disables keyboard input! " +
+            "Luckily, you can purge the Neurotoxins after the script has run. " +
+            "Just click the 'Purge' button when you want to regain control");
+      _GLaDOS.init();
+      _Testing = true;
 
     //My customized GlasOs for internal testing
 //        _GLaDNOS = new GladNos();
