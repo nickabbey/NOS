@@ -101,7 +101,7 @@ function krnOnCPUClockPulse()
     }
     else // If there are no interrupts and there is nothing being executed then just be idle.
     {
-        krnTrace("Idle");
+//        krnTrace("Idle");
     }
 
     //This is done in lots of places where it may be desirable to see an immediate update to host status
@@ -200,22 +200,45 @@ function krnKillProgram(param)
    //the thread that we will kill
     var thread = _ThreadList[param];
 
-    //first, clean up memory for the partition holding this thread
-    _MMU.flushPartition(thread.base / _MemorySegmentSize );
-
-    //next, set CPU.isExecuting false
+    //first, set CPU.isExecuting false
     _CPU.isExecuting = false;
 
-    //finally, remove the PCB from the _ThreadList
+    //then, clean up memory for the partition holding this thread
+    _MMU.flushPartition(thread.base / _MemorySegmentSize );
+
+    //next, clean up any swap files for this thread
+    for (var i = 0; i < FS_FILENAMES.length; i++)
+    {   //start by looping through the list for filenames in the FAT
+
+        //look for a match of the current pid swap file name to a file on disk
+        if(FS_FILENAMES[i][1] === _MMU.makeSwapId(thread.pid))
+        {
+            //make note of it
+            var filename = FS_FILENAMES[i][1];
+        }
+    }
+
+    //when there was a swap file found, delete it
+    if (filename)
+    {
+        krnDeleteFile([HDD_IRQ_CODES[2],filename,null]);
+    }
+
+    //now, remove the PCB from the _ThreadList
     _ThreadList.splice(_ThreadList.indexOf(thread), 1);
 
-    //so the krnOnClockPulse
+    //and the ready queue
+    _ReadyQueue.dequeue();
+
+    //and set the current thread to null so the CPU scheduler will know that it can assign a new thread
     _CurrentThread = null;
 }
 
 //does the actual work of switching contexts when the SWI for context switch is encountered
 function krnContextSwitch()
 {
+    var didRollIn = true;
+
     if (!_CurrentThread)
     {
         krnTrace(this + "Context switch failed: no active thread!");
@@ -223,30 +246,53 @@ function krnContextSwitch()
     }
     else
     {
-        krnTrace(this + "Moving process " + _CurrentThread.pid + " out of ready queue.");
+        krnTrace(this + "Context switch set process " + _CurrentThread.pid + " to state 'READY'.");
         _CurrentThread.state = "READY";
         _CurrentThread.update();
 
-        _ReadyQueue.enqueue(_CurrentThread);
+        //move the current thread to the back of the ready queue
+        var nextThread = _ReadyQueue.dequeue();
+        _ReadyQueue.enqueue(nextThread);
 
-        _CurrentThread = _ReadyQueue.dequeue();
+        //and roll in the new head of the ready queue
+        nextThread = _ReadyQueue.peek();
 
-        krnTrace(this + "Moving process " + _CurrentThread.pid + " in to ready queue.");
-        _CurrentThread.state = "RUNNING";
+        //when the next thread is on disk, it needs to be rolled in from memory
+        if (nextThread.location === -1)
+        {
+            didRollIn = _MMU.rollIn(nextThread);
+        }
 
-        _CPU.update(_CurrentThread);
+        if (didRollIn)
+        {
+            //update the current thread to the one at the front of the ready queue
+            _CurrentThread = nextThread;
 
-        _Scheduler.resetCycles();
+
+            _CurrentThread.state = "RUNNING";
+            krnTrace(this + "Context switch set process " + _CurrentThread.pid + " to state 'running'.");
+
+            _CPU.update(_CurrentThread);
+
+            _Scheduler.resetCycles();
+        }
+        else
+        {
+            _CurrentThread = _ReadyQueue.dequeue();
+            krnTrace(this + "Context switch failed to roll in " + _CurrentThread.pid);
+            _StdOut.putLine("Failed to roll in process " + _CurrentThread.pid + ". Killing and cleaning up.");
+            krnKillProgram(_CurrentThread.pid);
+        }
     }
 }
 
 function krnRunAll() {
-    for (var i = 0; i < _ThreadList.length; i++)
+    for (var i = 0; i < MAX_TRHEADS; i++)
     {
         if (_ThreadList[i])
         {
-        _ReadyQueue.enqueue(_ThreadList[i]);
             _ThreadList[i].state = "READY";
+            _ReadyQueue.enqueue(_ThreadList[i]);
         }
     }
 }
@@ -259,42 +305,82 @@ function krnFormatDisk(params)
 
 function krnCreateFile(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: Attempted file creation on an unformatted disk");
+    }
 
+    return retVal;
 }
 
 function krnDeleteFile(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: Attempted file delete on an unformatted disk");
+    }
+    return retVal;
 }
 
 function krnListFiles(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: Attempted list files on an unformatted disk");
+    }
+    return retVal;
 }
 
 function krnWriteFile(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: Attempted file write on an unformatted disk");
+    }
+    return retVal;
 }
 
 function krnReadFile(params)
 {
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
+    var retVal = false;
+    if (_FS.isFree)
+    {
+        //put a disk I/O interrupt on the queue
+        retVal = true;
+        _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
+    }
+    else
+    {
+        _StdOut.putLine("ERROR: Attempted file read on an unformatted disk");
+    }
+    return retVal;
 }
 
-function krnDeleteFile(params)
-{
-    //put a disk I/O interrupt on the queue
-    _KernelInterruptQueue.enqueue( new Interrupt(HDD_IRQ, [params]) );
-
-}

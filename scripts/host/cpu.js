@@ -182,7 +182,7 @@ function Cpu()
         if(!opCode)
         {   //no opcode encountered - might be redundant if switch handles opCode === null via default case?
 
-            //Raise SWI 0 = invalid opcode
+            //Raise SWI 0 === invalid opcode
             _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[0]) );
 
             //TODO - kill the ps on invalid opcode (also, implement kill)

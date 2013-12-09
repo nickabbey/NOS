@@ -31,16 +31,15 @@ function Scheduler()
         //if there were no threads in execution, check if there's anything on the ready queue
         else if (_ReadyQueue.getSize() > 0 )
         {
-            //get the head of the rq
-            var index = _ReadyQueue.dequeue();
-            //figure out where in the list of loaded threads this pcb is
-            index = shellGetPidIndex(index.pid.toString());
-            //make the popped pcs the current thread of execution
-            _CurrentThread = _ThreadList[index];
-            _CurrentThread.state = "RUNNING";
-            _CPU.update(_CurrentThread);
-            _CPU.isExecuting = true;
+            _CurrentThread = _ReadyQueue.peek();
+            if (_CurrentThread)
+            {
+                _CurrentThread.state = "RUNNING";
+                _CPU.update(_CurrentThread);
+                _CPU.isExecuting = true;
+            }
         }
+        //TODO add logic to keep the ready queue full if new processes are added while others are running
     };
 
     //for resetting the cycles, called on context switches

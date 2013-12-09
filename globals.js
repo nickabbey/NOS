@@ -13,7 +13,6 @@
 //
 var APP_NAME = "NOS";  // NickOS, AKA NOS AKA Nitrous.  Fast?  Laughing gas?  Both?  You decide.
 var APP_VERSION = "0.42";   // "The Answer to the Ultimate Question of Life, the Universe, and Everything."  Duh!
-var FS_INVALID_CHARS    = "\\\'\"\n\b\r\f\t"; //the base list of characters that aren't allowed in out file system
 
 var CPU_CLOCK_INTERVAL = 100;   // This is in ms, or milliseconds, so 1000 = 1 second.
 
@@ -24,6 +23,8 @@ var KEYBOARD_IRQ = 1;
 var SOFTWARE_IRQ = 2;  //  Software IRQ (for things like invlaid opcodes, memory access violations, etc)
 
 var HDD_IRQ = 3;    // irq for disk I/O
+
+var MAX_TRHEADS = 4;  //the maximum number of threads allowed in the ready queue at any given time
 
 //software IRQ code. Use their indices when raising opcodes
 // IE) _KernelInterruptQueue.enqueue( new Interrupt(SOFTWARE_IRQ, SOFT_IRQ_CODES[0]) );
@@ -167,6 +168,8 @@ var _HddList = [];
 //a reference to the file system in use
 var _FS = null;
 
+var _FS_INVALID_CHARS    = "\\\'\"\n\b\r\f\t"; //The initial list of characters forbidden in file names
+
 //virtual hdd "physical" specs
 var HDD_NUM_TRACKS  = 4;
 var HDD_NUM_SECTORS = 8;
@@ -183,10 +186,11 @@ var HDD_MAX_FAT_BLOCKS      = null;
 var HDD_USED_FAT_BLOCKS     = null;
 var HDD_FREE_FAT_BLOCKS     = null;
 
-//number of bits reserved for file metadata
 var FS_META_BITS        = null; //number of bits used to store fs metadata
 var FS_NEXT_FREE_FILE_BLOCK  = null; //tsb address of the next free block for data
 var FS_NEXT_FREE_FAT_BLOCK  = null; //tsb address of the next free block for file information
+
+var FS_FILENAMES    = null;   //a list of the filenames in use by the system
 
 //address of mbr "t.s.b"
 var HDD_MBR_ADDRESS     = null;  //tsb address of the main boot record, specified by file system driver init routine

@@ -28,6 +28,16 @@ function Queue()
     this.dequeue = function() {
         return this.q.shift();
     };
+
+    this.peek = function()
+    {
+        return this.q[0];
+    };
+
+    this.peekAhead = function()
+    {
+        return this.q[1];
+    };
     
     this.toString = function() {
         var retVal = "";

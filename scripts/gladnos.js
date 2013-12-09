@@ -22,6 +22,9 @@ function GladNos() {
 
         _UserProgramText.value = _ProgramOne;
 
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
         _KernelInputQueue.enqueue('f');
         _KernelInputQueue.enqueue('o');
         _KernelInputQueue.enqueue('r');
@@ -29,54 +32,35 @@ function GladNos() {
         _KernelInputQueue.enqueue('a');
         _KernelInputQueue.enqueue('t');
         krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
-        _KernelInputQueue.enqueue('c');
-        _KernelInputQueue.enqueue('r');
-        _KernelInputQueue.enqueue('e');
-        _KernelInputQueue.enqueue('a');
-        _KernelInputQueue.enqueue('t');
-        _KernelInputQueue.enqueue('e');
-        _KernelInputQueue.enqueue(' ');
-        _KernelInputQueue.enqueue('n');
-        _KernelInputQueue.enqueue('i');
-        _KernelInputQueue.enqueue('c');
-        _KernelInputQueue.enqueue('k');
         krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
 
         _KernelInputQueue.enqueue('l');
-        _KernelInputQueue.enqueue('s');
-        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
-
-        _KernelInputQueue.enqueue('w');
-        _KernelInputQueue.enqueue('r');
-        _KernelInputQueue.enqueue('i');
-        _KernelInputQueue.enqueue('t');
-        _KernelInputQueue.enqueue('e');
-        _KernelInputQueue.enqueue(' ');
-        _KernelInputQueue.enqueue('n');
-        _KernelInputQueue.enqueue('i');
-        _KernelInputQueue.enqueue('c');
-        _KernelInputQueue.enqueue('k');
-        _KernelInputQueue.enqueue(' ');
-        _KernelInputQueue.enqueue('"');
-        _KernelInputQueue.enqueue('h');
-        _KernelInputQueue.enqueue('e');
-        _KernelInputQueue.enqueue('l');
-        _KernelInputQueue.enqueue('p');
-        _KernelInputQueue.enqueue('"');
-        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
-
-        _KernelInputQueue.enqueue('r');
-        _KernelInputQueue.enqueue('e');
+        _KernelInputQueue.enqueue('o');
         _KernelInputQueue.enqueue('a');
         _KernelInputQueue.enqueue('d');
-        _KernelInputQueue.enqueue(' ');
-        _KernelInputQueue.enqueue('n');
-        _KernelInputQueue.enqueue('i');
-        _KernelInputQueue.enqueue('c');
-        _KernelInputQueue.enqueue('k');
         krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
+        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('o');
+        _KernelInputQueue.enqueue('a');
+        _KernelInputQueue.enqueue('d');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
+        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('o');
+        _KernelInputQueue.enqueue('a');
+        _KernelInputQueue.enqueue('d');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
+
+        _KernelInputQueue.enqueue('l');
+        _KernelInputQueue.enqueue('o');
+        _KernelInputQueue.enqueue('a');
+        _KernelInputQueue.enqueue('d');
+        krnInterruptHandler(KEYBOARD_IRQ, [13, false]);
 
 //        _UserProgramText.value = _TestingProg;
 

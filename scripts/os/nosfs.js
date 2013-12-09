@@ -20,7 +20,12 @@ function Nosfs()
     this.chainedBlock   = "2";          //first bit 2 = used block, 1 file in more than 1 blocks
     this.systemBlock    = "3";          //first bit 3 = used block, 1 system file in 1 or more blocks
     this.eof            = "$";          //The end of file character
+    this.sysFileMarker  = "@";          //The lead character for system reserved file names
     this.fsMetaBits     = "5";          //the number of bits in a block that are used for meta information
+
+
+    //the list of characters that may not be used in a file name
+    this.invalidChars   = this.eof + this.sysFileMarker;
 
     //fields
     this.emptyFatBlock      = "";       //Formatted, empty block valid for writing to FAT or file
@@ -29,23 +34,22 @@ function Nosfs()
     this.firstFatAddy       = "";       //the very first tsb address that can contain FAT info
     this.mbrDescriptorBlock = "";       //the block data version of the mbr descriptor
     this.mbrBlockData       = "";       //look at this.updateMbrData for info
-    this.isFree             = true;     //false when an operation is in progress.
+    this.isFree             = false;    //false until a format occurs
 
     //methods
     this.init = function()
     {
-        //File sytsem globals that we can do now
-        FS_META_BITS = this.fsMetaBits;                               //number of bits required for fs metadata = mask.t.s.b.eof
-        FS_INVALID_CHARS = FS_INVALID_CHARS + this.eof; //add any customizations to the list of invalid characters
+        //File sytsem globals that are needed to set up the defaults below
+        FS_META_BITS = this.fsMetaBits;                             //number of bits required for fs metadata = mask.t.s.b.eof
+        _FS_INVALID_CHARS = _FS_INVALID_CHARS + this.invalidChars;    //add any customizations to the list of invalid characters
 
-
-        //Set the defaults for this file system
+        //Defaults for this file system that rely on globals
         this.emptyFatBlock = this. initEmptyFatBlock();
         this.mbrDescriptorBlock = this.dotify(this.mbrDescriptor);
         this.firstFatAddy = this.getFirstFatAddress();
         this.firstFileAddy = this.getFirstFileAddress();
 
-        //Set up the OS globals for use with this file system
+        //File system globals that rely on this file systems defaults
         HDD_MBR_ADDRESS = this.mbrAddress;
         //Fat metadata setup
         HDD_MAX_FAT_BLOCKS = this.getMaxFatBlocks();
@@ -55,14 +59,12 @@ function Nosfs()
         HDD_MAX_FILE_BLOCKS = this.getMaxFileBlocks();
         HDD_FREE_FILE_BLOCKS = HDD_MAX_FILE_BLOCKS;     //doing getFreeFileBlocks() the first time is wasteful
         HDD_USED_FILE_BLOCKS = 0;                       //doing getUsedFileBlocks() the first time is wasteful
-
-        //File sytsem globals that we need to do now
         FS_NEXT_FREE_FAT_BLOCK = this.mbrAddress;       //next block for a filename
         FS_NEXT_FREE_FILE_BLOCK = this.firstFileAddy;   //next block for file data
+        FS_FILENAMES = this.getFatList();
 
         //for now, this is ok but it needs to change when we add more hard drives and the "cd" commands
         FS_ACTIVE_HDD = _HddList[0];
-
 
         //finalize the mbr default state
         this.mbrBlockData = this.getMbrBlockData();
@@ -610,7 +612,7 @@ function Nosfs()
         }
         else
         {
-            krnTrace(this + "Block data retrieval failed at:" + address.toString());
+            krnTrace(this + "Block data retrieval failed at:" + address);
         }
 
         return data;
@@ -807,7 +809,7 @@ function Nosfs()
 
         for(var i = 0; i < data.length; i++)
         {
-            if (FS_INVALID_CHARS.indexOf(data[i]) > -1)
+            if (_FS_INVALID_CHARS.indexOf(data[i]) > -1)
             {
                 retVal = false
             }
@@ -816,6 +818,7 @@ function Nosfs()
         return retVal;
     };
 
+    //reads the block at a given address and returns the t.s.b string stored in it's metadata (aka block pointers)
     this.getAddressFromBlock = function(blockAddy)
     {
         var meta = ""
@@ -824,6 +827,69 @@ function Nosfs()
         meta = meta.join(".");
 
         return meta;
+    };
+
+    //this is a pretty dirty hack that bypasses the entire IRQ/ISR routine and provides the file contents
+    //Required to make swap files work without having to interrupt and resume context switches for disk reads
+    this.readFile = function(filename)
+    {
+
+        //set the ones that matter right now
+        var file = null;
+        var firstAdddy = null;  //the fat table address for the file entry
+        var blocks = [];
+        var fileContents = "";
+
+        //if we got good arguments
+        if (filename)
+        {   //then check if the file exists
+
+            if (FS_FILENAMES.length > 0)
+            {
+                for (var i = 0; i < FS_FILENAMES.length; i++)
+                {
+                    if (FS_FILENAMES[i][1] === filename)
+                    {
+                        firstAdddy = FS_FILENAMES[i][0];  //fat address of the file we found
+                        file = FS_FILENAMES[i][1];  //the filename (kind of redundant...)
+                    }
+                }
+
+            }
+        }
+
+        //Check if we found the file
+        if(file)
+        {   //when we were able to find the file we care about
+
+            //get get the blocks allocated to that file
+            blocks = _FS.getAllocatedBlocks(firstAdddy);
+
+            //print out the blocks to the screen
+            if (blocks)
+            {
+                for (var j = 0; j < blocks.length; j++)
+                {
+                    fileContents = fileContents + _FS.getBlockData(blocks[i]);
+                }
+
+            }
+            else
+            {
+                krnTrace(this + "Read failed, getting allocated blocks failed");
+            }
+
+
+        }
+        else
+        //we didn't find the file we wanted
+        {
+            krnTrace(this + "Read failed, file not found");
+            fileContents = null;
+        }
+
+        return fileContents;
+
     };
 
 }
