@@ -79,13 +79,13 @@ function hostInit()
 //   if (typeof _GLaDOS === "function")
 //   {
        //Interpreter will see this as an unresolved type if alan's test script isn't enabled in index.html
-      _GLaDOS = new Glados();
-       alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
-           "The script executes, but this disables keyboard input! " +
-            "Luckily, you can purge the Neurotoxins after the script has run. " +
-            "Just click the 'Purge' button when you want to regain control");
-      _GLaDOS.init();
-      _Testing = true;
+//      _GLaDOS = new Glados();
+//       alert("ALERT! - Changes to console IO don't play nice with GlaDOS. " +
+//           "The script executes, but this disables keyboard input! " +
+//            "Luckily, you can purge the Neurotoxins after the script has run. " +
+//            "Just click the 'Purge' button when you want to regain control");
+//      _GLaDOS.init();
+//      _Testing = true;
 //   }
 
 //    // Personal testing
